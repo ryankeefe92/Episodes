@@ -2,23 +2,1198 @@
 --  AppDelegate.applescript
 --  Episodes
 --
---  Created by Ryan Keefe on 4/27/16.
---  Copyright Â© 2016 Ryan Keefe. All rights reserved.
+--  Created by Ryan Keefe in 2008.
+--  Copyright © 2008-2016 Ryan Keefe. All rights reserved.
 --
 
 script AppDelegate
-	property parent : class "NSObject"
-	
-	-- IBOutlets
-	property theWindow : missing value
-	
-	on applicationWillFinishLaunching_(aNotification)
-		-- Insert code here to initialize your application before any files are opened 
-	end applicationWillFinishLaunching_
-	
-	on applicationShouldTerminate_(sender)
-		-- Insert code here to do any housekeeping before your application quits 
-		return current application's NSTerminateNow
-	end applicationShouldTerminate_
-	
+    property parent : class "NSObject"
+    
+    -- IBOutlets
+    property thePanel : missing value
+    property listOfShows : missing value
+    property seasonField : missing value
+    property episodeField : missing value
+    property showComboField : missing value
+    property beginWith : missing value
+    property statusLabel : missing value
+    property progressBar : missing value
+    property NSTimer : class "NSTimer"
+    global resourceFolder
+    global listFile
+    global atomicParsley
+    global thefaac
+    global theFeedChecker
+    global theffmpeg
+    global theMediaInfo
+    global themkvExtract
+    global themp4Box
+    global rawFolder
+    global showArtFolder0
+    global showArtFolder
+    global theTorrentDownloader
+    
+    global currentlyAiring
+    --property showTable : missing value
+    --property qualitySelect : missing value
+    --property theFirstRun : 0
+    
+    -- IBActions
+    on applicationWillFinishLaunching_(aNotification)
+        tell application "Finder"
+            set appLocation to (path to current application) as string
+            set resourceFolder to appLocation & "Contents:Resources:" as string
+            set showArtFolder0 to appLocation & "Contents:Resources:showart:" as alias
+            set showArtFolder to POSIX path of showArtFolder0 as text
+            set rawFolder0 to appLocation & "Contents:Resources:RawStreams:" as alias
+            set rawFolder to POSIX path of rawFolder0 as text
+            set the listFile to (resourceFolder as string) & "show_list.txt" as string
+            set atomicParsley to POSIX path of resourceFolder & "AtomicParsley64" as text
+            set theFeedChecker to POSIX path of resourceFolder & "feedchecker.workflow" as text
+            set thefaac to POSIX path of resourceFolder & "faac" as text
+            set theffmpeg to POSIX path of resourceFolder & "ffmpeg" as text
+            set theMediaInfo to POSIX path of resourceFolder & "mediainfo" as text
+            set themkvExtract to POSIX path of resourceFolder & "mkvextract" as text
+            set themp4Box to POSIX path of resourceFolder & "MP4Box" as text
+            set theTorrentDownloader to POSIX path of resourceFolder & "torrentdownloader.workflow" as text
+            set the open_target_file to open for access file listFile
+            try
+                set showlist to read the open_target_file
+                listOfShows's setStringValue_(showlist)
+            end try
+        end tell
+        ---Currently airing Wikipedia check
+        set find_id to do shell script "curl \"https://en.wikipedia.org/w/index.php?title=List_of_American_television_shows_currently_in_production&printable=yes\""
+        set AppleScript's text item delimiters to "<li><i><a href=\"/wiki/"
+        set wikiCount to count text items of find_id
+        set wikiTokens0 to text items of find_id
+        set firstRun to true
+        set wikiShow3 to ""
+        repeat with aa from 2 to wikiCount
+            set wikiShow0 to item aa of wikiTokens0 ----this will work with every number from 2 to however many TV shows there are in the list
+            set AppleScript's text item delimiters to "\" title=\""
+            set wikiTokens1 to text items of wikiShow0
+            set wikiShow1 to item 2 of wikiTokens1
+            set AppleScript's text item delimiters to "\">"
+            set wikiTokens2 to text items of wikiShow1
+            set wikiShow2 to item 1 of wikiTokens2
+            set AppleScript's text item delimiters to " ("
+            set wikiTokens3 to text items of wikiShow2
+            set wikiShow3 to item 1 of wikiTokens3
+            set AppleScript's text item delimiters to "\""
+            set wikiTokens4 to text items of wikiShow3
+            set wikiShow4 to item 1 of wikiTokens4
+            set AppleScript's text item delimiters to "&amp;"
+            set wikiTokens5 to text items of wikiShow4
+            set wikiCount2 to count wikiTokens5
+            set firstRun2 to true
+            if wikiCount2 is greater than 1
+            repeat with wc from 1 to wikiCount2
+                if firstRun2 is true
+                set wikiShow5 to item 1 of wikiTokens5
+                set firstRun2 to false
+                else
+                set wikiShow5 to wikiShow5 & "and" & item wc of wikiTokens5
+            end if
+        end repeat
+        else
+        set wikiShow5 to wikiShow4
+    end if
+    set AppleScript's text item delimiters to "'"
+    set wikiTokens6 to text items of wikiShow5
+    set wikiCount3 to count wikiTokens6
+    set firstRun3 to true
+    if wikiCount3 is greater than 1
+    repeat with wc2 from 1 to wikiCount3
+        if firstRun3 is true
+        set wikiShow6 to item 1 of wikiTokens6
+        set firstRun3 to false
+        else
+        set wikiShow6 to wikiShow6 & "" & item wc2 of wikiTokens6
+    end if
+end repeat
+else
+set wikiShow6 to wikiShow5
+end if
+if firstRun is true then
+    set wikiShow7 to wikiShow6
+    set firstRun to false
+    else
+    if wikiShow7 does not contain wikiShow6 then
+        set wikiShow7 to wikiShow7 & "\n" & wikiShow6
+    end if
+end if
+end repeat
+set AppleScript's text item delimiters to "\n"
+set wikiTokens7 to text items of wikiShow7
+set list_string to (wikiTokens7 as string)
+set new_string to do shell script "echo " & quoted form of list_string & " | sort -f"
+set wikiShow to (paragraphs of new_string)
+tell showComboField
+addItemsWithObjectValues_(wikiShow)
+end tell
+---end currently airing wikipedia block
+end applicationWillFinishLaunching_
+
+    on applicationDidFinishLaunching_(aNotification)
+    --NSTimer's scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(30, me, "downloader:", "Downloader", false)
+    NSTimer's scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(330, me, "downloader:", "Downloader", true)
+    NSTimer's scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(5, me, "encoder:", "Encoder", true)
+    end applicationDidFinishLaunching_
+
+    on downloader_(sender)
+    set showlist to listOfShows's stringValue() as text
+    set AppleScript's text item delimiters to "\n"
+    set tokens999 to text items of showlist
+    set countshows to count tokens999
+    if countshows is greater than 0
+    repeat with c from 1 to countshows
+        set showname0 to item c of tokens999
+        set AppleScript's text item delimiters to " ("
+        set nameToken99 to text items of showname0
+        set showname to item 1 of nameToken99
+        ----STATBAR----
+        set statbar to current application's NSString's stringWithFormat_("%@%@", "Checking sources for: ", showname)
+        set incrementJump to (100/(countshows + 1))
+        if c is greater than 1
+        progressBar's incrementBy_(incrementJump)
+    end if
+    statusLabel's setStringValue_(statbar)
+    ----STATBAR----
+    delay 0.1
+    set text item delimiters of AppleScript to " "
+    set showname2 to text items of showname
+    set text item delimiters of AppleScript to "."
+    set showname2 to "" & showname2 & "."
+    set urlshow to text items of showname2
+    set text item delimiters of AppleScript to "%20"
+    set urlshow to "" & urlshow
+    set url1 to "https://kat.cr/usearch/%22" & urlshow & "%22%20264%20OR%20x264%20category%3Atv/?rss=1" as text
+    ----the below line might be where the -100024 error is
+    set rss_items to do shell script "automator -i " & url1 & " " & theFeedChecker
+    ---above line might be where the -100024 error is.  wrap it in try/on error?
+    set existsShows to ""
+    tell application "iTunes"
+        set existsShows to (every track of playlist "TV Shows" whose show contains showname) --show name, ie "Family Guy"
+    end tell
+    set countfiles to count items of existsShows
+    if countfiles is greater than 0 then
+        repeat with f from 1 to countfiles
+            ----PROGBAR------
+            progressBar's incrementBy_((incrementJump/2)/countfiles)
+            ----PROGBAR------
+            tell application "iTunes"
+                set iTunesEpcode to episode ID of item f of existsShows
+                set iTunesQuality to comment of item f of existsShows
+            end tell
+            set vidQualFirst to "0" as integer
+            set audQualFirst to "2" as integer
+            set videoListd to {"SDTV", "720p", "1080p", "4K"}
+            repeat with i from 1 to count of videoListd
+                if iTunesQuality contains item i of videoListd then
+                    set vidQualFirst to (i - 1) as integer
+                end if
+            end repeat
+            set channelListd to {"Mono", "Stereo", "3ch", "4ch", "5ch", "Dolby Digital 5.1"}
+            repeat with i from 1 to count of channelListd
+                if iTunesQuality contains item i of channelListd then
+                    set audQualFirst to i as integer
+                end if
+            end repeat
+            
+            --- PART THAT COULD BE A SUBROUTINE STARTS HERE - Set it up as its own subroutine outside of downloader_ and call it as many times as you need to when it's needed.  THERE ARE SOME DIFFERENCES THOUGH SO LOOK AT THEM SIDE BY SIDE  ----
+            if vidQualFirst is less than 3 then --this is where you can set it to a different "max quality" setting
+                set url2 to "https://kat.cr/usearch/%22" & urlshow & "%20" & iTunesEpcode & "%22%20264%20OR%20x264%20category%3Atv/?rss=1" as text
+                set rss_items100 to do shell script "automator -i " & url2 & " " & theFeedChecker
+                set AppleScript's text item delimiters to " \""
+                set tokens to text items of rss_items100
+                set totalTorrents to count tokens
+                set bestquality to 0 as integer
+                set bestfeeditem to 0 as integer
+                repeat with i from 2 to totalTorrents
+                    try
+                        set current_torrent to item i of tokens
+                        set AppleScript's text item delimiters to "%5D" & showname2
+                        set tokens2 to text items of current_torrent
+                        set torrentTitle to item 2 of tokens2
+                        set tor_comment to "SDTV"
+                        set torQual to 0 as integer
+                        set vidList to {"720p", "1080p", "4K"}
+                        repeat with i from 1 to count of vidList
+                            if torrentTitle contains item i of vidList then
+                                set tor_comment to item i of vidList as text
+                                set torQual to i as integer
+                            end if
+                        end repeat
+                        set torAudQual to 2 as integer
+                        ---the below (from here to end repeat) sets the torAudQual, but nothing checks the torAudQual later!  Implement something (a few lines down, when it is checking the torQual) to also check the torAudQual
+                        ignoring case, hyphens, punctuation and white space
+                            if torrentTitle contains "AAC2.0" then
+                                set torAudQual to 2 as integer
+                                else if torrentTitle contains "DD5.1" then
+                                set torAudQual to 6 as integer
+                                else if torrentTitle contains "6ch" then
+                                set torAudQual to 6 as integer
+                            end if
+                        end ignoring
+                        set chanList to {"Mono", "Stereo", "3ch", "4ch", "5ch", "Dolby Digital 5.1"}
+                        repeat with i from 1 to count of chanList
+                            if torrentTitle contains item i of chanList then
+                                set torAudQual to i as integer
+                            end if
+                        end repeat
+                        set torSourceQual to 2 as integer
+                        set sourcList to {"WEB-DL", "TV-Rip", "Blu-Ray"}
+                        ignoring case, hyphens, punctuation and white space
+                            if torrentTitle contains "Web-Rip" then
+                                set torSourceQual to 1 as integer
+                            end if
+                            repeat with i from 1 to count of sourcList
+                                if torrentTitle contains item i of sourcList then
+                                    set torSourceQual to i as integer
+                                end if
+                            end repeat
+                        end ignoring
+                        ----make it so if a torrent is nuked and propered, the proper replaces the nuke
+                        if torQual is greater than vidQualFirst then
+                            ----also add in audio and source quality checkers here...torAudQual and torSourceQual are set just a few lines above and should be checked here!!
+                            if torQual is greater than bestquality then
+                                set bestquality to torQual as integer
+                                set bestfeeditem to i as integer
+                            end if
+                        end if
+                    end try
+                end repeat
+                if bestfeeditem is greater than 0 then
+                    set final_torrent to item bestfeeditem of tokens
+                    set AppleScript's text item delimiters to "?"
+                    set tokens3 to text items of final_torrent
+                    set final_torrent2 to item 1 of tokens3
+                    set AppleScript's text item delimiters to "torrent/"
+                    set nametoken to text items of final_torrent2
+                    set the_filename to item 2 of nametoken
+                    set AppleScript's text item delimiters to ".torrent"
+                    set nametoken2 to text items of the_filename
+                    set the_filename_2 to item 1 of nametoken2
+                    tell application "Finder"
+                        set torrent_add to folder "TorrentAdd" of the folder "Episodes" of the folder "RKApps" of the folder "Desktop" of home
+                        set torrent_files to folder "TorrentFiles" of the folder "Episodes" of the folder "RKApps" of the folder "Desktop" of home
+                        set already_downloaded to count (every item of torrent_add whose name contains the_filename_2)
+                        set already_downloaded2 to count (every item of torrent_files whose name contains the_filename_2)
+                    end tell
+                    if already_downloaded is 0 then
+                        if already_downloaded2 is 0 then
+                            do shell script "automator -i " & final_torrent2 & " " & theTorrentDownloader
+                            ----STATBAR2----
+                            set statbar2 to current application's NSString's stringWithFormat_("%@%@%@%@", "Downloading higher-quality version of ", showname, " ", iTunesEpcode)
+                            statusLabel's setStringValue_(statbar2)
+                            delay 0.1
+                            ----STATBAR2----
+                            tell application "Vuze"
+                                launch
+                            end tell
+                        end if
+                    end if
+                end if
+            end if
+        end repeat
+    end if
+    --- PART THAT COULD BE A SUBROUTINE ENDS HERE ---
+    
+    set currentdata0 to listOfShows's stringValue() as text
+    set AppleScript's text item delimiters to showname & " (S"
+    set dataTokens to text items of currentdata0
+    set currentdata1 to item 2 of dataTokens
+    set AppleScript's text item delimiters to ")"
+    set dataTokens2 to text items of currentdata1
+    set currentdata2 to item 1 of dataTokens2
+    set AppleScript's text item delimiters to "E"
+    set dataTokens3 to text items of currentdata2
+    set currentdataSeason to item 1 of dataTokens3
+    set currentdataEpisode to item 2 of dataTokens3
+    set currentdata4 to currentdataSeason & currentdataEpisode as integer
+    set currentdata to currentdata4 + 90000
+    
+    set AppleScript's text item delimiters to " \""
+    set tokens100 to text items of rss_items
+    set totalTorrents to count tokens100
+    set highestepcode to 0 as integer
+    repeat with t from 2 to totalTorrents
+        set correctTitle to "%5D" & showname2 & "s"
+        if item t of tokens100 contains correctTitle then
+            set currentTorrent to item t of tokens100
+            set AppleScript's text item delimiters to correctTitle
+            set tokens101 to text items of currentTorrent
+            set seasonnum0 to item 2 of tokens101
+            set correctTitle2 to text 1 thru 2 of seasonnum0 & "e"
+            if seasonnum0 contains correctTitle2 then
+                set AppleScript's text item delimiters to correctTitle2
+                set tokens102 to text items of seasonnum0
+                set seasonnum to text 1 thru 2 of seasonnum0
+                set epnum0 to item 2 of tokens102
+                set AppleScript's text item delimiters to "."
+                set tokens103 to text items of epnum0
+                set epnum to item 1 of tokens103
+                set feedepcode0 to seasonnum & epnum as integer
+                set feedepcode to feedepcode0 + 90000
+                if feedepcode is greater than highestepcode then
+                    set highestepcode to feedepcode
+                end if
+            end if
+        end if
+    end repeat
+    repeat
+        set urlepcode00 to currentdata as text
+        set urlepcode to "S" & text 2 thru 3 of urlepcode00 & "E" & text 4 thru 5 of urlepcode00
+        set url2 to "https://kat.cr/usearch/%22" & urlshow & urlepcode & "%22%20264%20OR%20x264%20category%3Atv/?rss=1" as text
+        set rss_items200 to do shell script "automator -i " & url2 & " " & theFeedChecker
+        if length of rss_items200 is greater than 3 then
+            set AppleScript's text item delimiters to " \""
+            set tokens to text items of rss_items200
+            set totalTorrents2 to count tokens
+            set bestquality to 0 as integer
+            set bestfeeditem to 0 as integer
+            repeat with w from 2 to totalTorrents2
+                try
+                    set current_torrent2 to item w of tokens
+                    set AppleScript's text item delimiters to "%5D" & showname2
+                    set tokens2 to text items of current_torrent2
+                    set torrentTitle to item 2 of tokens2
+                    set tor_comment to "SDTV"
+                    set torQual to 0 as integer
+                    set vidList to {"720p", "1080p", "4K"}
+                    repeat with i from 1 to count of vidList
+                        if torrentTitle contains item i of vidList then
+                            set tor_comment to item i of vidList as text
+                            set torQual to i as integer
+                        end if
+                    end repeat
+                    set torAudQual to 2 as integer
+                    ---the below (from here to end repeat) sets the torAudQual, but nothing checks the torAudQual later!  Implement something (a few lines down, when it is checking the torQual) to also check the torAudQual
+                    ignoring case, hyphens, punctuation and white space
+                        if torrentTitle contains "AAC2.0" then
+                            set torAudQual to 2 as integer
+                            else if torrentTitle contains "DD5.1" then
+                            set torAudQual to 6 as integer
+                            else if torrentTitle contains "6ch" then
+                            set torAudQual to 6 as integer
+                            --aac often means 2.0, and if it doesn't say aac2.0 or dd5.1, it is most likely 5.1, so it should prefer 5.1 or ac3 to nothing, and prefer nothing to 2.0 or web-dl or aac, unless web-dl also says 5.1
+                        end if
+                    end ignoring
+                    set chanList to {"Mono", "Stereo", "3ch", "4ch", "5ch", "Dolby Digital 5.1"}
+                    repeat with i from 1 to count of chanList
+                        if torrentTitle contains item i of chanList then
+                            set torAudQual to i as integer
+                        end if
+                    end repeat
+                    set torSourceQual to 2 as integer
+                    set sourcList to {"WEB-DL", "TV-Rip", "Blu-Ray"}
+                    ignoring case, hyphens, punctuation and white space
+                        if torrentTitle contains "Web-Rip" then
+                            set torSourceQual to 1 as integer
+                        end if
+                        repeat with i from 1 to count of sourcList
+                            if torrentTitle contains item i of sourcList then
+                                set torSourceQual to i as integer
+                            end if
+                        end repeat
+                    end ignoring
+                    ----make it so if a torrent is nuked and propered, the proper replaces the nuke
+                    if torQual is greater than bestquality then
+                        set bestquality to torQual as integer
+                        set bestfeeditem to w as integer
+                        set tor_comment2 to tor_comment
+                        ----also add in audio & source quality checkers here...torAudQual and torSourceQual were just set above.
+                    end if
+                end try
+            end repeat
+            if bestfeeditem is greater than 0 then
+                set final_torrent to item bestfeeditem of tokens
+                set AppleScript's text item delimiters to "?"
+                set tokens3 to text items of final_torrent
+                set final_torrent2 to item 1 of tokens3
+                set AppleScript's text item delimiters to "torrent/"
+                set nametoken to text items of final_torrent2
+                set the_filename to item 2 of nametoken
+                set AppleScript's text item delimiters to ".torrent"
+                set nametoken2 to text items of the_filename
+                set the_filename_2 to item 1 of nametoken2
+                tell application "Finder"
+                    set torrent_add to folder "TorrentAdd" of the folder "Episodes" of the folder "RKApps" of the folder "Desktop" of home
+                    set torrent_files to folder "TorrentFiles" of the folder "Episodes" of the folder "RKApps" of the folder "Desktop" of home
+                    set already_downloaded to count (every item of torrent_add whose name contains the_filename_2)
+                    set already_downloaded2 to count (every item of torrent_files whose name contains the_filename_2)
+                end tell
+                if already_downloaded is 0 then
+                    if already_downloaded2 is 0 then
+                        do shell script "automator -i " & final_torrent2 & " " & theTorrentDownloader
+                        ---is there to see if this returns with an error, or warning?  for example, if the URL provided doesn't work, right now it will just move on without downloading the torrent.  it should really be made aware of this warning/error by automator, and select a different torrent for the same episode instead.
+                        ----STATBAR4----
+                        set statbar4 to current application's NSString's stringWithFormat_("%@%@%@%@%@%@%@", "Downloading ", showname, " ", urlepcode, " at ", tor_comment2, " quality.")
+                        statusLabel's setStringValue_(statbar4)
+                        delay 0.1
+                        ----STATBAR4----
+                        tell application "Vuze"
+                            launch
+                        end tell
+                    end if
+                end if
+            end if
+            set currentdata to currentdata + 1
+            else
+            exit repeat
+        end if
+    end repeat
+    ---- REPEATED PART THAT COULD BE SUBROUTINE ENDS HERE  ---
+end repeat
+----STATBAR5----
+set statbar5 to current application's NSString's stringWithFormat_("%@", "Idle")  --shouldn't always be idle, leave "downloading" statuses up until the episode is added to itunes...then say adding...then idle.
+progressBar's incrementBy_(incrementJump)
+statusLabel's setStringValue_(statbar5)
+delay 0.1
+progressBar's incrementBy_(-100)
+----STATBAR5----
+end if
+end downloader_
+
+
+
+    on encoder_(sender)
+    tell application "Finder"
+        set downloads to folder "DownloadingComplete" of the folder "Episodes" of the folder "RKApps" of the folder "Desktop" of home
+        set processing to folder "Processing" of the folder "Episodes" of the folder "RKApps" of the folder "Desktop" of home
+        set mp3Downloads to folder "MP3Downloads" of the folder "Episodes" of the folder "RKApps" of the folder "Desktop" of home
+        ----From here to the next comment, the script checks downloadcomplete folder for video files, then deletes everything it doesn't need
+        set totalfolders to count folders in downloads
+        repeat while totalfolders is greater than 0
+            set downloads2 to folder 1 of downloads
+            set {mkvfiles, mp4files, m4vfiles, mp3files} to {(every item of downloads2 whose name ends with ".mkv"), (every item of downloads2 whose name ends with ".mp4"), (every item of downloads2 whose name ends with ".m4v"), (every item of downloads2 whose name ends with ".mp3")}
+            move {mkvfiles, mp4files, m4vfiles} to downloads with replacing
+            move mp3files to mp3Downloads
+            try
+                move downloads2 to trash
+            end try
+            set totalfolders to count folders in downloads
+        end repeat
+        --The below renames the file to the proper naming format
+        if exists item 1 of downloads then
+            if exists item 1 of processing then
+                set moveon to false
+                else
+                move item 1 of downloads to processing
+                set the_file to item 1 of processing
+                set alldownloads to the_file as text
+                ---the 2 lines below set the variable to just the filename (everything after the last colon), as opposed to the whole path
+                set AppleScript's text item delimiters to ":"
+                set allfilenames to last text item of alldownloads
+                tell current application
+                    ----the 4 lines below change any dashes in the filename to dots
+                    set text item delimiters of AppleScript to {" - ", " "}
+                    set someText2 to text items of allfilenames
+                    set text item delimiters of AppleScript to "."
+                    set someText2 to "" & someText2
+                    set tokens to text items of someText2
+                    set extension1 to "." & last text item of tokens ----the file type, which can be used later when determining which shell script to use
+                    set capitalizedfinal to {}
+                    set nameLength to ((count tokens) - 1) --the minus 1 gets rid of the extension so it doesn't capitalize it
+                    repeat with zz from 1 to nameLength
+                        set myWord to item zz of tokens
+                        --if the first letter is not capitalized, make it upper case
+                        set firstLetter to character 1 of myWord
+                        considering case
+                            if firstLetter is not in "ABCDEFGHIJKLMNOPQRSTUVWXYZ" then set firstLetter to do shell script "echo " & firstLetter & " | tr '[a-z]' '[A-Z]'"
+                            --make the rest of the letters lower case
+                            if length of myWord > 1 then
+                                set lowerletters to text 2 thru (length of myWord) of myWord
+                                set lowerletters to do shell script "echo " & lowerletters & " | tr '[A-Z]' '[a-z]'"
+                                else
+                                set lowerletters to ""
+                            end if
+                        end considering
+                        if zz is equal to 1 then
+                            try
+                                set capitalizedfinal to firstLetter & lowerletters
+                            end try
+                            else
+                            try
+                                set capitalizedfinal to capitalizedfinal & "." & firstLetter & lowerletters
+                            end try
+                        end if
+                    end repeat
+                end tell
+                set AppleScript's text item delimiters to {".S0", ".S1", ".S2", ".S3", ".S4", ".S5", ".S6", ".S7", ".S8", ".S9"}
+                ----below checks the video quality.  0 = 480p or lower, 1 = 720p, 2 = 1080p, 3 = 4K
+                set vidQual to "0" as integer ---if there is no indication of the quality, we assume that it is 480p or below.  this value will be changed by the "if" statements below if the title does contain the quality or mediainfo discovers it
+                set vid_comment to "SDTV"
+                set vidHeight to do shell script theMediaInfo & " \"--Inform=Video;%Height%\" /Users/ryankeefe/Desktop/RKApps/Episodes/Processing/*.{mkv,mp4,m4v}"
+                set vidheight2 to vidHeight as integer
+                if vidheight2 is less than 535 then
+                    set vidQual to "0" as integer
+                    set vid_comment to "SDTV"
+                    else if vidheight2 is less than 803 then
+                    if vidheight2 is greater than or equal to 535 then
+                        set vidQual to "1" as integer
+                        set vid_comment to "720p"
+                    end if
+                    else if vidheight2 is less than 1606 then
+                    if vidheight2 is greater than or equal to 803 then
+                        set vidQual to "2" as integer
+                        set vid_comment to "1080p"
+                    end if
+                    else if vidheight2 is greater than or equal to 1606 then
+                    set vidQual to "3" as integer
+                    set vid_comment to "4K"
+                end if
+                ----The below checks to see how many audio channels are in the MKV file.  This is used to determine, in a case where the same episode already has been added to iTunes, if the incoming episode should replace it because it has more audio channels.  Later, these variables are used to figure out which raw audio files should be added into the final container. If more than 2 channels, it adds the AC3 file for 5.1 surround sound, as well as a secondary stereo audio track.  If it's just stereo, it only adds in the stereo aac file.
+                set channels2 to "2" as integer --just in case there's a problem retrieving the number of audio channels in the file, we assume it is stereo until the processes below tell us otherwise
+                set channels to do shell script theMediaInfo & " \"--Inform=Audio;%Channels%\" /Users/ryankeefe/Desktop/RKApps/Episodes/Processing/*.{mkv,mp4,m4v}"
+                set stream1 to 0 as integer
+                set stream2 to 0 as integer
+                set stream3 to 0 as integer
+                -----the below checks EACH audio stream to see how many channels it has
+                try
+                    set stream1 to text 1 of channels as integer
+                end try
+                try
+                    set stream2 to text 2 of channels as integer
+                end try
+                try
+                    set stream3 to text 3 of channels as integer
+                end try
+                ------this part sees which audio stream has the greatest number of channels, and that is the audio stream that matters because if a file has stereo and 5.1 audio, the 5.1 audio is what will be extracted and used.  BUT, IF IT HAS STEREO AAC, SHOULDN'T IT ADD THAT TOO, SO IT DOESN'T NEED TO MAKE A STEREO MIXDOWN OF THE 5.1 IN ADDITION TO THE AC3 PASSTHRU?  OR DOES IT NEED TO BE MP3?
+                if stream1 is greater than or equal to stream2 then
+                    if stream1 is greater than or equal to stream3 then
+                        set channels2 to stream1
+                    end if
+                    else if stream2 is greater than or equal to stream1 then
+                    if stream2 is greater than or equal to stream3 then
+                        set channels2 to stream2
+                    end if
+                    else if stream3 is greater than or equal to stream1 then
+                    if stream3 is greater than or equal to stream2 then
+                        set channels2 to stream3
+                    end if
+                end if
+                set channels2List to {"Mono", "Stereo", "3ch", "4ch", "5ch", "Dolby Digital 5.1"}
+                repeat with i from 1 to count of channels2List
+                    if channels2 is equal to i then
+                        set aud_comment to item i of channels2List as text
+                    end if
+                end repeat
+                set sourceQual to "2" as integer ---if there is no indication of the source in the title, we assume that it is a TV rip.  TV rip = 2, BDrip = 3, WEB-DL = 1
+                set source_comment to "TV-Rip"
+                ---for the below to work, when it renames the file in the folder, it can't clip off everything after the epcode!
+                ignoring case, hyphens, punctuation and white space
+                    if text of capitalizedfinal contains "webdl" then
+                        set sourceQual to "1" as integer
+                        set source_comment to "Web-DL"
+                        else if text of capitalizedfinal contains "webrip" then
+                        set sourceQual to "1" as integer
+                        set source_comment to "Web-DL"
+                        else if text of capitalizedfinal contains "bdrip" then
+                        set sourceQual to "3" as integer
+                        set source_comment to "Blu-Ray"
+                        else if text of capitalizedfinal contains "bluray" then
+                        set sourceQual to "3" as integer
+                        set source_comment to "Blu-Ray"
+                    end if
+                end ignoring
+                set final_comment to vid_comment & " " & aud_comment & " " & source_comment
+                set totaltokens2 to count text items of capitalizedfinal
+                if totaltokens2 is equal to 1 then -----if the show DOES NOT use the standard SxxExx naming format
+                    set AppleScript's text item delimiters to {".720p.", ".1080p.", "4K"}
+                    set totaltokens3 to count text items of capitalizedfinal
+                    if totaltokens3 is equal to 1 then
+                        set AppleScript's text item delimiters to {".HDTV.", ".hdtv."}
+                    end if
+                end if
+                set tokens to text items of capitalizedfinal
+                set myshow to item 1 of tokens -----The name of the show, formatted as "30.Rock"
+                if totaltokens2 is greater than 1 then -----if the show uses the standard SxxExx naming format
+                    set AppleScript's text item delimiters to myshow & "."
+                    set tokens to text items of capitalizedfinal
+                    set preepcode to item 2 of tokens
+                    set AppleScript's text item delimiters to "."
+                    set tokens to text items of preepcode
+                    set epcode to item 1 of tokens
+                    set epcodefinal to "S" & text 2 thru 3 of epcode & "E" & text 5 thru 6 of epcode ----The EpisodeID, formatted as "S04E09"
+                end if
+                set fileNameNoExt to myshow
+                if totaltokens2 is greater than 1 then -----if the show uses the standard SxxExx naming format
+                    set fileNameNoExt to fileNameNoExt & "." & epcodefinal
+                end if
+                set name of the_file to fileNameNoExt & extension1
+                tell current application
+                    ---if show name is weird, reset it here!  THIS SHOULD ONLY BE A TEMPORARY FIX, FIND A BETTER WAY TO DO THIS THAN MANUALLY ENTERING IT HERE...
+                    ----The Office
+                    set myshow3 to text of myshow
+                    if myshow3 contains "The.Office.US" then
+                        set myshow to "The.Office"
+                        ----The Newsroom
+                        else if myshow3 contains "The.Newsroom.2012" then
+                        set myshow to "The.Newsroom"
+                    end if
+                    ----the 4 lines below change any dots in the filename to spaces
+                    set text item delimiters of AppleScript to "."
+                    set showname2 to text items of myshow
+                    set text item delimiters of AppleScript to " "
+                    set showname2 to "" & showname2
+                    if totaltokens2 is greater than 1 then -----if the show uses the standard SxxExx naming format
+                        ----the 4 lines below change any dots in the filename to plus signs (for the URL later)
+                        set text item delimiters of AppleScript to "."
+                        set myshow2 to text items of myshow
+                        set text item delimiters of AppleScript to "+"
+                        set myshow2 to "" & myshow2
+                        
+                        set url1 to "https://www.themoviedb.org/search?query=" & myshow2
+                        set find_id to do shell script "curl \"" & url1 & "\""
+                        set text item delimiters of AppleScript to "<a id=\"tv_"
+                        set tokens to text items of find_id
+                        set id0 to item 2 of tokens
+                        set text item delimiters of AppleScript to "\""
+                        set tokens to text items of id0
+                        set tvshowID to item 1 of tokens
+                        set the_file to item 1 of processing
+                        set mySeason to text 2 through 3 of epcodefinal as number
+                        set mySeason2 to mySeason as text
+                        set myEpisode to text 5 through 6 of epcodefinal as number
+                        set myEpisode2 to myEpisode as text
+                        set mySeason2 to text 2 through 3 of epcodefinal
+                        set myEpisode2 to text 5 through 6 of epcodefinal
+                        set myurl to "api.themoviedb.org/3/tv/" & tvshowID & "/season/" & mySeason2 & "/episode/" & myEpisode2 & "?api_key=22c941722d77bc546e751ac90d4bebf6"
+                        set in2 to do shell script "curl \"" & myurl & "\""
+                        set AppleScript's text item delimiters to "\",\"overview\":\""
+                        set tokens to text items of in2
+                        set myname1 to item 1 of tokens
+                        set descrip1 to item 2 of tokens
+                        set AppleScript's text item delimiters to "\""
+                        set tokens to text items of myname1
+                        set myname to last item of tokens as text ---episode name
+                        set AppleScript's text item delimiters to "\",\"id"
+                        set tokens to text items of descrip1
+                        set descrip2 to item 1 of tokens ---description
+                        set showdescrip to "No description available."
+                        set text item delimiters of AppleScript to {"'", "\"", "\\"}
+                        set descrip2 to text items of descrip2
+                        set text item delimiters of AppleScript to ""
+                        set descrip2 to "" & descrip2
+                        set text item delimiters of AppleScript to "<br>
+                        "
+                        set descrip2 to text items of descrip2
+                        set text item delimiters of AppleScript to "  "
+                        set descrip2 to "" & descrip2
+                        try
+                            set showdescrip to descrip2 as text
+                        end try
+                        set AppleScript's text item delimiters to "\"air_date\":\""
+                        set tokens to text items of in2
+                        set myair to item 2 of tokens
+                        set AppleScript's text item delimiters to "\""
+                        set tokens to text items of myair
+                        set myair2 to item 1 of tokens as text ---airdate
+                        -----fetch artwork
+                        tell application "Finder"
+                            set artfolder to folder showArtFolder0
+                            move (every item of artfolder whose creation date ² ((current date) - 4 * weeks)) to trash
+                            set artfiles to (every item of artfolder whose name contains myshow2)
+                            set artcount to count artfiles
+                            try
+                                set artname to name of item 1 of artfiles
+                            end try
+                        end tell
+                        if artcount is greater than 0 then
+                            set final_final_artwork to showArtFolder & artname as string
+                        else
+                            set arturl to "squaredtvart.tumblr.com/search/" & myshow2
+                            set find_artlink to do shell script "curl \"" & arturl & "\""
+                            set AppleScript's text item delimiters to "<a href=\""
+                            set arttokens to text items of find_artlink
+                            set the_artlink0 to item 6 of arttokens
+                            set AppleScript's text item delimiters to "\""
+                            set arttokens1 to text items of the_artlink0
+                            set the_artlink to item 1 of arttokens1
+                            try
+                                set artcurl to do shell script "curl \"" & the_artlink & "\""
+                                set AppleScript's text item delimiters to "data-src=\""
+                                set curltokens to text items of artcurl
+                                set final_artwork0 to item 2 of curltokens
+                                set AppleScript's text item delimiters to "\" "
+                                set curltokens1 to text items of final_artwork0
+                                set final_artwork to item 1 of curltokens1
+                                set AppleScript's text item delimiters to "."
+                                set extensiontoke to text items of final_artwork
+                                set the_extension to last item of extensiontoke
+                                do shell script "curl " & final_artwork & " -o " & "\"" & showArtFolder & myshow2 & "." & the_extension & "\""
+                                set final_final_artwork to showArtFolder & myshow2 & "." & the_extension as string
+                                on error
+                                set final_final_artwork to showArtFolder & "no_art.jpg" as string
+                            end try
+                        end if
+                        else
+                        set myname to showname2
+                        set final_final_artwork to showArtFolder & "no_art.jpg" as string
+                    end if
+                    set text item delimiters of AppleScript to {":", "'"}
+                    set showname2 to text items of showname2  ---showname2 = name of the show
+                    set myname to text items of myname   ---myname = name of the episode
+                    set text item delimiters of AppleScript to ""
+                    set showname2 to "" & showname2
+                    set myname to "" & myname
+                    set EPids to "N/A"
+                    set shouldcheckiTunes to false
+                end tell
+                tell application "iTunes"
+                    set existsShows to every track of playlist "TV Shows" whose name contains myname --episode title
+                    set countfiles to count items of existsShows
+                    set replaceShow to {}
+                    if countfiles is greater than 0 then
+                        repeat with i from 1 to countfiles
+                            if show of item i of existsShows contains showname2 then
+                                set replaceShow to item i of existsShows
+                            end if
+                        end repeat
+                        if replaceShow is not {} then
+                            set EPids to comment of replaceShow
+                            set playbackpos to bookmark of replaceShow
+                            set shouldcheckiTunes to true
+                        end if
+                    end if
+                end tell
+                set replacefirst to true
+                if shouldcheckiTunes is true then
+                    tell current application
+                        set vidQualFirst to "-1" as integer
+                        set audQualFirst to "-1" as integer
+                        set sourceQualFirst to "-1" as integer
+                        if EPids is not "N/A" then
+                            set vidQualFirst to "0" as integer
+                            set audQualFirst to "2" as integer
+                            set sourceQualFirst to "2" as integer
+                        end if
+                        set videoList to {"SDTV", "720p", "1080p", "4K"}
+                        repeat with i from 1 to count of videoList
+                            if EPids contains item i of videoList then
+                                set vidQualFirst to (i - 1) as integer
+                            end if
+                        end repeat
+                        set channelList to {"Mono", "Stereo", "3ch", "4ch", "5ch", "Dolby Digital 5.1"}
+                        repeat with i from 1 to count of channelList
+                            if EPids contains item i of channelList then
+                                set audQualFirst to i as integer
+                            end if
+                        end repeat
+                        set sourceList to {"WEB-DL", "TV-Rip", "Blu-Ray"}
+                        repeat with i from 1 to count of sourceList
+                            if EPids contains item i of sourceList then
+                                set sourceQualFirst to i as integer
+                            end if
+                        end repeat
+                        set replacefirst to false
+                        if vidQual is greater than vidQualFirst then
+                            set replacefirst to true
+                        end if
+                        if vidQualFirst is 1 then ---iTunes 720p
+                            if audQualFirst is greater than channels2 then ---itunes 5.1, incoming stereo
+                                if vidQual is not 3 then ----incoming is not 4K
+                                    set replacefirst to false
+                                end if
+                            end if
+                        end if
+                        if vidQual is 1 then --incoming 720p
+                            if channels2 is greater than audQualFirst then ---incoming 5.1, iTunes stereo
+                                if vidQualFirst is not 3 then --itunes is not 4K
+                                    set replacefirst to true
+                                end if
+                            end if
+                        end if
+                        if vidQual is equal to vidQualFirst then ---if incoming and itunes are same video resolution
+                            if channels2 is greater than audQualFirst then ---incoming 5.1, itunes stereo
+                                set replacefirst to true
+                                else if channels2 is equal to audQualFirst then
+                                if sourceQual is greater than sourceQualFirst then
+                                    set replacefirst to true
+                                end if
+                            end if
+                        end if
+                    end tell
+                end if
+                set continue_adding to true
+                if replacefirst is false then set continue_adding to false
+                if continue_adding is false then
+                    tell application "Finder"
+                        move every item of processing to trash
+                    end tell
+                    else if continue_adding is true then
+                    if extension1 is ".mkv" then
+                        set filename1 to name of item 1 of processing
+                        tell current application
+                            ----a way to combine the do shell scripts that all use mediainfo?
+                            set newFramerate to do shell script theMediaInfo & " \"--Inform=Video;%FrameRate%\" /Users/ryankeefe/Desktop/RKApps/Episodes/Processing/*.mkv"
+                            ---the below identifies whether the audio codec is AC3 or AAC
+                            set audioCodec to do shell script theMediaInfo & " \"--Inform=Audio;%Format%\" /Users/ryankeefe/Desktop/RKApps/Episodes/Processing/*.mkv"
+                            ---THE BELOW IDENTIFIES WHETHER THE AUDIO OR VIDEO STREAM COMES FIRST, SO THAT MKVEXTRACT KNOWS WHAT IT'S EXPORTINGÉis there a way to combine the two into a single do shell script command??
+                            set aud_pos to do shell script theMediaInfo & " \"--Inform=Audio;%StreamOrder%\" /Users/ryankeefe/Desktop/RKApps/Episodes/Processing/*.mkv"
+                            set vid_pos to do shell script theMediaInfo & " \"--Inform=Video;%StreamOrder%\" /Users/ryankeefe/Desktop/RKApps/Episodes/Processing/*.mkv"
+                            if vid_pos is greater than aud_pos then
+                                if channels2 is greater than 2 then
+                                    -----below: first stream is audio, has AC3 5.1 surround
+                                    do shell script themkvExtract & " tracks /Users/ryankeefe/Desktop/RKApps/Episodes/Processing/*.mkv 1:" & rawFolder & "DolbySurround.ac3 2:" & rawFolder & "Video.264 && " & theffmpeg & " -i " & rawFolder & "DolbySurround.ac3 -ac 2 -ab 160 " & rawFolder & "stereo_temp.wav && " & thefaac & " --mpeg-vers 4 " & rawFolder & "stereo_temp.wav -o " & rawFolder & "Stereo.aac && " & themp4Box & " -add " & rawFolder & "Video.264:name=Video:fps=" & newFramerate & " -add " & rawFolder & "Stereo.aac:group=1:lang=ENG:name=\"Stereo\" -add " & rawFolder & "DolbySurround.ac3:disable:group=1:lang=ENG:name=\"Dolby Digital 5.1\" -inter 500 /Users/ryankeefe/Desktop/RKApps/Episodes/Processing/" & fileNameNoExt & ".m4v && rm " & rawFolder & "*.{264,ac3,wav,aac}"
+                                else
+                                    if audioCodec is "AC-3" then
+                                        -----below: first stream is audio, has stereo only, but is in AC3
+                                        do shell script themkvExtract & " tracks /Users/ryankeefe/Desktop/RKApps/Episodes/Processing/*.mkv 1:" & rawFolder & "Stereo.ac3 2:" & rawFolder & "Video.264 && " & theffmpeg & " -i " & rawFolder & "Stereo.ac3 -ac 2 -ab 160 " & rawFolder & "stereo_temp.wav && " & thefaac & " --mpeg-vers 4 " & rawFolder & "stereo_temp.wav -o " & rawFolder & "Stereo_Final.aac && " & themp4Box & " -add " & rawFolder & "Video.264:name=Video:fps=" & newFramerate & " -add " & rawFolder & "Stereo_Final.aac:group=1:lang=ENG:name=\"Stereo\" -inter 500 /Users/ryankeefe/Desktop/RKApps/Episodes/Processing/" & fileNameNoExt & ".m4v && rm " & rawFolder & "*.{264,ac3,wav,aac}"
+                                    else
+                                        -----below: first stream is audio, has stereo only, is in AAC
+                                        do shell script themkvExtract & " tracks /Users/ryankeefe/Desktop/RKApps/Episodes/Processing/*.mkv 1:" & rawFolder & "Stereo.aac 2:" & rawFolder & "Video.264 && " & themp4Box & " -add " & rawFolder & "Video.264:name=Video:fps=" & newFramerate & " -add " & rawFolder & "Stereo.aac:lang=ENG:name=\"Stereo\" -inter 500 /Users/ryankeefe/Desktop/RKApps/Episodes/Processing/" & fileNameNoExt & ".m4v && rm " & rawFolder & "*.{264,aac}"
+                                    end if
+                                end if
+                            else
+                                if channels2 is greater than 2 then
+                                    -----below: first stream is video, has AC3 5.1 surround
+                                    do shell script themkvExtract & " tracks /Users/ryankeefe/Desktop/RKApps/Episodes/Processing/*.mkv 1:" & rawFolder & "Video.264 2:" & rawFolder & "DolbySurround.ac3 && " & theffmpeg & " -i " & rawFolder & "DolbySurround.ac3 -ac 2 -ab 160 " & rawFolder & "stereo_temp.wav && " & thefaac & " --mpeg-vers 4 " & rawFolder & "stereo_temp.wav -o " & rawFolder & "Stereo.aac && " & themp4Box & " -add " & rawFolder & "Video.264:name=Video:fps=" & newFramerate & " -add " & rawFolder & "Stereo.aac:group=1:lang=ENG:name=\"Stereo\" -add " & rawFolder & "DolbySurround.ac3:disable:group=1:lang=ENG:name=\"Dolby Digital 5.1\" -inter 500 /Users/ryankeefe/Desktop/RKApps/Episodes/Processing/" & fileNameNoExt & ".m4v && rm " & rawFolder & "*.{264,ac3,wav,aac}"
+                                    else
+                                    if audioCodec is "AC-3" then
+                                        -----below: first stream is video, has stereo only, but is in AC3
+                                        do shell script themkvExtract & " tracks /Users/ryankeefe/Desktop/RKApps/Episodes/Processing/*.mkv 1:" & rawFolder & "Video.264 2:" & rawFolder & "Stereo.ac3 && " & theffmpeg & " -i " & rawFolder & "Stereo.ac3 -ac 2 -ab 160 " & rawFolder & "stereo_temp.wav && " & thefaac & " --mpeg-vers 4 " & rawFolder & "stereo_temp.wav -o " & rawFolder & "Stereo_Final.aac && " & themp4Box & " -add " & rawFolder & "Video.264:name=Video:fps=" & newFramerate & " -add " & rawFolder & "Stereo_Final.aac:group=1:lang=ENG:name=\"Stereo\" -inter 500 /Users/ryankeefe/Desktop/RKApps/Episodes/Processing/" & fileNameNoExt & ".m4v && rm " & rawFolder & "*.{264,ac3,wav,aac}"
+                                        else
+                                        -----below: first stream is video, has stereo only, is in AAC
+                                        do shell script themkvExtract & " tracks /Users/ryankeefe/Desktop/RKApps/Episodes/Processing/*.mkv 1:" & rawFolder & "Video.264 2:" & rawFolder & "Stereo.aac && " & themp4Box & " -add " & rawFolder & "Video.264:name=Video:fps=" & newFramerate & " -add " & rawFolder & "Stereo.aac:lang=ENG:name=\"Stereo\" -inter 500 /Users/ryankeefe/Desktop/RKApps/Episodes/Processing/" & fileNameNoExt & ".m4v && rm " & rawFolder & "*.{264,aac}"
+                                    end if
+                                end if
+                            end if
+                        end tell
+                        try
+                            move the_file to trash
+                        end try
+                        set encoding1 to item 1 of processing as alias
+                        if exists item 2 of processing then
+                            set encoding2 to item 2 of processing as alias
+                        end if
+                        if name of encoding1 ends with ".m4v" then
+                            try
+                                move encoding2 to trash
+                            end try
+                            set the_file to encoding1
+                            else
+                            try
+                                move encoding1 to trash
+                            end try
+                            set the_file to encoding2
+                        end if
+                    end if
+                end if
+            end if
+        end if
+        try
+            set totalprocessing to count files in processing
+            if totalprocessing is greater than 2 then
+                move every item of processing to trash
+            end if
+            set the_file to item 1 of processing
+            set origin to name of the_file
+            --the following two lines:  combine or make subroutine.
+            if origin ends with ".mp4" then set goOn to true
+            if origin ends with ".m4v" then set goOn to true
+            if goOn is true then
+                if totaltokens2 is greater than 1 then --if the show uses the standard SxxExx naming format
+                    tell current application
+                        do shell script atomicParsley & " /Users/ryankeefe/Desktop/RKApps/Episodes/Processing/" & origin & " --stik 'TV Show' --TVShowName '" & showname2 & "' --TVEpisode '" & epcodefinal & "' --comment '" & final_comment & "' --TVSeasonNum '" & mySeason & "' --TVEpisodeNum '" & myEpisode & "' --album '" & showname2 & ", Season " & mySeason & "' --tracknum '" & myEpisode & "' --disk '" & mySeason & "' --artwork REMOVE_ALL --artwork " & final_final_artwork & " --year '" & myair2 & "' --title '" & myname & "' --description '" & showdescrip & "'"
+                    end tell
+                    else -----if the show does not use the standard SxxExx naming format
+                    tell current application
+                        do shell script atomicParsley & " /Users/ryankeefe/Desktop/RKApps/Episodes/Processing/" & origin & " --stik 'TV Show' --TVShowName '" & showname2 & "' --comment '" & final_comment & "' --artwork REMOVE_ALL --artwork " & final_final_artwork & "' --title '" & myname & "'"
+                    end tell
+                end if
+                set metafiles2 to (every item of processing whose name contains "temp") as string
+                tell application "iTunes"
+                    try
+                        set kleepklop to location of replaceShow
+                    end try
+                    try
+                        tell application "Finder"
+                            move kleepklop to trash
+                        end tell
+                    end try
+                    try
+                        delete replaceShow
+                    end try
+                    try
+                        add metafiles2
+                        on error number -43
+                        move every item of processing to trash
+                    end try
+                    try
+                        set existsShows to every track of playlist "TV Shows" whose name contains myname
+                        set countfiles to count items of existsShows
+                        if countfiles is greater than 0 then
+                            repeat with i from 1 to countfiles
+                                if show of item i of existsShows contains showname2 then
+                                    set finalShow to item i of existsShows
+                                end if
+                            end repeat
+                            set bookmark of finalShow to (playbackpos - 5)
+                        end if
+                    end try
+                end tell
+                set metafiles3 to metafiles2 as string
+                try
+                    move the_file to trash
+                end try
+                try
+                    move metafiles3 to trash
+                end try
+                ----update epcode in list of show's view
+                set old_data0 to listOfShows's stringValue() as text
+                set newDelim to showname2 & " (S"
+                set Applescript's text item delimiters to newDelim
+                set epcodeTokens to text items of old_data0
+                set beforeEpcode0 to item 1 of epcodeTokens
+                set beforeEpcode to beforeEpcode0 & newDelim
+                set old_data1 to item 2 of epcodeTokens
+                set Applescript's text item delimiters to ")"
+                set epcodeTokens2 to text items of old_data1
+                set old_data2 to item 1 of epcodeTokens2 ---everything between the parentheses, except for the S.  Ex: 04E01
+                set AppleScript's text item delimiters to "E"
+                set eTokens to text items of old_data2
+                set old_dataSeason to item 1 of eTokens
+                set old_dataEpisode to item 2 of eTokens
+                set Applescript's text item delimiters to old_data2 & ")"
+                set epcodeTokens3 to text items of old_data1
+                set afterEpcode to item 2 of epcodeTokens3
+                set oldnum9 to old_dataSeason & old_dataEpisode as integer
+                set oldnum0 to oldnum9 + 90000
+                set newnum0 to mySeason2 & myEpisode2 as integer
+                set newnum1 to newnum0 + 90001
+                set newnum7 to newnum1 as text
+                set oldnum7 to oldnum0 as text
+                set newnum to text 2 thru 3 of newnum7 & "E" & text 4 thru 5 of newnum7
+                set newData to beforeEpcode & newnum & ")" & afterEpcode
+                if newnum1 is greater than oldnum0 then
+                    listOfShows's setStringValue_(newData)
+                    else
+                    listOfShows's setStringValue_(old_data0)
+                end if
+                ---end update epcode block
+                tell application "iTunes"
+                    try
+                        update item 3 of every source
+                    end try
+                    try
+                        update item 4 of every source
+                    end try
+                end tell
+            end if
+        end try
+        set the_file to {}
+    end tell
+end encoder_
+
+    on populateEpcode_(sender)
+    if showComboField's stringValue as string does not equal ""
+    set the_index to beginWith's indexOfSelectedItem()
+    if the_index is less than 2
+    if the_index is greater than -1
+    set todayDate to short date string of (current date)
+    set AppleScript's text item delimiters to "/"
+    set dateTokes to text items of todayDate
+    set theMonth to item 1 of dateTokes
+    set theMonthInt to theMonth as integer
+    if theMonthInt is less than 10 then
+        set theMonth to "0" & theMonth
+    end if
+    set theDay to item 2 of dateTokes
+    set theDayInt to theDay as integer
+    if theDayInt is less than 10 then
+        set theDay to "0" & theDay
+    end if
+    set todayDate2 to "20" & item 3 of dateTokes & theMonth & theDay as integer
+    set theShowEntry to showComboField's stringValue() as text
+    set text item delimiters of AppleScript to " "
+    ----THE BELOW CODE IS VERY SIMILAR TO THE SECTION OF CODE IN THE "ENCODING" HANDLER THAT FETCHES THE TMDB ID FOR THE SHOW.  MAKE THAT CODE INTO ITS OWN SUBROUTINE, AND CALL WHERE ITS NEEDED ABOVE AND HERE---
+    set showEntry to text items of theShowEntry
+    set text item delimiters of AppleScript to "+"
+    set showEntry to "" & showEntry
+    set theTVURL to "https://www.themoviedb.org/search?query=" & showEntry
+    set find_id to do shell script "curl \"" & theTVURL & "\""
+    set text item delimiters of AppleScript to "<a id=\"tv_"
+    set apitokens to text items of find_id
+    set apiid to item 2 of apitokens
+    set text item delimiters of AppleScript to "\""
+    set apitokens to text items of apiid
+    set tvID to item 1 of apitokens
+    set myNewUrl to "api.themoviedb.org/3/tv/" & tvID & "?api_key=22c941722d77bc546e751ac90d4bebf6"
+    set API2 to do shell script "curl \"" & myNewUrl & "\""
+    ------END AREA OF CODE THAT IS VERY SIMILAR TO CODE IN "ENCODING" HANDLER
+    set AppleScript's text item delimiters to "season_number\":"
+    set apitokens2 to text items of API2
+    set countAPI to count items of apitokens2
+    set highSeason0 to item countAPI of apitokens2
+    set AppleScript's text item delimiters to "}],"
+    set apitokens3 to text items of highSeason0
+    set highSeason to item 1 of apitokens3
+    set nexthighSeason to (highSeason - 1)
+    set nexthighURL to "api.themoviedb.org/3/tv/" & tvID & "/season/" & nexthighSeason & "?api_key=22c941722d77bc546e751ac90d4bebf6"
+    set nexthighAPI to do shell script "curl \"" & myNewUrl & "\""
+    set AppleScript's text item delimiters to "\"air_date\":\""
+    set nexthighTokens to text items of nexthighAPI
+    set countnextAPI0 to count items of nexthighTokens
+    set countnextAPI to (countnextAPI0 + 2)
+    set myNewURL2 to "api.themoviedb.org/3/tv/" & tvID & "/season/" & highSeason & "?api_key=22c941722d77bc546e751ac90d4bebf6"
+    set API3 to do shell script "curl \"" & myNewURL2 & "\""
+    set apitokens4 to text items of API3
+    set countAPI2 to count items of apitokens4
+    set API6 to 0 as integer
+    set API60 to 0 as integer
+    repeat while API6 is equal to 0
+        set highAirdate0 to item countAPI2 of apitokens4
+        set AppleScript's text item delimiters to "\""
+        set apitokens5 to text items of highAirdate0
+        set highAirdate to item 1 of apitokens5
+        set AppleScript's text item delimiters to "-"
+        set airTokes to text items of highAirdate
+        set theAir to item 1 of airTokes & item 2 of airTokes & item 3 of airTokes as integer
+        if todayDate2 is greater than theAir then
+            set AppleScript's text item delimiters to "episode_number"
+            set apitokens6 to text items of highAirdate0
+            set API4 to item 2 of apitokens6
+            set AppleScript's text item delimiters to ":"
+            set apitokens7 to text items of API4
+            set API5 to item 2 of apitokens7
+            set AppleScript's text item delimiters to ","
+            set apitokens8 to text items of API5
+            set API6 to item 1 of apitokens8
+            set highSeason0 to highSeason as string
+            else
+            try
+                set nextAir to theAir ---this can be used in the GUI later to show when the next airdate will be
+                set AppleScript's text item delimiters to "episode_number"
+                set apitokens9 to text items of highAirdate0
+                set API40 to item 2 of apitokens9
+                set AppleScript's text item delimiters to ":"
+                set apitokens0 to text items of API40
+                set API50 to item 2 of apitokens0
+                set AppleScript's text item delimiters to ","
+                set apitokens00 to text items of API50
+                set API60 to item 1 of apitokens00
+            end try
+            set countAPI2 to (countAPI2 - 1) as integer
+            if countAPI2 is less than 2 then
+                set highSeason0 to nexthighSeason as string
+                set API6 to countnextAPI as string
+            end if
+        end if
+    end repeat
+    if the_index is equal to 1
+    if API60 is equal to 0
+    set API7 to API6 as integer
+    set API6 to (API7 + 1) as string
+    else
+    set API6 to API60 as string
+end if
+set highSeason0 to highSeason as string
+end if
+seasonField's setStringValue_(highSeason0)
+episodeField's setStringValue_(API6)
+end if
+else if the_index is equal to 2 then
+seasonField's setStringValue_("1")
+episodeField's setStringValue_("1")
+else if the_index is equal to 3 then
+seasonField's setStringValue_("")
+episodeField's setStringValue_("")
+end if
+else
+seasonField's setStringValue_("")
+episodeField's setStringValue_("")
+end if
+end populateEpcode_
+
+    --on showPanel_(sender)
+    --thePanel's makeKeyAndOrderFront_(thePanel)
+    --end showPanel_
+
+    on showCombo_(sender)
+    NSTimer's scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(0, me, "populateEpcode:", "populateEpcode", false)
+    end showCombo_
+
+    on beginWith_(sender)
+    NSTimer's scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(0, me, "populateEpcode:", "populateEpcode", false)
+    end beginWith_
+
+    on addShow_(sender)
+    if showComboField's stringValue as string = ""
+    display dialog "Please enter the name of the show."
+    else
+    set showEntry to showComboField's stringValue() as text
+    set seasonEntry to seasonField's stringValue() as text
+    if seasonField's stringValue as string = ""
+    display dialog "Please enter the season number."
+    else
+    try
+        set seasonEntryNum to seasonEntry as number
+        on error
+        display dialog "Please enter a season number between 1 and 99."
+        seasonField's setStringValue_("")
+    end try
+    if seasonEntryNum is less than 10
+    set seasonEntry to "0" & seasonEntry
+end if
+set episodeEntry to episodeField's stringValue() as text
+if episodeField's stringValue as string = ""
+display dialog "Please enter the episode number."
+else
+try
+    set episodeEntryNum to episodeEntry as number
+    on error
+    display dialog "Please enter an episode number between 1 and 99."
+    episodeField's setStringValue_("")
+end try
+if episodeEntryNum is less than 10
+set episodeEntry to "0" & episodeEntry
+end if
+set originalList to listOfShows's stringValue() as text
+set finalEntry to showEntry & " (S" & seasonEntry & "E" & episodeEntry & ")"
+if listOfShows's stringValue as string = ""
+listOfShows's setStringValue_(finalEntry)
+else
+set newList to current application's NSString's stringWithFormat_("%@%@%@", originalList, "\n", finalEntry)
+set newList2 to newList as text
+set Applescript's text item delimiters to "\n"
+set showtokens to text items of newList2
+set list_sort to (showtokens as string)
+set sort_string to do shell script "echo " & quoted form of list_sort & " | sort -f"
+set sortedList to (paragraphs of sort_string)
+set sortedList2 to sortedList as text
+listOfShows's setStringValue_(sortedList2)
+end if
+showComboField's setStringValue_("")
+seasonField's setStringValue_("")
+episodeField's setStringValue_("")
+end if
+end if
+end if
+end addShow_
+
+    --on donePanel_(sender)
+    ---write edited panel to text file
+    --thePanel's orderOut_(thePanel)
+    --end donePanel_
+
+    on appQuit_(sender)
+    tell current application to quit
+    end appQuit_
+
+    on applicationShouldTerminate_(sender)
+    -- Insert code here to do any housekeeping before your application quits
+    set newText to listOfShows's stringValue() as text
+    tell application "Finder"
+        set the listFile2 to the listFile as text
+        set the open_master_file to open for access file listFile2 with write permission
+        set eof of the open_master_file to 0
+        write newText to the open_master_file
+        close access the open_master_file
+    end tell
+    return current application's NSTerminateNow
+    end applicationShouldTerminate_
+
 end script
