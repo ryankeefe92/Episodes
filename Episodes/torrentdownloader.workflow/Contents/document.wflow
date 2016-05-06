@@ -25,7 +25,7 @@
 					</array>
 				</dict>
 				<key>AMActionVersion</key>
-				<string>1.1.2</string>
+				<string>v.1.1.2</string>
 				<key>AMApplication</key>
 				<array>
 					<string>Safari</string>
@@ -36,8 +36,13 @@
 					<dict>
 						<key>isPathPopUp</key>
 						<true/>
+						<key>selectedVariableUUID</key>
+						<string>3F4CA515-9885-4C5D-A565-1771F36A0721</string>
 						<key>variableUUIDsInMenu</key>
-						<array/>
+						<array>
+							<string>D058D499-2565-4023-8C47-25FE35FA1C33</string>
+							<string>3F4CA515-9885-4C5D-A565-1771F36A0721</string>
+						</array>
 					</dict>
 				</dict>
 				<key>AMProvides</key>
@@ -56,7 +61,7 @@
 				<key>ActionParameters</key>
 				<dict>
 					<key>destinationPath</key>
-					<string>~/Desktop/RKApps/Episodes/TorrentAdd</string>
+					<string></string>
 				</dict>
 				<key>BundleIdentifier</key>
 				<string>com.apple.Automator.DownloadInternetFile</string>
@@ -72,6 +77,8 @@
 				</array>
 				<key>Class Name</key>
 				<string>DownloadURLsAction</string>
+				<key>Disabled</key>
+				<false/>
 				<key>InputUUID</key>
 				<string>2CB22EF3-8376-45AB-9D84-55F906CF1BE2</string>
 				<key>Keywords</key>
@@ -109,7 +116,7 @@
 				<key>isViewVisible</key>
 				<true/>
 				<key>location</key>
-				<string>545.000000:105.000000</string>
+				<string>545.000000:211.000000</string>
 				<key>nibPath</key>
 				<string>/System/Library/Automator/Download URLs.action/Contents/Resources/Base.lproj/main.nib</string>
 			</dict>
@@ -119,6 +126,73 @@
 	</array>
 	<key>connectors</key>
 	<dict/>
+	<key>variables</key>
+	<array>
+		<dict>
+			<key>UUID</key>
+			<string>D058D499-2565-4023-8C47-25FE35FA1C33</string>
+			<key>identifier</key>
+			<string>com.apple.Automator.Variable.Storage</string>
+			<key>name</key>
+			<string>the_path</string>
+		</dict>
+		<dict>
+			<key>UUID</key>
+			<string>E3E9F87B-C974-435D-AE7F-C140F99F9C18</string>
+			<key>identifier</key>
+			<string>com.apple.Automator.Variable.Path</string>
+			<key>name</key>
+			<string>Path</string>
+			<key>value</key>
+			<string>~/Desktop</string>
+		</dict>
+		<dict>
+			<key>UUID</key>
+			<string>388F38B0-5C83-479B-9C0F-8914A3B8CA2F</string>
+			<key>identifier</key>
+			<string>com.apple.Automator.Variable.HomeFolder</string>
+		</dict>
+		<dict>
+			<key>UUID</key>
+			<string>3F4CA515-9885-4C5D-A565-1771F36A0721</string>
+			<key>identifier</key>
+			<string>com.apple.Automator.Variable.DownloadsFolder</string>
+		</dict>
+		<dict>
+			<key>UUID</key>
+			<string>0D6110E9-9BD8-4092-B749-5F41AA8E94CC</string>
+			<key>identifier</key>
+			<string>com.apple.Automator.Variable.AppleScript</string>
+			<key>name</key>
+			<string>AppleScript</string>
+			<key>value</key>
+			<string>"Text"</string>
+		</dict>
+		<dict>
+			<key>UUID</key>
+			<string>FE135E54-E954-4A56-B57E-5FA9C9F09B02</string>
+			<key>identifier</key>
+			<string>com.apple.Automator.Variable.Storage</string>
+			<key>name</key>
+			<string>url</string>
+		</dict>
+		<dict>
+			<key>UUID</key>
+			<string>1FE1C668-9C53-427E-8879-410758ADFFCF</string>
+			<key>identifier</key>
+			<string>com.apple.Automator.Variable.Storage</string>
+			<key>name</key>
+			<string>main_in</string>
+		</dict>
+		<dict>
+			<key>UUID</key>
+			<string>308241A9-14E7-4B46-B912-9B0BCF05FE93</string>
+			<key>identifier</key>
+			<string>com.apple.Automator.Variable.Storage</string>
+			<key>name</key>
+			<string>Storage</string>
+		</dict>
+	</array>
 	<key>workflowMetaData</key>
 	<dict>
 		<key>workflowTypeIdentifier</key>
