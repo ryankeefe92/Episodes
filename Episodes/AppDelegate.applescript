@@ -28,6 +28,8 @@ script AppDelegate
     global theMediaInfo
     global themkvExtract
     global themp4Box
+    global processingFolder0
+    global processingFolder
     global rawFolder
     global showArtFolder0
     global showArtFolder
@@ -47,6 +49,8 @@ script AppDelegate
             set showArtFolder to POSIX path of showArtFolder0 as text
             set rawFolder0 to appLocation & "Contents:Resources:RawStreams:" as alias
             set rawFolder to POSIX path of rawFolder0 as text
+            set processingFolder0 to appLocation & "Contents:Resources:Processing:" as alias
+            set processingFolder to POSIX path of processingFolder0 as text
             set the listFile to (resourceFolder as string) & "show_list.txt" as string
             set atomicParsley to POSIX path of resourceFolder & "AtomicParsley64" as text
             set theFeedChecker to POSIX path of resourceFolder & "feedchecker.workflow" as text
@@ -461,7 +465,7 @@ end downloader_
     on encoder_(sender)
     tell application "Finder"
         set downloads to folder "DownloadingComplete" of the folder "Episodes" of the folder "RKApps" of the folder "Desktop" of home
-        set processing to folder "Processing" of the folder "Episodes" of the folder "RKApps" of the folder "Desktop" of home
+        set processing to folder processingFolder0
         set mp3Downloads to folder "MP3Downloads" of the folder "Episodes" of the folder "RKApps" of the folder "Desktop" of home
         ----From here to the next comment, the script checks downloadcomplete folder for video files, then deletes everything it doesn't need
         set totalfolders to count folders in downloads
@@ -525,7 +529,7 @@ end downloader_
                 ----below checks the video quality.  0 = 480p or lower, 1 = 720p, 2 = 1080p, 3 = 4K
                 set vidQual to "0" as integer ---if there is no indication of the quality, we assume that it is 480p or below.  this value will be changed by the "if" statements below if the title does contain the quality or mediainfo discovers it
                 set vid_comment to "SDTV"
-                set vidHeight to do shell script theMediaInfo & " \"--Inform=Video;%Height%\" /Users/ryankeefe/Desktop/RKApps/Episodes/Processing/*.{mkv,mp4,m4v}"
+                set vidHeight to do shell script theMediaInfo & " \"--Inform=Video;%Height%\" " & processingFolder & "*.{mkv,mp4,m4v}"
                 set vidheight2 to vidHeight as integer
                 if vidheight2 is less than 535 then
                     set vidQual to "0" as integer
@@ -546,7 +550,7 @@ end downloader_
                 end if
                 ----The below checks to see how many audio channels are in the MKV file.  This is used to determine, in a case where the same episode already has been added to iTunes, if the incoming episode should replace it because it has more audio channels.  Later, these variables are used to figure out which raw audio files should be added into the final container. If more than 2 channels, it adds the AC3 file for 5.1 surround sound, as well as a secondary stereo audio track.  If it's just stereo, it only adds in the stereo aac file.
                 set channels2 to "2" as integer --just in case there's a problem retrieving the number of audio channels in the file, we assume it is stereo until the processes below tell us otherwise
-                set channels to do shell script theMediaInfo & " \"--Inform=Audio;%Channels%\" /Users/ryankeefe/Desktop/RKApps/Episodes/Processing/*.{mkv,mp4,m4v}"
+                set channels to do shell script theMediaInfo & " \"--Inform=Audio;%Channels%\" " & processingFolder & "*.{mkv,mp4,m4v}"
                 set stream1 to 0 as integer
                 set stream2 to 0 as integer
                 set stream3 to 0 as integer
@@ -828,36 +832,36 @@ end downloader_
                         set filename1 to name of item 1 of processing
                         tell current application
                             ----a way to combine the do shell scripts that all use mediainfo?
-                            set newFramerate to do shell script theMediaInfo & " \"--Inform=Video;%FrameRate%\" /Users/ryankeefe/Desktop/RKApps/Episodes/Processing/*.mkv"
+                            set newFramerate to do shell script theMediaInfo & " \"--Inform=Video;%FrameRate%\" " & processingFolder & "*.mkv"
                             ---the below identifies whether the audio codec is AC3 or AAC
-                            set audioCodec to do shell script theMediaInfo & " \"--Inform=Audio;%Format%\" /Users/ryankeefe/Desktop/RKApps/Episodes/Processing/*.mkv"
+                            set audioCodec to do shell script theMediaInfo & " \"--Inform=Audio;%Format%\" " & processingFolder & "*.mkv"
                             ---THE BELOW IDENTIFIES WHETHER THE AUDIO OR VIDEO STREAM COMES FIRST, SO THAT MKVEXTRACT KNOWS WHAT IT'S EXPORTINGÉis there a way to combine the two into a single do shell script command??
-                            set aud_pos to do shell script theMediaInfo & " \"--Inform=Audio;%StreamOrder%\" /Users/ryankeefe/Desktop/RKApps/Episodes/Processing/*.mkv"
-                            set vid_pos to do shell script theMediaInfo & " \"--Inform=Video;%StreamOrder%\" /Users/ryankeefe/Desktop/RKApps/Episodes/Processing/*.mkv"
+                            set aud_pos to do shell script theMediaInfo & " \"--Inform=Audio;%StreamOrder%\" " & processingFolder & "*.mkv"
+                            set vid_pos to do shell script theMediaInfo & " \"--Inform=Video;%StreamOrder%\" " & processingFolder & "*.mkv"
                             if vid_pos is greater than aud_pos then
                                 if channels2 is greater than 2 then
                                     -----below: first stream is audio, has AC3 5.1 surround
-                                    do shell script themkvExtract & " tracks /Users/ryankeefe/Desktop/RKApps/Episodes/Processing/*.mkv 1:" & rawFolder & "DolbySurround.ac3 2:" & rawFolder & "Video.264 && " & theffmpeg & " -i " & rawFolder & "DolbySurround.ac3 -ac 2 -ab 160 " & rawFolder & "stereo_temp.wav && " & thefaac & " --mpeg-vers 4 " & rawFolder & "stereo_temp.wav -o " & rawFolder & "Stereo.aac && " & themp4Box & " -add " & rawFolder & "Video.264:name=Video:fps=" & newFramerate & " -add " & rawFolder & "Stereo.aac:group=1:lang=ENG:name=\"Stereo\" -add " & rawFolder & "DolbySurround.ac3:disable:group=1:lang=ENG:name=\"Dolby Digital 5.1\" -inter 500 /Users/ryankeefe/Desktop/RKApps/Episodes/Processing/" & fileNameNoExt & ".m4v && rm " & rawFolder & "*.{264,ac3,wav,aac}"
+                                    do shell script themkvExtract & " tracks " & processingFolder & "*.mkv 1:" & rawFolder & "DolbySurround.ac3 2:" & rawFolder & "Video.264 && " & theffmpeg & " -i " & rawFolder & "DolbySurround.ac3 -ac 2 -ab 160 " & rawFolder & "stereo_temp.wav && " & thefaac & " --mpeg-vers 4 " & rawFolder & "stereo_temp.wav -o " & rawFolder & "Stereo.aac && " & themp4Box & " -add " & rawFolder & "Video.264:name=Video:fps=" & newFramerate & " -add " & rawFolder & "Stereo.aac:group=1:lang=ENG:name=\"Stereo\" -add " & rawFolder & "DolbySurround.ac3:disable:group=1:lang=ENG:name=\"Dolby Digital 5.1\" -inter 500 " & processingFolder & fileNameNoExt & ".m4v && rm " & rawFolder & "*.{264,ac3,wav,aac}"
                                 else
                                     if audioCodec is "AC-3" then
                                         -----below: first stream is audio, has stereo only, but is in AC3
-                                        do shell script themkvExtract & " tracks /Users/ryankeefe/Desktop/RKApps/Episodes/Processing/*.mkv 1:" & rawFolder & "Stereo.ac3 2:" & rawFolder & "Video.264 && " & theffmpeg & " -i " & rawFolder & "Stereo.ac3 -ac 2 -ab 160 " & rawFolder & "stereo_temp.wav && " & thefaac & " --mpeg-vers 4 " & rawFolder & "stereo_temp.wav -o " & rawFolder & "Stereo_Final.aac && " & themp4Box & " -add " & rawFolder & "Video.264:name=Video:fps=" & newFramerate & " -add " & rawFolder & "Stereo_Final.aac:group=1:lang=ENG:name=\"Stereo\" -inter 500 /Users/ryankeefe/Desktop/RKApps/Episodes/Processing/" & fileNameNoExt & ".m4v && rm " & rawFolder & "*.{264,ac3,wav,aac}"
+                                        do shell script themkvExtract & " tracks " & processingFolder & "*.mkv 1:" & rawFolder & "Stereo.ac3 2:" & rawFolder & "Video.264 && " & theffmpeg & " -i " & rawFolder & "Stereo.ac3 -ac 2 -ab 160 " & rawFolder & "stereo_temp.wav && " & thefaac & " --mpeg-vers 4 " & rawFolder & "stereo_temp.wav -o " & rawFolder & "Stereo_Final.aac && " & themp4Box & " -add " & rawFolder & "Video.264:name=Video:fps=" & newFramerate & " -add " & rawFolder & "Stereo_Final.aac:group=1:lang=ENG:name=\"Stereo\" -inter 500 " & processingFolder & fileNameNoExt & ".m4v && rm " & rawFolder & "*.{264,ac3,wav,aac}"
                                     else
                                         -----below: first stream is audio, has stereo only, is in AAC
-                                        do shell script themkvExtract & " tracks /Users/ryankeefe/Desktop/RKApps/Episodes/Processing/*.mkv 1:" & rawFolder & "Stereo.aac 2:" & rawFolder & "Video.264 && " & themp4Box & " -add " & rawFolder & "Video.264:name=Video:fps=" & newFramerate & " -add " & rawFolder & "Stereo.aac:lang=ENG:name=\"Stereo\" -inter 500 /Users/ryankeefe/Desktop/RKApps/Episodes/Processing/" & fileNameNoExt & ".m4v && rm " & rawFolder & "*.{264,aac}"
+                                        do shell script themkvExtract & " tracks " & processingFolder & "*.mkv 1:" & rawFolder & "Stereo.aac 2:" & rawFolder & "Video.264 && " & themp4Box & " -add " & rawFolder & "Video.264:name=Video:fps=" & newFramerate & " -add " & rawFolder & "Stereo.aac:lang=ENG:name=\"Stereo\" -inter 500 " & processingFolder & fileNameNoExt & ".m4v && rm " & rawFolder & "*.{264,aac}"
                                     end if
                                 end if
                             else
                                 if channels2 is greater than 2 then
                                     -----below: first stream is video, has AC3 5.1 surround
-                                    do shell script themkvExtract & " tracks /Users/ryankeefe/Desktop/RKApps/Episodes/Processing/*.mkv 1:" & rawFolder & "Video.264 2:" & rawFolder & "DolbySurround.ac3 && " & theffmpeg & " -i " & rawFolder & "DolbySurround.ac3 -ac 2 -ab 160 " & rawFolder & "stereo_temp.wav && " & thefaac & " --mpeg-vers 4 " & rawFolder & "stereo_temp.wav -o " & rawFolder & "Stereo.aac && " & themp4Box & " -add " & rawFolder & "Video.264:name=Video:fps=" & newFramerate & " -add " & rawFolder & "Stereo.aac:group=1:lang=ENG:name=\"Stereo\" -add " & rawFolder & "DolbySurround.ac3:disable:group=1:lang=ENG:name=\"Dolby Digital 5.1\" -inter 500 /Users/ryankeefe/Desktop/RKApps/Episodes/Processing/" & fileNameNoExt & ".m4v && rm " & rawFolder & "*.{264,ac3,wav,aac}"
+                                    do shell script themkvExtract & " tracks " & processingFolder & "*.mkv 1:" & rawFolder & "Video.264 2:" & rawFolder & "DolbySurround.ac3 && " & theffmpeg & " -i " & rawFolder & "DolbySurround.ac3 -ac 2 -ab 160 " & rawFolder & "stereo_temp.wav && " & thefaac & " --mpeg-vers 4 " & rawFolder & "stereo_temp.wav -o " & rawFolder & "Stereo.aac && " & themp4Box & " -add " & rawFolder & "Video.264:name=Video:fps=" & newFramerate & " -add " & rawFolder & "Stereo.aac:group=1:lang=ENG:name=\"Stereo\" -add " & rawFolder & "DolbySurround.ac3:disable:group=1:lang=ENG:name=\"Dolby Digital 5.1\" -inter 500 " & processingFolder & fileNameNoExt & ".m4v && rm " & rawFolder & "*.{264,ac3,wav,aac}"
                                     else
                                     if audioCodec is "AC-3" then
                                         -----below: first stream is video, has stereo only, but is in AC3
-                                        do shell script themkvExtract & " tracks /Users/ryankeefe/Desktop/RKApps/Episodes/Processing/*.mkv 1:" & rawFolder & "Video.264 2:" & rawFolder & "Stereo.ac3 && " & theffmpeg & " -i " & rawFolder & "Stereo.ac3 -ac 2 -ab 160 " & rawFolder & "stereo_temp.wav && " & thefaac & " --mpeg-vers 4 " & rawFolder & "stereo_temp.wav -o " & rawFolder & "Stereo_Final.aac && " & themp4Box & " -add " & rawFolder & "Video.264:name=Video:fps=" & newFramerate & " -add " & rawFolder & "Stereo_Final.aac:group=1:lang=ENG:name=\"Stereo\" -inter 500 /Users/ryankeefe/Desktop/RKApps/Episodes/Processing/" & fileNameNoExt & ".m4v && rm " & rawFolder & "*.{264,ac3,wav,aac}"
+                                        do shell script themkvExtract & " tracks " & processingFolder & "*.mkv 1:" & rawFolder & "Video.264 2:" & rawFolder & "Stereo.ac3 && " & theffmpeg & " -i " & rawFolder & "Stereo.ac3 -ac 2 -ab 160 " & rawFolder & "stereo_temp.wav && " & thefaac & " --mpeg-vers 4 " & rawFolder & "stereo_temp.wav -o " & rawFolder & "Stereo_Final.aac && " & themp4Box & " -add " & rawFolder & "Video.264:name=Video:fps=" & newFramerate & " -add " & rawFolder & "Stereo_Final.aac:group=1:lang=ENG:name=\"Stereo\" -inter 500 " & processingFolder & fileNameNoExt & ".m4v && rm " & rawFolder & "*.{264,ac3,wav,aac}"
                                         else
                                         -----below: first stream is video, has stereo only, is in AAC
-                                        do shell script themkvExtract & " tracks /Users/ryankeefe/Desktop/RKApps/Episodes/Processing/*.mkv 1:" & rawFolder & "Video.264 2:" & rawFolder & "Stereo.aac && " & themp4Box & " -add " & rawFolder & "Video.264:name=Video:fps=" & newFramerate & " -add " & rawFolder & "Stereo.aac:lang=ENG:name=\"Stereo\" -inter 500 /Users/ryankeefe/Desktop/RKApps/Episodes/Processing/" & fileNameNoExt & ".m4v && rm " & rawFolder & "*.{264,aac}"
+                                        do shell script themkvExtract & " tracks " & processingFolder & "*.mkv 1:" & rawFolder & "Video.264 2:" & rawFolder & "Stereo.aac && " & themp4Box & " -add " & rawFolder & "Video.264:name=Video:fps=" & newFramerate & " -add " & rawFolder & "Stereo.aac:lang=ENG:name=\"Stereo\" -inter 500 " & processingFolder & fileNameNoExt & ".m4v && rm " & rawFolder & "*.{264,aac}"
                                     end if
                                 end if
                             end if
@@ -897,11 +901,11 @@ end downloader_
             if goOn is true then
                 if totaltokens2 is greater than 1 then --if the show uses the standard SxxExx naming format
                     tell current application
-                        do shell script atomicParsley & " /Users/ryankeefe/Desktop/RKApps/Episodes/Processing/" & origin & " --stik 'TV Show' --TVShowName '" & showname2 & "' --TVEpisode '" & epcodefinal & "' --comment '" & final_comment & "' --TVSeasonNum '" & mySeason & "' --TVEpisodeNum '" & myEpisode & "' --album '" & showname2 & ", Season " & mySeason & "' --tracknum '" & myEpisode & "' --disk '" & mySeason & "' --artwork REMOVE_ALL --artwork " & final_final_artwork & " --year '" & myair2 & "' --title '" & myname & "' --description '" & showdescrip & "'"
+                        do shell script atomicParsley & " " & processingFolder & origin & " --stik 'TV Show' --TVShowName '" & showname2 & "' --TVEpisode '" & epcodefinal & "' --comment '" & final_comment & "' --TVSeasonNum '" & mySeason & "' --TVEpisodeNum '" & myEpisode & "' --album '" & showname2 & ", Season " & mySeason & "' --tracknum '" & myEpisode & "' --disk '" & mySeason & "' --artwork REMOVE_ALL --artwork " & final_final_artwork & " --year '" & myair2 & "' --title '" & myname & "' --description '" & showdescrip & "'"
                     end tell
                     else -----if the show does not use the standard SxxExx naming format
                     tell current application
-                        do shell script atomicParsley & " /Users/ryankeefe/Desktop/RKApps/Episodes/Processing/" & origin & " --stik 'TV Show' --TVShowName '" & showname2 & "' --comment '" & final_comment & "' --artwork REMOVE_ALL --artwork " & final_final_artwork & "' --title '" & myname & "'"
+                        do shell script atomicParsley & " " & processingFolder & origin & " --stik 'TV Show' --TVShowName '" & showname2 & "' --comment '" & final_comment & "' --artwork REMOVE_ALL --artwork " & final_final_artwork & "' --title '" & myname & "'"
                     end tell
                 end if
                 set metafiles2 to (every item of processing whose name contains "temp") as string
