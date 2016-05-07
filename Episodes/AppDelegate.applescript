@@ -21,6 +21,7 @@ script AppDelegate
 	property NSTimer : class "NSTimer"
 	global resourceFolder
 	global listFile
+    global aria
 	global atomicParsley
 	global thefaac
 	global theFeedChecker
@@ -31,7 +32,6 @@ script AppDelegate
     global downloadingFolder
 	global downloadingCompleteFolder
 	global downloads
-	global processingFolder0
 	global processingFolder
 	global processing
 	global rawFolder
@@ -71,7 +71,8 @@ script AppDelegate
 			set processingFolder to POSIX path of processingFolder0 as text
 			set processing to folder processingFolder0
 			set the listFile to (resourceFolder as string) & "show_list.txt" as string
-			set atomicParsley to POSIX path of resourceFolder & "AtomicParsley64" as text
+			set aria to POSIX path of resourceFolder & "aria2c" as text
+            set atomicParsley to POSIX path of resourceFolder & "AtomicParsley64" as text
 			set theFeedChecker to POSIX path of resourceFolder & "feedchecker.workflow" as text
 			set thefaac to POSIX path of resourceFolder & "faac" as text
 			set theffmpeg to POSIX path of resourceFolder & "ffmpeg" as text
@@ -313,9 +314,12 @@ script AppDelegate
 									(statusLabel's setStringValue:statbar2)
 									delay 0.1
 									----STATBAR2----
-									---here!!!!
-                                    --HAVE IT IMMEDIATELY MOVE THE TORRENT FILE TO TORRENT_ADD WITHIN PACKAGE CONTENTS AND THEN HAVE ARIA ADD IT AND START DOWNLOADING.
-                                    
+									tell application "Finder"
+                                        move (every item of downloads_torrents whose name contains ".torrent") to torrent_add
+                                    end tell
+                                    ignoring application responses
+                                        do shell script aria & " --seed-time=0 -d " & downloadingFolder & " " & torrentAddFolder & the_filename
+                                    end ignoring
 									end if
 								end if
 							end if
@@ -323,7 +327,6 @@ script AppDelegate
 					end repeat
 				end if
 				--- PART THAT COULD BE A SUBROUTINE ENDS HERE ---
-				
 				set currentdata0 to listOfShows's stringValue() as text
 				set AppleScript's text item delimiters to showname & " (S"
 				set dataTokens to text items of currentdata0
@@ -456,8 +459,12 @@ script AppDelegate
 								(statusLabel's setStringValue:statbar4)
 								delay 0.1
 								----STATBAR4----
-								---here!
-
+                                tell application "Finder"
+                                    move (every item of downloads_torrents whose name contains ".torrent") to torrent_add
+                                end tell
+                                ignoring application responses
+                                    do shell script aria & " --seed-time=0 -d " & downloadingFolder & " " & torrentAddFolder & the_filename
+                                end ignoring
 								end if
 							end if
 						end if
