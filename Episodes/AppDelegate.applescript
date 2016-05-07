@@ -28,18 +28,15 @@ script AppDelegate
 	global theMediaInfo
 	global themkvExtract
 	global themp4Box
-	global downloadingFolder0
-	global downloadingFolder
-	global downloadingCompleteFolder0
+    global downloadingFolder
 	global downloadingCompleteFolder
 	global downloads
 	global processingFolder0
 	global processingFolder
 	global processing
 	global rawFolder
-	global showArtFolder0
 	global showArtFolder
-	global torrentAddFolder0
+    global artfolder
 	global torrentAddFolder
 	global torrent_add
 	global theTorrentDownloader
@@ -67,6 +64,7 @@ script AppDelegate
 			set torrent_add to folder torrentAddFolder0
 			set showArtFolder0 to appLocation & "Contents:Resources:showart:" as alias
 			set showArtFolder to POSIX path of showArtFolder0 as text
+            set artfolder to folder showArtFolder0
 			set rawFolder0 to appLocation & "Contents:Resources:RawStreams:" as alias
 			set rawFolder to POSIX path of rawFolder0 as text
 			set processingFolder0 to appLocation & "Contents:Resources:Processing:" as alias
@@ -318,11 +316,6 @@ script AppDelegate
 									---here!!!!
                                     --HAVE IT IMMEDIATELY MOVE THE TORRENT FILE TO TORRENT_ADD WITHIN PACKAGE CONTENTS AND THEN HAVE ARIA ADD IT AND START DOWNLOADING.
                                     
-                                    
-                                    
-									tell application "Vuze"
-										launch
-									end tell
 									end if
 								end if
 							end if
@@ -464,9 +457,7 @@ script AppDelegate
 								delay 0.1
 								----STATBAR4----
 								---here!
-								tell application "Vuze"
-									launch
-								end tell
+
 								end if
 							end if
 						end if
@@ -720,7 +711,6 @@ script AppDelegate
 							set myair2 to item 1 of tokens as text ---airdate
 							-----fetch artwork
 							tell application "Finder"
-								set artfolder to folder showArtFolder0
 								move (every item of artfolder whose creation date ² ((current date) - 4 * weeks)) to trash
 								set artfiles to (every item of artfolder whose name contains myshow2)
 								set artcount to count artfiles
