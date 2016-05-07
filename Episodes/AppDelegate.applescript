@@ -43,6 +43,7 @@ script AppDelegate
 	global torrentAddFolder
 	global torrent_add
 	global theTorrentDownloader
+    global downloads_torrents
 	
 	global currentlyAiring
 	--property showTable : missing value
@@ -50,11 +51,13 @@ script AppDelegate
 	--property theFirstRun : 0
 	
 	-- IBActions
-	on applicationWillFinishLaunching:aNotification
+    on applicationWillFinishLaunching:aNotification
 		tell application "Finder"
 			set appLocation to (path to current application) as string
 			set resourceFolder to appLocation & "Contents:Resources:" as string
-			set downloadingFolder0 to appLocation & "Contents:Resources:Downloading:" as alias
+            set downloadsTorrents0 to path to downloads folder as alias
+            set downloads_torrents to folder downloadsTorrents0
+            set downloadingFolder0 to appLocation & "Contents:Resources:Downloading:" as alias
 			set downloadingFolder to POSIX path of downloadingFolder0 as text
 			set downloadingCompleteFolder0 to appLocation & "Contents:Resources:DownloadingComplete:" as alias
 			set downloadingCompleteFolder to POSIX path of downloadingCompleteFolder0 as text
@@ -303,10 +306,10 @@ script AppDelegate
 								set the_filename_2 to item 1 of nametoken2
 								tell application "Finder"
 									set already_downloaded to count (every item of torrent_add whose name contains the_filename_2)
-									--set already_downloaded2 to count (every item of torrent_files whose name contains the_filename_2)
+									set already_downloaded2 to count (every item of downloads_torrents whose name contains the_filename_2)
 								end tell
 								if already_downloaded is 0 then
-									--if already_downloaded2 is 0 then
+									if already_downloaded2 is 0 then
                                     do shell script "automator -i " & final_torrent2 & " " & theTorrentDownloader
 									----STATBAR2----
 									set statbar2 to current application's NSString's stringWithFormat_("%@%@%@%@", "Downloading higher-quality version of ", showname, " ", iTunesEpcode)
@@ -314,14 +317,14 @@ script AppDelegate
 									delay 0.1
 									----STATBAR2----
 									---here!!!!
-                                    HAVE IT IMMEDIATELY MOVE THE TORRENT FILE TO TORRENT_ADD WITHIN PACKAGE CONTENTS AND THEN HAVE ARIA ADD IT AND START DOWNLOADING.
+                                    --HAVE IT IMMEDIATELY MOVE THE TORRENT FILE TO TORRENT_ADD WITHIN PACKAGE CONTENTS AND THEN HAVE ARIA ADD IT AND START DOWNLOADING.
                                     
                                     
                                     
 									tell application "Vuze"
 										launch
 									end tell
-									--end if
+									end if
 								end if
 							end if
 						end if
@@ -449,10 +452,10 @@ script AppDelegate
 							set the_filename_2 to item 1 of nametoken2
 							tell application "Finder"
 								set already_downloaded to count (every item of torrent_add whose name contains the_filename_2)
-								--set already_downloaded2 to count (every item of torrent_files whose name contains the_filename_2)
+								set already_downloaded2 to count (every item of downloads_torrents whose name contains the_filename_2)
 							end tell
 							if already_downloaded is 0 then
-								--if already_downloaded2 is 0 then
+								if already_downloaded2 is 0 then
 								do shell script "automator -i " & final_torrent2 & " " & theTorrentDownloader
 								--do shell script "curl " & final_torrent2 & " -o " & "\"" & torrentAddFolder & the_filename & "\""
 								---is there to see if this returns with an error, or warning?  for example, if the URL provided doesn't work, right now it will just move on without downloading the torrent.  it should really be made aware of this warning/error by automator, and select a different torrent for the same episode instead.
@@ -465,7 +468,7 @@ script AppDelegate
 								tell application "Vuze"
 									launch
 								end tell
-								--end if
+								end if
 							end if
 						end if
 						set currentdata to currentdata + 1
@@ -489,15 +492,12 @@ script AppDelegate
 	
 	on encoder:sender
 		tell application "Finder"
-			
-			set mp3Downloads to folder "MP3Downloads" of the folder "Episodes" of the folder "RKApps" of the folder "Desktop" of home
 			----From here to the next comment, the script checks downloadcomplete folder for video files, then deletes everything it doesn't need
 			set totalfolders to count folders in downloads
 			repeat while totalfolders is greater than 0
 				set downloads2 to folder 1 of downloads
-				set {mkvfiles, mp4files, m4vfiles, mp3files} to {(every item of downloads2 whose name ends with ".mkv"), (every item of downloads2 whose name ends with ".mp4"), (every item of downloads2 whose name ends with ".m4v"), (every item of downloads2 whose name ends with ".mp3")}
+				set {mkvfiles, mp4files, m4vfiles} to {(every item of downloads2 whose name ends with ".mkv"), (every item of downloads2 whose name ends with ".mp4"), (every item of downloads2 whose name ends with ".m4v")}
 				move {mkvfiles, mp4files, m4vfiles} to downloads with replacing
-				move mp3files to mp3Downloads
 				try
 					move downloads2 to trash
 				end try
