@@ -65,7 +65,6 @@ script AppDelegate
 			set torrentAddFolder0 to appLocation & "Contents:Resources:TorrentAdd:" as alias
 			set torrentAddFolder to POSIX path of torrentAddFolder0 as text
 			set torrent_add to folder torrentAddFolder0
-			
 			set showArtFolder0 to appLocation & "Contents:Resources:showart:" as alias
 			set showArtFolder to POSIX path of showArtFolder0 as text
 			set rawFolder0 to appLocation & "Contents:Resources:RawStreams:" as alias
