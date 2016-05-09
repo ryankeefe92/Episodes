@@ -317,9 +317,15 @@ script AppDelegate
 									tell application "Finder"
                                         move (every item of downloads_torrents whose name contains ".torrent") to torrent_add
                                     end tell
-                                    ignoring application responses
-                                        do shell script aria & " --seed-time=0 -d " & downloadingFolder & " " & torrentAddFolder & the_filename
-                                    end ignoring
+                                        do shell script aria & " --seed-time=0 -d " & downloadingFolder & " " & torrentAddFolder & the_filename & " > /dev/null 2>&1 &"
+                                        --set pidSearch to do shell script "ps ax | grep " & thePID & " | grep -v grep | awk '{ print $1 }'"
+                                         --if pidSearch is "" then
+                                         --   return "process is finished"
+                                         --else if pidSearch is thePID then
+                                         --   return "process is still running"
+                                         --else
+                                         --   return "error"
+                                         --end if
 									end if
 								end if
 							end if
@@ -361,9 +367,13 @@ script AppDelegate
 							set AppleScript's text item delimiters to "."
 							set tokens103 to text items of epnum0
 							set epnum to item 1 of tokens103
-							set feedepcode0 to seasonnum & epnum as integer
+                            try
+                                set feedepcode0 to seasonnum & epnum as integer
+                            on error
+                                set feedepcode0 to 0
+                            end try
 							set feedepcode to feedepcode0 + 90000
-							if feedepcode is greater than highestepcode then
+                            if feedepcode is greater than highestepcode then
 								set highestepcode to feedepcode
 							end if
 						end if
@@ -451,20 +461,18 @@ script AppDelegate
 							end tell
 							if already_downloaded is 0 then
 								if already_downloaded2 is 0 then
-								do shell script "automator -i " & final_torrent2 & " " & theTorrentDownloader
-								--do shell script "curl " & final_torrent2 & " -o " & "\"" & torrentAddFolder & the_filename & "\""
-								---is there to see if this returns with an error, or warning?  for example, if the URL provided doesn't work, right now it will just move on without downloading the torrent.  it should really be made aware of this warning/error by automator, and select a different torrent for the same episode instead.
-								----STATBAR4----
-								set statbar4 to current application's NSString's stringWithFormat_("%@%@%@%@%@%@%@", "Downloading ", showname, " ", urlepcode, " at ", tor_comment2, " quality.")
-								(statusLabel's setStringValue:statbar4)
-								delay 0.1
-								----STATBAR4----
-                                tell application "Finder"
-                                    move (every item of downloads_torrents whose name contains ".torrent") to torrent_add
-                                end tell
-                                ignoring application responses
-                                    do shell script aria & " --seed-time=0 -d " & downloadingFolder & " " & torrentAddFolder & the_filename
-                                end ignoring
+                                    do shell script "automator -i " & final_torrent2 & " " & theTorrentDownloader
+                                    --do shell script "curl " & final_torrent2 & " -o " & "\"" & torrentAddFolder & the_filename & "\""
+                                    ---is there to see if this returns with an error, or warning?  for example, if the URL provided doesn't work, right now it will just move on without downloading the torrent.  it should really be made aware of this warning/error by automator, and select a different torrent for the same episode instead.
+                                    ----STATBAR4----
+                                    set statbar4 to current application's NSString's stringWithFormat_("%@%@%@%@%@%@%@", "Downloading ", showname, " ", urlepcode, " at ", tor_comment2, " quality.")
+                                    (statusLabel's setStringValue:statbar4)
+                                    delay 0.1
+                                    ----STATBAR4----
+                                    tell application "Finder"
+                                        move (every item of downloads_torrents whose name contains ".torrent") to torrent_add
+                                    end tell
+                                    do shell script aria & " --seed-time=0 -d " & downloadingFolder & " " & torrentAddFolder & the_filename & " > /dev/null 2>&1 &"
 								end if
 							end if
 						end if
