@@ -40,6 +40,7 @@ script AppDelegate
     global artfolder
 	global torrentAddFolder
 	global torrent_add
+    global theTorrent
 	global theTorrentDownloader
     global downloads_torrents
 	
@@ -182,6 +183,7 @@ script AppDelegate
                     set ariaDate to creation date of theAriaFile
                     if ariaDate ² ((current date) - 2 * minutes) then
                         move theAriaFile to downloads
+                        move (every item of torrent_add whose name contains theTorrent) to trash
                     end if
                 end if
             end repeat
@@ -338,7 +340,8 @@ script AppDelegate
 									tell application "Finder"
                                         move (every item of downloads_torrents whose name contains ".torrent") to torrent_add
                                     end tell
-                                       do shell script aria & " --seed-time=0 -d " & downloadingFolder & " " & torrentAddFolder & the_filename & " > /dev/null 2>&1 &"
+                                    set theTorrent to the_filename_2
+                                       do shell script aria & " --seed-time=0 --on-bt-download-complete=exit -d " & downloadingFolder & " " & torrentAddFolder & the_filename & " > /dev/null 2>&1 &"
 									end if
 								end if
 							end if
@@ -485,7 +488,8 @@ script AppDelegate
                                     tell application "Finder"
                                         move (every item of downloads_torrents whose name contains ".torrent") to torrent_add
                                     end tell
-                                    do shell script aria & " --seed-time=0 -d " & downloadingFolder & " " & torrentAddFolder & the_filename & " > /dev/null 2>&1 &"
+                                    set theTorrent to the_filename_2
+                                    do shell script aria & " --seed-time=0 --on-bt-download-complete=exit -d " & downloadingFolder & " " & torrentAddFolder & the_filename & " > /dev/null 2>&1 &"
 								end if
 							end if
 						end if
