@@ -161,7 +161,7 @@ script AppDelegate
 	end applicationWillFinishLaunching:
 	
 	on applicationDidFinishLaunching:aNotification
-		--NSTimer's scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(30, me, "downloader:", "Downloader", false)
+		NSTimer's scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(30, me, "downloader:", "Downloader", false)
 		NSTimer's scheduledTimerWithTimeInterval:330 target:me selector:"downloader:" userInfo:"Downloader" repeats:true
 		NSTimer's scheduledTimerWithTimeInterval:5 target:me selector:"encoder:" userInfo:"Encoder" repeats:true
         NSTimer's scheduledTimerWithTimeInterval:4 target:me selector:"moveHook:" userInfo:"moveHook" repeats:true
