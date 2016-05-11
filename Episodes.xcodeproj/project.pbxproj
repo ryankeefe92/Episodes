@@ -54,6 +54,7 @@
 		11C5E90E1CD084DC00450026 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		11DC8AFB1CE29EE200E1DEB6 /* Downloading */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Downloading; sourceTree = "<group>"; };
 		11DC8AFC1CE29EE200E1DEB6 /* DownloadingComplete */ = {isa = PBXFileReference; lastKnownFileType = folder; path = DownloadingComplete; sourceTree = "<group>"; };
+		11DC8B011CE3144300E1DEB6 /* logo.rsrc */ = {isa = PBXFileReference; lastKnownFileType = archive.rsrc; path = logo.rsrc; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -116,6 +117,7 @@
 				113492BE1CDADF940041DA61 /* mediainfo */,
 				113492BF1CDADF940041DA61 /* mkvextract */,
 				113492C01CDADF940041DA61 /* MP4Box */,
+				11DC8B011CE3144300E1DEB6 /* logo.rsrc */,
 				11DC8AFB1CE29EE200E1DEB6 /* Downloading */,
 				11DC8AFC1CE29EE200E1DEB6 /* DownloadingComplete */,
 				112D47771CDC8ECF00DE0F97 /* torrentdownloader.workflow */,

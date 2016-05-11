@@ -2,13 +2,10 @@
 --  AppDelegate.applescript
 --  Episodes
 --
---  Created by Ryan Keefe in 2008.
---  Copyright © 2008-2016 Ryan Keefe. All rights reserved.
---
+--  Copyright © 2008-2016 Ryan Keefe
 
 script AppDelegate
 	property parent : class "NSObject"
-	
 	-- IBOutlets
 	property thePanel : missing value
 	property listOfShows : missing value
@@ -43,7 +40,6 @@ script AppDelegate
     global theTorrent
 	global theTorrentDownloader
     global downloads_torrents
-	
 	global currentlyAiring
 	--property showTable : missing value
 	--property qualitySelect : missing value
