@@ -30,6 +30,7 @@ script AppDelegate
 	global themkvExtract
 	global themp4Box
     global downloadingFolder
+    global downloadingFolder_folder
 	global downloadingCompleteFolder
 	global downloads
 	global processingFolder
@@ -56,6 +57,7 @@ script AppDelegate
             set downloads_torrents to folder downloadsTorrents0
             set downloadingFolder0 to appLocation & "Contents:Resources:Downloading:" as alias
 			set downloadingFolder to POSIX path of downloadingFolder0 as text
+            set downloadingFolder_folder to folder downloadingFolder0
 			set downloadingCompleteFolder0 to appLocation & "Contents:Resources:DownloadingComplete:" as alias
 			set downloadingCompleteFolder to POSIX path of downloadingCompleteFolder0 as text
 			set downloads to folder downloadingCompleteFolder0
@@ -165,7 +167,26 @@ script AppDelegate
 		--NSTimer's scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(30, me, "downloader:", "Downloader", false)
 		NSTimer's scheduledTimerWithTimeInterval:330 target:me selector:"downloader:" userInfo:"Downloader" repeats:true
 		NSTimer's scheduledTimerWithTimeInterval:5 target:me selector:"encoder:" userInfo:"Encoder" repeats:true
+        NSTimer's scheduledTimerWithTimeInterval:4 target:me selector:"moveHook:" userInfo:"moveHook" repeats:true
 	end applicationDidFinishLaunching:
+    
+    on moveHook:sender
+        tell application "Finder"
+            set all_aria_downloads to (every item of downloadingFolder_folder whose name does not contain ".aria2")
+            set aria_count to count all_aria_downloads
+            repeat with i from 1 to aria_count
+                set theAriaFile to item i of all_aria_downloads
+                set theAriaName to name of theAriaFile
+                set notComplete to count (every item of downloadingFolder_folder whose name contains theAriaName & ".aria2")
+                if notComplete is less than 1 then
+                    set ariaDate to creation date of theAriaFile
+                    if ariaDate ² ((current date) - 2 * minutes) then
+                        move theAriaFile to downloads
+                    end if
+                end if
+            end repeat
+        end tell
+    end moveHook:
 	
 	on downloader:sender
 		set showlist to listOfShows's stringValue() as text
@@ -317,15 +338,7 @@ script AppDelegate
 									tell application "Finder"
                                         move (every item of downloads_torrents whose name contains ".torrent") to torrent_add
                                     end tell
-                                        do shell script aria & " --seed-time=0 -d " & downloadingFolder & " " & torrentAddFolder & the_filename & " > /dev/null 2>&1 &"
-                                        --set pidSearch to do shell script "ps ax | grep " & thePID & " | grep -v grep | awk '{ print $1 }'"
-                                         --if pidSearch is "" then
-                                         --   return "process is finished"
-                                         --else if pidSearch is thePID then
-                                         --   return "process is still running"
-                                         --else
-                                         --   return "error"
-                                         --end if
+                                       do shell script aria & " --seed-time=0 -d " & downloadingFolder & " " & torrentAddFolder & the_filename & " > /dev/null 2>&1 &"
 									end if
 								end if
 							end if

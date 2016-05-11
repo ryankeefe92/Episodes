@@ -7,8 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		112D47681CDC680B00DE0F97 /* Downloading in Resources */ = {isa = PBXBuildFile; fileRef = 112D47671CDC680B00DE0F97 /* Downloading */; };
-		112D47701CDC698000DE0F97 /* DownloadingComplete in Resources */ = {isa = PBXBuildFile; fileRef = 112D476F1CDC698000DE0F97 /* DownloadingComplete */; };
 		112D47751CDC798700DE0F97 /* TorrentAdd in Resources */ = {isa = PBXBuildFile; fileRef = 112D47731CDC798700DE0F97 /* TorrentAdd */; };
 		112D47781CDC8ECF00DE0F97 /* torrentdownloader.workflow in Resources */ = {isa = PBXBuildFile; fileRef = 112D47771CDC8ECF00DE0F97 /* torrentdownloader.workflow */; };
 		113492C41CDADF940041DA61 /* AtomicParsley64 in Resources */ = {isa = PBXBuildFile; fileRef = 113492BA1CDADF940041DA61 /* AtomicParsley64 */; };
@@ -28,11 +26,11 @@
 		11C5E9081CD084DC00450026 /* AppDelegate.applescript in Sources */ = {isa = PBXBuildFile; fileRef = 11C5E9071CD084DC00450026 /* AppDelegate.applescript */; };
 		11C5E90A1CD084DC00450026 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 11C5E9091CD084DC00450026 /* Assets.xcassets */; };
 		11C5E90D1CD084DC00450026 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 11C5E90B1CD084DC00450026 /* MainMenu.xib */; };
+		11DC8AFD1CE29EE200E1DEB6 /* Downloading in Resources */ = {isa = PBXBuildFile; fileRef = 11DC8AFB1CE29EE200E1DEB6 /* Downloading */; };
+		11DC8AFE1CE29EE200E1DEB6 /* DownloadingComplete in Resources */ = {isa = PBXBuildFile; fileRef = 11DC8AFC1CE29EE200E1DEB6 /* DownloadingComplete */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		112D47671CDC680B00DE0F97 /* Downloading */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Downloading; path = ../../RKApps/Episodes/Downloading; sourceTree = "<group>"; };
-		112D476F1CDC698000DE0F97 /* DownloadingComplete */ = {isa = PBXFileReference; lastKnownFileType = folder; name = DownloadingComplete; path = ../../RKApps/Episodes/DownloadingComplete; sourceTree = "<group>"; };
 		112D47731CDC798700DE0F97 /* TorrentAdd */ = {isa = PBXFileReference; lastKnownFileType = folder; path = TorrentAdd; sourceTree = "<group>"; };
 		112D47771CDC8ECF00DE0F97 /* torrentdownloader.workflow */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = torrentdownloader.workflow; sourceTree = "<group>"; };
 		113492BA1CDADF940041DA61 /* AtomicParsley64 */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = AtomicParsley64; sourceTree = "<group>"; };
@@ -54,6 +52,8 @@
 		11C5E9091CD084DC00450026 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		11C5E90C1CD084DC00450026 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/MainMenu.xib; sourceTree = "<group>"; };
 		11C5E90E1CD084DC00450026 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		11DC8AFB1CE29EE200E1DEB6 /* Downloading */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Downloading; sourceTree = "<group>"; };
+		11DC8AFC1CE29EE200E1DEB6 /* DownloadingComplete */ = {isa = PBXFileReference; lastKnownFileType = folder; path = DownloadingComplete; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -116,14 +116,14 @@
 				113492BE1CDADF940041DA61 /* mediainfo */,
 				113492BF1CDADF940041DA61 /* mkvextract */,
 				113492C01CDADF940041DA61 /* MP4Box */,
-				112D47731CDC798700DE0F97 /* TorrentAdd */,
+				11DC8AFB1CE29EE200E1DEB6 /* Downloading */,
+				11DC8AFC1CE29EE200E1DEB6 /* DownloadingComplete */,
 				112D47771CDC8ECF00DE0F97 /* torrentdownloader.workflow */,
 				113492C11CDADF940041DA61 /* show_list.txt */,
-				112D47671CDC680B00DE0F97 /* Downloading */,
-				112D476F1CDC698000DE0F97 /* DownloadingComplete */,
 				1142A7041CDC027700A29AF5 /* Processing */,
 				1142A7081CDC032C00A29AF5 /* RawStreams */,
 				113492C21CDADF940041DA61 /* showart */,
+				112D47731CDC798700DE0F97 /* TorrentAdd */,
 				11C5E9051CD084DC00450026 /* main.m */,
 			);
 			name = "Supporting Files";
@@ -192,18 +192,18 @@
 				1142A7051CDC027700A29AF5 /* Processing in Resources */,
 				113492CB1CDADF940041DA61 /* show_list.txt in Resources */,
 				113492CC1CDADF940041DA61 /* showart in Resources */,
+				11DC8AFE1CE29EE200E1DEB6 /* DownloadingComplete in Resources */,
 				113492C81CDADF940041DA61 /* mediainfo in Resources */,
 				113492C71CDADF940041DA61 /* ffmpeg in Resources */,
 				113492C91CDADF940041DA61 /* mkvextract in Resources */,
+				11DC8AFD1CE29EE200E1DEB6 /* Downloading in Resources */,
 				112D47781CDC8ECF00DE0F97 /* torrentdownloader.workflow in Resources */,
 				113492CA1CDADF940041DA61 /* MP4Box in Resources */,
 				113492C41CDADF940041DA61 /* AtomicParsley64 in Resources */,
 				11C5E90D1CD084DC00450026 /* MainMenu.xib in Resources */,
-				112D47681CDC680B00DE0F97 /* Downloading in Resources */,
 				117BF2A31CDD749900BAA3D4 /* aria2c in Resources */,
 				113492C51CDADF940041DA61 /* faac in Resources */,
 				113492C61CDADF940041DA61 /* feedchecker.workflow in Resources */,
-				112D47701CDC698000DE0F97 /* DownloadingComplete in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
