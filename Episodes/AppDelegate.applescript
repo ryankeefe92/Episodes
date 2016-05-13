@@ -161,9 +161,9 @@ script AppDelegate
 	end applicationWillFinishLaunching:
 	
 	on applicationDidFinishLaunching:aNotification
-		NSTimer's scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(30, me, "downloader:", "Downloader", false)
-		NSTimer's scheduledTimerWithTimeInterval:330 target:me selector:"downloader:" userInfo:"Downloader" repeats:true
-		NSTimer's scheduledTimerWithTimeInterval:5 target:me selector:"encoder:" userInfo:"Encoder" repeats:true
+		NSTimer's scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(30, me, "download:", "Download", false)
+		NSTimer's scheduledTimerWithTimeInterval:330 target:me selector:"download:" userInfo:"Download" repeats:true
+		NSTimer's scheduledTimerWithTimeInterval:5 target:me selector:"process:" userInfo:"Process" repeats:true
         NSTimer's scheduledTimerWithTimeInterval:4 target:me selector:"moveHook:" userInfo:"moveHook" repeats:true
 	end applicationDidFinishLaunching:
     
@@ -186,7 +186,7 @@ script AppDelegate
         end tell
     end moveHook:
 	
-	on downloader:sender
+	on download:sender
 		set showlist to listOfShows's stringValue() as text
 		set AppleScript's text item delimiters to "
 "
@@ -247,7 +247,7 @@ script AppDelegate
 							end if
 						end repeat
 						
-						--- PART THAT COULD BE A SUBROUTINE STARTS HERE - Set it up as its own subroutine outside of downloader_ and call it as many times as you need to when it's needed.  THERE ARE SOME DIFFERENCES THOUGH SO LOOK AT THEM SIDE BY SIDE  ----
+						--- PART THAT COULD BE A SUBROUTINE STARTS HERE - Set it up as its own subroutine outside of download_ and call it as many times as you need to when it's needed.  THERE ARE SOME DIFFERENCES THOUGH SO LOOK AT THEM SIDE BY SIDE  ----
 						if vidQualFirst is less than 3 then --this is where you can set it to a different "max quality" setting
 							set url2 to "https://kat.cr/usearch/%22" & urlshow & "%20" & iTunesEpcode & "%22%20264%20OR%20x264%20category%3Atv/?rss=1" as text
 							set rss_items100 to do shell script "automator -i " & url2 & " " & theFeedChecker
@@ -504,11 +504,11 @@ script AppDelegate
 			progressBar's incrementBy:-100
 			----STATBAR5----
 		end if
-	end downloader:
+	end download:
 	
 	
 	
-	on encoder:sender
+	on process:sender
 		tell application "Finder"
 			----From here to the next comment, the script checks downloadcomplete folder for video files, then deletes everything it doesn't need
 			set totalfolders to count folders in downloads
@@ -1031,7 +1031,7 @@ script AppDelegate
 			end try
 			set the_file to {}
 		end tell
-	end encoder:
+	end process:
 	
 	on populateEpcode:sender
 		if showComboField's stringValue as string is not equal to "" then

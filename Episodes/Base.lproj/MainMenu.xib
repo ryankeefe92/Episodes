@@ -337,7 +337,7 @@
                             <font key="font" metaFont="system"/>
                         </buttonCell>
                         <connections>
-                            <action selector="downloader:" target="Voe-Tx-rLC" id="om4-5g-3Cc"/>
+                            <action selector="download:" target="Voe-Tx-rLC" id="bxW-i3-att"/>
                         </connections>
                     </button>
                 </subviews>
