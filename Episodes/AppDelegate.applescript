@@ -37,7 +37,6 @@ script AppDelegate
     global artfolder
 	global torrentAddFolder
 	global torrent_add
-    global theTorrent
 	global theTorrentDownloader
     global downloads_torrents
 	global currentlyAiring
@@ -58,15 +57,15 @@ script AppDelegate
 			set downloadingCompleteFolder0 to appLocation & "Contents:Resources:DownloadingComplete:" as alias
 			set downloadingCompleteFolder to POSIX path of downloadingCompleteFolder0 as text
 			set downloads to folder downloadingCompleteFolder0
-			set torrentAddFolder0 to appLocation & "Contents:Resources:TorrentAdd:" as alias
+            set torrentAddFolder0 to appLocation & "Contents:Resources:TorrentAdd:" as alias
 			set torrentAddFolder to POSIX path of torrentAddFolder0 as text
 			set torrent_add to folder torrentAddFolder0
-			set showArtFolder0 to appLocation & "Contents:Resources:showart:" as alias
+            set showArtFolder0 to appLocation & "Contents:Resources:showart:" as alias
 			set showArtFolder to POSIX path of showArtFolder0 as text
             set artfolder to folder showArtFolder0
-			set rawFolder0 to appLocation & "Contents:Resources:RawStreams:" as alias
+            set rawFolder0 to appLocation & "Contents:Resources:RawStreams:" as alias
 			set rawFolder to POSIX path of rawFolder0 as text
-			set processingFolder0 to appLocation & "Contents:Resources:Processing:" as alias
+            set processingFolder0 to appLocation & "Contents:Resources:Processing:" as alias
 			set processingFolder to POSIX path of processingFolder0 as text
 			set processing to folder processingFolder0
 			set the listFile to (resourceFolder as string) & "show_list.txt" as string
@@ -174,12 +173,13 @@ script AppDelegate
             repeat with i from 1 to aria_count
                 set theAriaFile to item i of all_aria_downloads
                 set theAriaName to name of theAriaFile
-                set notComplete to count (every item of downloadingFolder_folder whose name contains theAriaName & ".aria2")
-                if notComplete is less than 1 then
-                    set ariaDate to creation date of theAriaFile
-                    if ariaDate ² ((current date) - 2 * minutes) then
-                        move theAriaFile to downloads
-                        move (every item of torrent_add whose name contains theTorrent) to trash
+                if theAriaName does not contain "dummyfile"
+                    set notComplete to count (every item of downloadingFolder_folder whose name contains theAriaName & ".aria2")
+                    if notComplete is less than 1 then
+                        set ariaDate to creation date of theAriaFile
+                        if ariaDate ² ((current date) - 2 * minutes) then
+                            move theAriaFile to downloads
+                        end if
                     end if
                 end if
             end repeat
@@ -240,7 +240,7 @@ script AppDelegate
 								set vidQualFirst to (i - 1) as integer
 							end if
 						end repeat
-						set channelListd to {"Mono", "Stereo", "3ch", "4ch", "5ch", "Dolby Digital 5.1"}
+						set channelListd to {"Mono", "Stereo", "3ch", "4ch", "5ch", "DD5.1"}
 						repeat with i from 1 to count of channelListd
 							if iTunesQuality contains item i of channelListd then
 								set audQualFirst to i as integer
@@ -282,7 +282,7 @@ script AppDelegate
 											set torAudQual to 6 as integer
 										end if
 									end ignoring
-									set chanList to {"Mono", "Stereo", "3ch", "4ch", "5ch", "Dolby Digital 5.1"}
+									set chanList to {"Mono", "Stereo", "3ch", "4ch", "5ch", "DD5.1"}
 									repeat with i from 1 to count of chanList
 										if torrentTitle contains item i of chanList then
 											set torAudQual to i as integer
@@ -311,19 +311,27 @@ script AppDelegate
 								end try
 							end repeat
 							if bestfeeditem is greater than 0 then
-								set final_torrent to item bestfeeditem of tokens
-								set AppleScript's text item delimiters to "?"
-								set tokens3 to text items of final_torrent
-								set final_torrent2 to item 1 of tokens3
-								set AppleScript's text item delimiters to "torrent/"
-								set nametoken to text items of final_torrent2
-								set the_filename to item 2 of nametoken
-								set AppleScript's text item delimiters to ".torrent"
-								set nametoken2 to text items of the_filename
-								set the_filename_2 to item 1 of nametoken2
+                                set final_torrent to item bestfeeditem of tokens
+                                set AppleScript's text item delimiters to "?"
+                                set tokens3 to text items of final_torrent
+                                set final_torrent2 to item 1 of tokens3
+                                set torname0 to item 2 of tokens3
+                                set AppleScript's text item delimiters to "5D"
+                                set tortokens to text items of torname0
+                                set torname2 to item 2 of tortokens
+                                set AppleScript's text item delimiters to "\""
+                                set tortokens2 to text items of torname2
+                                set torname1 to item 1 of tortokens2
+                                set torname to torname1 & ".torrent"
+                                set AppleScript's text item delimiters to "torrent/"
+                                set nametoken to text items of final_torrent2
+                                set the_filename to item 2 of nametoken
+                                set AppleScript's text item delimiters to ".torrent"
+                                set nametoken2 to text items of the_filename
+                                set the_filename_2 to item 1 of nametoken2
 								tell application "Finder"
-									set already_downloaded to count (every item of torrent_add whose name contains the_filename_2)
-									set already_downloaded2 to count (every item of downloads_torrents whose name contains the_filename_2)
+									set already_downloaded to count (every item of torrent_add whose name contains torname1)
+									set already_downloaded2 to count (every item of downloads_torrents whose name contains torname1)
 								end tell
 								if already_downloaded is 0 then
 									if already_downloaded2 is 0 then
@@ -334,10 +342,10 @@ script AppDelegate
 									delay 0.1
 									----STATBAR2----
 									tell application "Finder"
+                                        set name of (every item of downloads_torrents whose name contains ".torrent") to torname
                                         move (every item of downloads_torrents whose name contains ".torrent") to torrent_add
                                     end tell
-                                    set theTorrent to the_filename_2
-                                       do shell script aria & " --seed-time=0 --on-bt-download-complete=exit -d " & downloadingFolder & " " & torrentAddFolder & the_filename & " > /dev/null 2>&1 &"
+                                       do shell script aria & " --seed-time=0 --on-bt-download-complete=exit -d " & downloadingFolder & " " & torrentAddFolder & torname & " > /dev/null 2>&1 &"
 									end if
 								end if
 							end if
@@ -429,7 +437,7 @@ script AppDelegate
 										--aac often means 2.0, and if it doesn't say aac2.0 or dd5.1, it is most likely 5.1, so it should prefer 5.1 or ac3 to nothing, and prefer nothing to 2.0 or web-dl or aac, unless web-dl also says 5.1
 									end if
 								end ignoring
-								set chanList to {"Mono", "Stereo", "3ch", "4ch", "5ch", "Dolby Digital 5.1"}
+								set chanList to {"Mono", "Stereo", "3ch", "4ch", "5ch", "DD5.1"}
 								repeat with i from 1 to count of chanList
 									if torrentTitle contains item i of chanList then
 										set torAudQual to i as integer
@@ -457,35 +465,42 @@ script AppDelegate
 							end try
 						end repeat
 						if bestfeeditem is greater than 0 then
-							set final_torrent to item bestfeeditem of tokens
-							set AppleScript's text item delimiters to "?"
-							set tokens3 to text items of final_torrent
-							set final_torrent2 to item 1 of tokens3
-							set AppleScript's text item delimiters to "torrent/"
-							set nametoken to text items of final_torrent2
-							set the_filename to item 2 of nametoken
-							set AppleScript's text item delimiters to ".torrent"
-							set nametoken2 to text items of the_filename
-							set the_filename_2 to item 1 of nametoken2
+                            set final_torrent to item bestfeeditem of tokens
+                            set AppleScript's text item delimiters to "?"
+                            set tokens3 to text items of final_torrent
+                            set final_torrent2 to item 1 of tokens3
+                            set torname0 to item 2 of tokens3
+                            set AppleScript's text item delimiters to "5D"
+                            set tortokens to text items of torname0
+                            set torname2 to item 2 of tortokens
+                            set AppleScript's text item delimiters to "\""
+                            set tortokens2 to text items of torname2
+                            set torname1 to item 1 of tortokens2
+                            set torname to torname1 & ".torrent"
+                            set AppleScript's text item delimiters to "torrent/"
+                            set nametoken to text items of final_torrent2
+                            set the_filename to item 2 of nametoken
+                            set AppleScript's text item delimiters to ".torrent"
+                            set nametoken2 to text items of the_filename
+                            set the_filename_2 to item 1 of nametoken2
 							tell application "Finder"
-								set already_downloaded to count (every item of torrent_add whose name contains the_filename_2)
-								set already_downloaded2 to count (every item of downloads_torrents whose name contains the_filename_2)
+								set already_downloaded to count (every item of torrent_add whose name contains torname1)
+								set already_downloaded2 to count (every item of downloads_torrents whose name contains torname1)
 							end tell
 							if already_downloaded is 0 then
 								if already_downloaded2 is 0 then
                                     do shell script "automator -i " & final_torrent2 & " " & theTorrentDownloader
-                                    --do shell script "curl " & final_torrent2 & " -o " & "\"" & torrentAddFolder & the_filename & "\""
-                                    ---is there to see if this returns with an error, or warning?  for example, if the URL provided doesn't work, right now it will just move on without downloading the torrent.  it should really be made aware of this warning/error by automator, and select a different torrent for the same episode instead.
+                                    ---is there a way to see if this returns with an error, or warning?  for example, if the URL provided doesn't work, right now it will just move on without downloading the torrent.  it should really be made aware of this warning/error by automator, and select a different torrent for the same episode instead.
                                     ----STATBAR4----
                                     set statbar4 to current application's NSString's stringWithFormat_("%@%@%@%@%@%@%@", "Downloading ", showname, " ", urlepcode, " at ", tor_comment2, " quality.")
                                     (statusLabel's setStringValue:statbar4)
                                     delay 0.1
                                     ----STATBAR4----
                                     tell application "Finder"
+                                        set name of (every item of downloads_torrents whose name contains ".torrent") to torname
                                         move (every item of downloads_torrents whose name contains ".torrent") to torrent_add
                                     end tell
-                                    set theTorrent to the_filename_2
-                                    do shell script aria & " --seed-time=0 --on-bt-download-complete=exit -d " & downloadingFolder & " " & torrentAddFolder & the_filename & " > /dev/null 2>&1 &"
+                                    do shell script aria & " --seed-time=0 --on-bt-download-complete=exit -d " & downloadingFolder & " " & torrentAddFolder & torname & " > /dev/null 2>&1 &"
 								end if
 							end if
 						end if
@@ -522,12 +537,20 @@ script AppDelegate
 				set totalfolders to count folders in downloads
 			end repeat
 			--The below renames the file to the proper naming format
-			if exists item 1 of downloads then
-				if exists item 1 of processing then
+			if exists item 2 of downloads then
+				if exists item 2 of processing then
 					set moveon to false
 				else
-					move item 1 of downloads to processing
-					set the_file to item 1 of processing
+                    if name of item 1 of downloads contains "dummyfile"
+                        move item 2 of downloads to processing
+                    else
+                        move item 1 of downloads to processing
+                    end if
+                    if name of item 1 of processing contains "dummyfile"
+					set the_file to item 2 of processing
+                    else
+                    set the_file to item 1 of processing
+                    end if
 					set alldownloads to the_file as text
 					---the 2 lines below set the variable to just the filename (everything after the last colon), as opposed to the whole path
 					set AppleScript's text item delimiters to ":"
@@ -620,7 +643,7 @@ script AppDelegate
 							set channels2 to stream3
 						end if
 					end if
-					set channels2List to {"Mono", "Stereo", "3ch", "4ch", "5ch", "Dolby Digital 5.1"}
+					set channels2List to {"Mono", "Stereo", "3ch", "4ch", "5ch", "DD5.1"}
 					repeat with i from 1 to count of channels2List
 						if channels2 is equal to i then
 							set aud_comment to item i of channels2List as text
@@ -664,11 +687,11 @@ script AppDelegate
 						set epcode to item 1 of tokens
 						set epcodefinal to "S" & text 2 thru 3 of epcode & "E" & text 5 thru 6 of epcode ----The EpisodeID, formatted as "S04E09"
 					end if
-					set fileNameNoExt to myshow
+					set fileNameNoExt to myshow & "." & vid_comment & "." & aud_comment & "." & source_comment & extension1
 					if totaltokens2 is greater than 1 then -----if the show uses the standard SxxExx naming format
-						set fileNameNoExt to fileNameNoExt & "." & epcodefinal
+						set fileNameNoExt to myshow & "." & epcodefinal & "." & vid_comment & "." & aud_comment & "." & source_comment & extension1
 					end if
-					set name of the_file to fileNameNoExt & extension1
+					set name of the_file to fileNameNoExt
 					tell current application
 						---if show name is weird, reset it here!  THIS SHOULD ONLY BE A TEMPORARY FIX, FIND A BETTER WAY TO DO THIS THAN MANUALLY ENTERING IT HERE...
 						----The Office
@@ -699,7 +722,11 @@ script AppDelegate
 							set text item delimiters of AppleScript to "\""
 							set tokens to text items of id0
 							set tvshowID to item 1 of tokens
-							set the_file to item 1 of processing
+							if name of item 1 of processing contains "dummyfile"
+                                set the_file to item 2 of processing
+                            else
+                                set the_file to item 1 of processing
+                            end if
 							set mySeason to text 2 through 3 of epcodefinal as number
 							set mySeason2 to mySeason as text
 							set myEpisode to text 5 through 6 of epcodefinal as number
@@ -821,7 +848,7 @@ script AppDelegate
 									set vidQualFirst to (i - 1) as integer
 								end if
 							end repeat
-							set channelList to {"Mono", "Stereo", "3ch", "4ch", "5ch", "Dolby Digital 5.1"}
+							set channelList to {"Mono", "Stereo", "3ch", "4ch", "5ch", "DD5.1"}
 							repeat with i from 1 to count of channelList
 								if EPids contains item i of channelList then
 									set audQualFirst to i as integer
@@ -866,11 +893,17 @@ script AppDelegate
 					if replacefirst is false then set continue_adding to false
 					if continue_adding is false then
 						tell application "Finder"
-							move every item of processing to trash
+							move (every item of processing whose name does not contain "dummyfile") to trash
+                            ---second trash here!
+                            
 						end tell
 					else if continue_adding is true then
 						if extension1 is ".mkv" then
-							set filename1 to name of item 1 of processing
+                            if name of item 1 of processing contains "dummyfile"
+                                set filename1 to name of item 2 of processing
+                            else
+                                set filename1 to name of item 1 of processing
+                            end if
 							tell current application
 								----a way to combine the do shell scripts that all use mediainfo?
 								set newFramerate to do shell script theMediaInfo & " \"--Inform=Video;%FrameRate%\" " & processingFolder & "*.mkv"
@@ -882,7 +915,7 @@ script AppDelegate
 								if vid_pos is greater than aud_pos then
 									if channels2 is greater than 2 then
 										-----below: first stream is audio, has AC3 5.1 surround
-										do shell script themkvExtract & " tracks " & processingFolder & "*.mkv 1:" & rawFolder & "DolbySurround.ac3 2:" & rawFolder & "Video.264 && " & theffmpeg & " -i " & rawFolder & "DolbySurround.ac3 -ac 2 -ab 160 " & rawFolder & "stereo_temp.wav && " & thefaac & " --mpeg-vers 4 " & rawFolder & "stereo_temp.wav -o " & rawFolder & "Stereo.aac && " & themp4Box & " -add " & rawFolder & "Video.264:name=Video:fps=" & newFramerate & " -add " & rawFolder & "Stereo.aac:group=1:lang=ENG:name=\"Stereo\" -add " & rawFolder & "DolbySurround.ac3:disable:group=1:lang=ENG:name=\"Dolby Digital 5.1\" -inter 500 " & processingFolder & fileNameNoExt & ".m4v && rm " & rawFolder & "*.{264,ac3,wav,aac}"
+										do shell script themkvExtract & " tracks " & processingFolder & "*.mkv 1:" & rawFolder & "DolbySurround.ac3 2:" & rawFolder & "Video.264 && " & theffmpeg & " -i " & rawFolder & "DolbySurround.ac3 -ac 2 -ab 160 " & rawFolder & "stereo_temp.wav && " & thefaac & " --mpeg-vers 4 " & rawFolder & "stereo_temp.wav -o " & rawFolder & "Stereo.aac && " & themp4Box & " -add " & rawFolder & "Video.264:name=Video:fps=" & newFramerate & " -add " & rawFolder & "Stereo.aac:group=1:lang=ENG:name=\"Stereo\" -add " & rawFolder & "DolbySurround.ac3:disable:group=1:lang=ENG:name=\"DD5.1\" -inter 500 " & processingFolder & fileNameNoExt & ".m4v && rm " & rawFolder & "*.{264,ac3,wav,aac}"
 									else
 										if audioCodec is "AC-3" then
 											-----below: first stream is audio, has stereo only, but is in AC3
@@ -895,7 +928,7 @@ script AppDelegate
 								else
 									if channels2 is greater than 2 then
 										-----below: first stream is video, has AC3 5.1 surround
-										do shell script themkvExtract & " tracks " & processingFolder & "*.mkv 1:" & rawFolder & "Video.264 2:" & rawFolder & "DolbySurround.ac3 && " & theffmpeg & " -i " & rawFolder & "DolbySurround.ac3 -ac 2 -ab 160 " & rawFolder & "stereo_temp.wav && " & thefaac & " --mpeg-vers 4 " & rawFolder & "stereo_temp.wav -o " & rawFolder & "Stereo.aac && " & themp4Box & " -add " & rawFolder & "Video.264:name=Video:fps=" & newFramerate & " -add " & rawFolder & "Stereo.aac:group=1:lang=ENG:name=\"Stereo\" -add " & rawFolder & "DolbySurround.ac3:disable:group=1:lang=ENG:name=\"Dolby Digital 5.1\" -inter 500 " & processingFolder & fileNameNoExt & ".m4v && rm " & rawFolder & "*.{264,ac3,wav,aac}"
+										do shell script themkvExtract & " tracks " & processingFolder & "*.mkv 1:" & rawFolder & "Video.264 2:" & rawFolder & "DolbySurround.ac3 && " & theffmpeg & " -i " & rawFolder & "DolbySurround.ac3 -ac 2 -ab 160 " & rawFolder & "stereo_temp.wav && " & thefaac & " --mpeg-vers 4 " & rawFolder & "stereo_temp.wav -o " & rawFolder & "Stereo.aac && " & themp4Box & " -add " & rawFolder & "Video.264:name=Video:fps=" & newFramerate & " -add " & rawFolder & "Stereo.aac:group=1:lang=ENG:name=\"Stereo\" -add " & rawFolder & "DolbySurround.ac3:disable:group=1:lang=ENG:name=\"DD5.1\" -inter 500 " & processingFolder & fileNameNoExt & ".m4v && rm " & rawFolder & "*.{264,ac3,wav,aac}"
 									else
 										if audioCodec is "AC-3" then
 											-----below: first stream is video, has stereo only, but is in AC3
@@ -910,31 +943,24 @@ script AppDelegate
 							try
 								move the_file to trash
 							end try
-							set encoding1 to item 1 of processing as alias
-							if exists item 2 of processing then
-								set encoding2 to item 2 of processing as alias
-							end if
-							if name of encoding1 ends with ".m4v" then
-								try
-									move encoding2 to trash
-								end try
-								set the_file to encoding1
-							else
-								try
-									move encoding1 to trash
-								end try
-								set the_file to encoding2
-							end if
+                            set the_file to every item of processing whose name ends with ".mp4"
+                            set the_file to every item of processing whose name ends with ".m4v"
+                            set delete_files to every item of processing whose name ends with ".mkv"
+                            move delete_files to trash
 						end if
 					end if
 				end if
 			end if
 			try
 				set totalprocessing to count files in processing
-				if totalprocessing is greater than 2 then
-					move every item of processing to trash
+				if totalprocessing is greater than 3 then
+					move (every item of processing whose name does not contain "dummyfile") to trash
 				end if
-				set the_file to item 1 of processing
+                if name of item 1 of processing contains "dummyfile"
+				set the_file to item 2 of processing
+                else
+                set the_file to item 1 of processing
+                end if
 				set origin to name of the_file
 				--the following two lines:  combine or make subroutine.
 				if origin ends with ".mp4" then set goOn to true
@@ -965,7 +991,8 @@ script AppDelegate
 						try
 							add metafiles2
 						on error number -43
-							move every item of processing to trash
+							move (every item of processing whose name does not contain "dummyfile") to trash
+                            --more trash here?
 						end try
 						try
 							set existsShows to every track of playlist "TV Shows" whose name contains myname
@@ -983,11 +1010,13 @@ script AppDelegate
 					set metafiles3 to metafiles2 as string
 					try
 						move the_file to trash
+                        --more trash here?
 					end try
 					try
 						move metafiles3 to trash
+                        --more trash here?
 					end try
-					----update epcode in list of show's view
+					----update epcode in list of shows view
 					set old_data0 to listOfShows's stringValue() as text
 					set newDelim to showname2 & " (S"
 					set AppleScript's text item delimiters to newDelim
@@ -1019,6 +1048,25 @@ script AppDelegate
 						listOfShows's setStringValue:old_data0
 					end if
 					---end update epcode block
+                    tell application "Finder"
+                        set every_tor to every item of torrent_add
+                        set every_torCount to count every_tor
+                        display dialog every_torCount
+                        repeat with i from 1 to every_torCount
+                            ignoring case, hyphens, punctuation, white space and diacriticals
+                                if name of item i contains myshow3
+                                display dialog "1: true"
+                                    if name of item i contains epcodefinal
+                                    display dialog "2: true"
+                                        if name of item i contains vid_comment
+                                        display dialog "3: true"
+                                            move item i to trash
+                                        end if
+                                    end if
+                                end if
+                            end ignoring
+                        end repeat
+                    end tell
 					tell application "iTunes"
 						try
 							update item 3 of every source
