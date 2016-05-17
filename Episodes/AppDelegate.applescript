@@ -43,7 +43,6 @@ script AppDelegate
 	--property showTable : missing value
 	--property qualitySelect : missing value
 	--property theFirstRun : 0
-	
 	-- IBActions
     on applicationWillFinishLaunching:aNotification
 		tell application "Finder"
@@ -158,14 +157,14 @@ script AppDelegate
 		end tell
 		---end currently airing wikipedia block
 	end applicationWillFinishLaunching:
-	
+############################################################################################################################
 	on applicationDidFinishLaunching:aNotification
 		NSTimer's scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(30, me, "download:", "Download", false)
 		NSTimer's scheduledTimerWithTimeInterval:330 target:me selector:"download:" userInfo:"Download" repeats:true
 		NSTimer's scheduledTimerWithTimeInterval:5 target:me selector:"process:" userInfo:"Process" repeats:true
         NSTimer's scheduledTimerWithTimeInterval:4 target:me selector:"moveHook:" userInfo:"moveHook" repeats:true
 	end applicationDidFinishLaunching:
-    
+############################################################################################################################
     on moveHook:sender
         tell application "Finder"
             set all_aria_downloads to (every item of downloadingFolder_folder whose name does not contain ".aria2")
@@ -185,7 +184,7 @@ script AppDelegate
             end repeat
         end tell
     end moveHook:
-	
+############################################################################################################################
 	on download:sender
 		set showlist to listOfShows's stringValue() as text
 		set AppleScript's text item delimiters to "
@@ -246,7 +245,6 @@ script AppDelegate
 								set audQualFirst to i as integer
 							end if
 						end repeat
-						
 						--- PART THAT COULD BE A SUBROUTINE STARTS HERE - Set it up as its own subroutine outside of download_ and call it as many times as you need to when it's needed.  THERE ARE SOME DIFFERENCES THOUGH SO LOOK AT THEM SIDE BY SIDE  ----
 						if vidQualFirst is less than 3 then --this is where you can set it to a different "max quality" setting
 							set url2 to "https://kat.cr/usearch/%22" & urlshow & "%20" & iTunesEpcode & "%22%20264%20OR%20x264%20category%3Atv/?rss=1" as text
@@ -520,9 +518,7 @@ script AppDelegate
 			----STATBAR5----
 		end if
 	end download:
-	
-	
-	
+############################################################################################################################
 	on process:sender
 		tell application "Finder"
 			----From here to the next comment, the script checks downloadcomplete folder for video files, then deletes everything it doesn't need
@@ -1052,6 +1048,7 @@ script AppDelegate
                         set every_tor to every item of torrent_add
                         set every_torCount to count every_tor
                         display dialog every_torCount
+                        --falls apart somewhere below here
                         repeat with i from 1 to every_torCount
                             ignoring case, hyphens, punctuation, white space and diacriticals
                                 if name of item i contains myshow3
@@ -1080,7 +1077,7 @@ script AppDelegate
 			set the_file to {}
 		end tell
 	end process:
-	
+############################################################################################################################
 	on populateEpcode:sender
 		if showComboField's stringValue as string is not equal to "" then
 			set the_index to beginWith's indexOfSelectedItem()
@@ -1200,19 +1197,17 @@ script AppDelegate
 			episodeField's setStringValue:""
 		end if
 	end populateEpcode:
-	
 	--on showPanel_(sender)
 	--thePanel's makeKeyAndOrderFront_(thePanel)
 	--end showPanel_
-	
 	on showCombo:sender
 		NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"populateEpcode:" userInfo:"populateEpcode" repeats:false
 	end showCombo:
-	
+############################################################################################################################
 	on beginWith:sender
 		NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"populateEpcode:" userInfo:"populateEpcode" repeats:false
 	end beginWith:
-	
+############################################################################################################################
 	on addShow:sender
 		if showComboField's stringValue as string = "" then
 			display dialog "Please enter the name of the show."
@@ -1268,16 +1263,14 @@ script AppDelegate
 			end if
 		end if
 	end addShow:
-	
 	--on donePanel_(sender)
 	---write edited panel to text file
 	--thePanel's orderOut_(thePanel)
 	--end donePanel_
-	
 	on appQuit:sender
 		tell current application to quit
 	end appQuit:
-	
+############################################################################################################################
 	on applicationShouldTerminate:sender
 		-- Insert code here to do any housekeeping before your application quits
 		set newText to listOfShows's stringValue() as text
@@ -1290,5 +1283,5 @@ script AppDelegate
 		end tell
 		return current application's NSTerminateNow
 	end applicationShouldTerminate:
-	
+############################################################################################################################
 end script
