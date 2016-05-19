@@ -40,6 +40,9 @@ script AppDelegate
 	global theTorrentDownloader
     global downloads_torrents
 	global currentlyAiring
+    global myshow3
+    global epcodefinal
+    global vid_comment
 	--property showTable : missing value
 	--property qualitySelect : missing value
 	--property theFirstRun : 0
@@ -185,8 +188,23 @@ script AppDelegate
         end tell
     end moveHook:
 ############################################################################################################################
-    --on trashTorrent:sender
-    --end trashTorrent:
+        on trashTorrent:sender
+            tell application "Finder"
+                set every_tor to every item of torrent_add
+                set every_torCount to count every_tor
+                repeat with i from 1 to every_torCount
+                    ignoring case, hyphens, punctuation, white space and diacriticals
+                        if name of item i of torrent_add contains myshow3
+                            if name of item i of torrent_add contains epcodefinal
+                                if name of item i of torrent_add contains vid_comment then
+                                    move item i of torrent_add to trash
+                                end if
+                            end if
+                        end if
+                    end ignoring
+                end repeat
+            end tell
+        end trashTorrent:
 ############################################################################################################################
 	on download:sender
 		set showlist to listOfShows's stringValue() as text
@@ -891,11 +909,8 @@ script AppDelegate
 					set continue_adding to true
 					if replacefirst is false then set continue_adding to false
 					if continue_adding is false then
-						tell application "Finder"
-							move (every item of processing whose name does not contain "dummyfile") to trash
-                            ---second trash here!
-                            
-						end tell
+						tell application "Finder" to move (every item of processing whose name does not contain "dummyfile") to trash
+                        NSTimer's scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(0, me, "trashTorrent:", missing value, false)
 					else if continue_adding is true then
 						if extension1 is ".mkv" then
                             if name of item 1 of processing contains "dummyfile"
@@ -991,7 +1006,7 @@ script AppDelegate
 							add metafiles2
 						on error number -43
 							move (every item of processing whose name does not contain "dummyfile") to trash
-                            --more trash here?
+                            NSTimer's scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(0, me, "trashTorrent:", missing value, false)
 						end try
 						try
 							set existsShows to every track of playlist "TV Shows" whose name contains myname
@@ -1009,11 +1024,11 @@ script AppDelegate
 					set metafiles3 to metafiles2 as string
 					try
 						move the_file to trash
-                        --more trash here?
+                        NSTimer's scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(0, me, "trashTorrent:", missing value, false)
 					end try
 					try
 						move metafiles3 to trash
-                        --more trash here?
+                        NSTimer's scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(0, me, "trashTorrent:", missing value, false)
 					end try
 					----update epcode in list of shows view
 					set old_data0 to listOfShows's stringValue() as text
@@ -1047,21 +1062,7 @@ script AppDelegate
 						listOfShows's setStringValue:old_data0
 					end if
 					---end update epcode block
-                    tell application "Finder"
-                        set every_tor to every item of torrent_add
-                        set every_torCount to count every_tor
-                        repeat with i from 1 to every_torCount
-                            ignoring case, hyphens, punctuation, white space and diacriticals
-                                if name of item i of torrent_add contains myshow3
-                                    if name of item i of torrent_add contains epcodefinal
-                                        if name of item i of torrent_add contains vid_comment then
-                                            move item i of torrent_add to trash
-                                        end if
-                                    end if
-                                end if
-                            end ignoring
-                        end repeat
-                    end tell
+                    
 					tell application "iTunes"
 						try
 							update item 3 of every source
@@ -1281,5 +1282,4 @@ script AppDelegate
 		end tell
 		return current application's NSTerminateNow
 	end applicationShouldTerminate:
-############################################################################################################################
 end script
