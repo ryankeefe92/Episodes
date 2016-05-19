@@ -185,6 +185,9 @@ script AppDelegate
         end tell
     end moveHook:
 ############################################################################################################################
+    --on trashTorrent:sender
+    --end trashTorrent:
+############################################################################################################################
 	on download:sender
 		set showlist to listOfShows's stringValue() as text
 		set AppleScript's text item delimiters to "
@@ -974,11 +977,11 @@ script AppDelegate
 					set metafiles2 to (every item of processing whose name contains "temp") as string
 					tell application "iTunes"
 						try
-							set kleepklop to location of replaceShow
+							set itunesShow to location of replaceShow
 						end try
 						try
 							tell application "Finder"
-								move kleepklop to trash
+								move itunesShow to trash
 							end tell
 						end try
 						try
@@ -1047,17 +1050,12 @@ script AppDelegate
                     tell application "Finder"
                         set every_tor to every item of torrent_add
                         set every_torCount to count every_tor
-                        display dialog every_torCount
-                        --falls apart somewhere below here
                         repeat with i from 1 to every_torCount
                             ignoring case, hyphens, punctuation, white space and diacriticals
-                                if name of item i contains myshow3
-                                display dialog "1: true"
-                                    if name of item i contains epcodefinal
-                                    display dialog "2: true"
-                                        if name of item i contains vid_comment
-                                        display dialog "3: true"
-                                            move item i to trash
+                                if name of item i of torrent_add contains myshow3
+                                    if name of item i of torrent_add contains epcodefinal
+                                        if name of item i of torrent_add contains vid_comment then
+                                            move item i of torrent_add to trash
                                         end if
                                     end if
                                 end if
