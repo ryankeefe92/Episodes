@@ -43,9 +43,9 @@ script AppDelegate
     global myshow3
     global epcodefinal
     global vid_comment
+    global showname
     global showname2
     global vidQualFirst
-    global rss_items100
 	--property showTable : missing value
 	--property qualitySelect : missing value
 	--property theFirstRun : 0
@@ -172,9 +172,10 @@ script AppDelegate
 	end applicationDidFinishLaunching:
 ############################################################################################################################
     on grabTorrent:sender
-            set theEpcode to item 1 of sender's userInfo
+            set theEpcode to item 1 of sender's userInfo as text
+            set rss_items300 to item 2 of sender's userInfo as text
             set AppleScript's text item delimiters to " \""
-            set tokens to text items of rss_items100
+            set tokens to text items of rss_items300
             set totalTorrents to count tokens
             set bestquality to 0 as integer
             set bestfeeditem to 0 as integer
@@ -376,7 +377,7 @@ script AppDelegate
 						if vidQualFirst is less than 3 then --this is where you can set it to a different "max quality" setting
                             set url2 to "https://kat.cr/usearch/%22" & urlshow & "%20" & iTunesEpcode & "%22%20264%20OR%20x264%20category%3Atv/?rss=1" as text
                             set rss_items100 to do shell script "automator -i " & url2 & " " & theFeedChecker
-                            NSTimer's scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(0, me, "grabTorrent:",{iTunesEpcode}, false)
+                            NSTimer's scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(0, me, "grabTorrent:",{iTunesEpcode,rss_items100}, false)
 						end if
 					end repeat
 				end if
@@ -431,13 +432,13 @@ script AppDelegate
 					set urlepcode to "S" & text 2 thru 3 of urlepcode00 & "E" & text 4 thru 5 of urlepcode00
                     set vidQualFirst to -1 as integer
                     set url2 to "https://kat.cr/usearch/%22" & urlshow & "%20" & urlepcode & "%22%20264%20OR%20x264%20category%3Atv/?rss=1" as text
-                    set rss_items100 to do shell script "automator -i " & url2 & " " & theFeedChecker
-                    if length of rss_items100 is greater than 3 then
-                        NSTimer's scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(0, me, "grabTorrent:",{urlepcode}, false)
+                    set rss_items200 to do shell script "automator -i " & url2 & " " & theFeedChecker
+                    if length of rss_items200 is greater than 3 then
+                        NSTimer's scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(0, me, "grabTorrent:",{urlepcode,rss_items200}, false)
+                        set currentdata to currentdata + 1
                     else
                         exit repeat
                     end if
-                    set currentdata to currentdata + 1
 				end repeat
 			end repeat
 			----STATBAR3----
