@@ -43,9 +43,6 @@ script AppDelegate
     global myshow3
     global epcodefinal
     global vid_comment
-    global showname
-    global showname2
-    global vidQualFirst
 	--property showTable : missing value
 	--property qualitySelect : missing value
 	--property theFirstRun : 0
@@ -174,6 +171,9 @@ script AppDelegate
     on grabTorrent:sender
             set theEpcode to item 1 of sender's userInfo as text
             set rss_items300 to item 2 of sender's userInfo as text
+            set vidQualFirst to item 3 of sender's userInfo as integer
+            set showname2 to item 4 of sender's userInfo as text
+            set showname to item 5 of sender's userInfo as text
             set AppleScript's text item delimiters to " \""
             set tokens to text items of rss_items300
             set totalTorrents to count tokens
@@ -188,10 +188,10 @@ script AppDelegate
                     set tor_comment to "SDTV"
                     set torQual to 0 as integer
                     set vidList to {"720p", "1080p", "4K"}
-                    repeat with i from 1 to count of vidList
-                        if torrentTitle contains item i of vidList then
-                            set tor_comment to item i of vidList as text
-                            set torQual to i as integer
+                    repeat with j from 1 to count of vidList
+                        if torrentTitle contains item j of vidList then
+                            set tor_comment to item j of vidList as text
+                            set torQual to j as integer
                         end if
                     end repeat
                     set torAudQual to 2 as integer
@@ -207,9 +207,9 @@ script AppDelegate
                         end if
                     end ignoring
                     set chanList to {"Mono", "Stereo", "3ch", "4ch", "5ch", "DD5.1"}
-                    repeat with i from 1 to count of chanList
-                        if torrentTitle contains item i of chanList then
-                            set torAudQual to i as integer
+                    repeat with j from 1 to count of chanList
+                        if torrentTitle contains item j of chanList then
+                            set torAudQual to j as integer
                         end if
                     end repeat
                     set torSourceQual to 2 as integer
@@ -218,9 +218,9 @@ script AppDelegate
                         if torrentTitle contains "Web-Rip" then
                             set torSourceQual to 1 as integer
                         end if
-                        repeat with i from 1 to count of sourcList
-                            if torrentTitle contains item i of sourcList then
-                                set torSourceQual to i as integer
+                        repeat with j from 1 to count of sourcList
+                            if torrentTitle contains item j of sourcList then
+                                set torSourceQual to j as integer
                             end if
                         end repeat
                     end ignoring
@@ -274,6 +274,7 @@ script AppDelegate
                     end if
                 end if
             end if
+            delay 6
     end grabTorrent:
 ############################################################################################################################
     on moveHook:sender
@@ -377,7 +378,7 @@ script AppDelegate
 						if vidQualFirst is less than 3 then --this is where you can set it to a different "max quality" setting
                             set url2 to "https://kat.cr/usearch/%22" & urlshow & "%20" & iTunesEpcode & "%22%20264%20OR%20x264%20category%3Atv/?rss=1" as text
                             set rss_items100 to do shell script "automator -i " & url2 & " " & theFeedChecker
-                            NSTimer's scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(0, me, "grabTorrent:",{iTunesEpcode,rss_items100}, false)
+                            NSTimer's scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(0, me, "grabTorrent:",{iTunesEpcode,rss_items100,vidQualFirst,showname2,showname}, false)
 						end if
 					end repeat
 				end if
@@ -434,7 +435,7 @@ script AppDelegate
                     set url2 to "https://kat.cr/usearch/%22" & urlshow & "%20" & urlepcode & "%22%20264%20OR%20x264%20category%3Atv/?rss=1" as text
                     set rss_items200 to do shell script "automator -i " & url2 & " " & theFeedChecker
                     if length of rss_items200 is greater than 3 then
-                        NSTimer's scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(0, me, "grabTorrent:",{urlepcode,rss_items200}, false)
+                        NSTimer's scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(0, me, "grabTorrent:",{urlepcode,rss_items200,vidQualFirst,showname2,showname}, false)
                         set currentdata to currentdata + 1
                     else
                         exit repeat
