@@ -4,6 +4,15 @@
 --
 --  Copyright © 2008-2016 Ryan Keefe
 
+----REWRITE, WITH EACH INDEPENDENT PIECE BROKEN UP--EVERY ACTION, BIT OF LOGIC, ETC SHOULD BE ITS OWN SUBROUTINE--THEN STRING BACK TOGETHER.  PERFORMSELECTOR?
+----IF CODE IS LIKE:
+#######on doThing:sender
+#######blah blah blah
+#######performselector/NSTIMER that contains display dialog "1"
+#######display dialog "2"
+#######end doThing:
+------display dialog "2" is displayed BEFORE display dialog 1, EVEN THOUGH the code containing display dialog "1" is before display dialog "2"...to work around this and make sure that everything executes in the right order, add "delay 0.1" on the line IMMEDIATELY AFTER the NSTIMER line.  If performselector is used instead of NSTIMER, is this still necessary?
+
 script AppDelegate
 	property parent : class "NSObject"
 	-- IBOutlets
@@ -1167,6 +1176,7 @@ script AppDelegate
 						set sortedList2 to sortedList as text
 						listOfShows's setStringValue:sortedList2
 					end if
+                    NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"writeList:" userInfo:"writeList" repeats:false
 					showComboField's setStringValue:""
 					seasonField's setStringValue:""
 					episodeField's setStringValue:""
@@ -1174,24 +1184,26 @@ script AppDelegate
 			end if
 		end if
 	end addShow:
-	--on donePanel_(sender)
-	---write edited panel to text file
-	--thePanel's orderOut_(thePanel)
-	--end donePanel_
+############################################################################################################################
+    on writeList:sender
+        set newText to listOfShows's stringValue() as text
+        tell application "Finder"
+            set the listFile2 to the listFile as text
+            set the open_master_file to open for access file listFile2 with write permission
+            set eof of the open_master_file to 0
+            write newText to the open_master_file
+            close access the open_master_file
+        end tell
+    end writeList:
+############################################################################################################################
 	on appQuit:sender
+        NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"writeList:" userInfo:"writeList" repeats:false
+        delay 0.1
 		tell current application to quit
 	end appQuit:
 ############################################################################################################################
 	on applicationShouldTerminate:sender
 		-- Insert code here to do any housekeeping before your application quits
-		set newText to listOfShows's stringValue() as text
-		tell application "Finder"
-			set the listFile2 to the listFile as text
-			set the open_master_file to open for access file listFile2 with write permission
-			set eof of the open_master_file to 0
-			write newText to the open_master_file
-			close access the open_master_file
-		end tell
 		return current application's NSTerminateNow
 	end applicationShouldTerminate:
 end script
