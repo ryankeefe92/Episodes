@@ -5,13 +5,7 @@
 --  Copyright © 2008-2016 Ryan Keefe
 
 ----REWRITE, WITH EACH INDEPENDENT PIECE BROKEN UP--EVERY ACTION, BIT OF LOGIC, ETC SHOULD BE ITS OWN SUBROUTINE--THEN STRING BACK TOGETHER.  PERFORMSELECTOR?
-----IF CODE IS LIKE:
-#######on doThing:sender
-#######blah blah blah
-#######performselector/NSTIMER that contains display dialog "1"
-#######display dialog "2"
-#######end doThing:
-------display dialog "2" is displayed BEFORE display dialog 1, EVEN THOUGH the code containing display dialog "1" is before display dialog "2"...to work around this and make sure that everything executes in the right order, add "delay 0.1" on the line IMMEDIATELY AFTER the NSTIMER line.  If performselector is used instead of NSTIMER, is this still necessary?
+----DELAY 0.1 (LONGER TIME NECESSARY IF SUBROUTINE CALLED BY PERFORMSELECTOR TAKES A WHILE TO COMPLETE???  IF NOT, IS SHORTER TIME POSSIBLE? 0.01? 0.000001?) MUST BE ADDED ON THE LINE IMMEDIATELY FOLLOW NSTIMER.  If performselector is used instead of NSTIMER, is this still necessary?
 
 script AppDelegate
 	property parent : class "NSObject"
