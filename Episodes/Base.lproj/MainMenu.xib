@@ -217,7 +217,7 @@
                         <rect key="frame" x="20" y="46" width="152" height="25"/>
                         <popUpButtonCell key="cell" type="roundTextured" title="most recently aired" bezelStyle="texturedRounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" selectedItem="POB-IB-NZ3" id="J4l-pE-Q3M">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                            <font key="font" metaFont="system"/>
+                            <font key="font" metaFont="menu"/>
                             <menu key="menu" id="NEu-pR-EcZ">
                                 <items>
                                     <menuItem title="most recently aired" state="on" id="POB-IB-NZ3"/>
@@ -318,7 +318,7 @@
                         </connections>
                     </button>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="aS5-M1-gRU">
-                        <rect key="frame" x="30" y="431" width="135" height="48"/>
+                        <rect key="frame" x="17" y="431" width="135" height="48"/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Episodes" id="iyO-SB-GJX">
                             <font key="font" size="32" name="Futura-Medium"/>
                             <color key="textColor" red="0.10859834290000001" green="0.16904694419999999" blue="0.85090206180000005" alpha="1" colorSpace="calibratedRGB"/>
@@ -326,7 +326,7 @@
                         </textFieldCell>
                     </textField>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="gFs-oT-I75">
-                        <rect key="frame" x="55" y="430" width="35" height="16"/>
+                        <rect key="frame" x="42" y="430" width="35" height="16"/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" allowsUndo="NO" sendsActionOnEndEditing="YES" title="(βeta)" id="YTv-Eb-II6">
                             <font key="font" metaFont="systemLight" size="11"/>
                             <color key="textColor" name="controlDarkShadowColor" catalog="System" colorSpace="catalog"/>
@@ -334,7 +334,7 @@
                         </textFieldCell>
                     </textField>
                     <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Ye4-pz-8sZ">
-                        <rect key="frame" x="180" y="445" width="72" height="19"/>
+                        <rect key="frame" x="158" y="445" width="72" height="19"/>
                         <buttonCell key="cell" type="roundTextured" title="Check Now" bezelStyle="texturedRounded" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="cgt-2y-btW">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                             <font key="font" metaFont="smallSystem"/>

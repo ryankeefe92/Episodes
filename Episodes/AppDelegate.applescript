@@ -277,7 +277,7 @@ script AppDelegate
                     end if
                 end if
             end if
-            delay 6
+            delay 6  ----IS THIS NEEDED NOW THAT THE DELAY 0.1 HAS BEEN ADDED????
     end grabTorrent:
 ############################################################################################################################
     on moveHook:sender
