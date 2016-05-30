@@ -2,7 +2,7 @@
 --  AppDelegate.applescript
 --  Episodes
 --
---  Copyright © 2008-2016 Ryan Keefe
+--  Copyright © 2007-2016 Ryan Keefe
 
 ----REWRITE, WITH EACH INDEPENDENT PIECE BROKEN UP--EVERY ACTION, BIT OF LOGIC, ETC SHOULD BE ITS OWN SUBROUTINE--THEN STRING BACK TOGETHER.  PERFORMSELECTOR?
 ----DELAY 0.1 (LONGER TIME NECESSARY IF SUBROUTINE CALLED BY PERFORMSELECTOR TAKES A WHILE TO COMPLETE???  IF NOT, IS SHORTER TIME POSSIBLE? 0.01? 0.000001?) MUST BE ADDED ON THE LINE IMMEDIATELY FOLLOWING NSTIMER.  If performselector is used instead of NSTIMER, is this still necessary?
@@ -274,10 +274,11 @@ script AppDelegate
                             move (every item of downloads_torrents whose name contains ".torrent") to torrent_add
                         end tell
                         do shell script aria & " --seed-time=0 --on-bt-download-complete=exit -d " & downloadingFolder & " " & torrentAddFolder & torname & " > /dev/null 2>&1 &"
+                        --delay 6 ----IS THIS NEEDED NOW THAT THE DELAY 0.1 HAS BEEN ADDED????
                     end if
                 end if
             end if
-            delay 6  ----IS THIS NEEDED NOW THAT THE DELAY 0.1 HAS BEEN ADDED????
+            delay 0.1  -- more of these at END of NSTIMER sections, before it returns to main script?
     end grabTorrent:
 ############################################################################################################################
     on moveHook:sender
