@@ -302,14 +302,17 @@ script AppDelegate
 ############################################################################################################################
     on trashTorrent:sender
         tell application "Finder"
-            set every_tor to every item of torrent_add
+            set every_tor to every item of torrent_add whose name contains ".torrent"
             set every_torCount to count every_tor
             repeat with i from 1 to every_torCount
                 ignoring case, hyphens, punctuation, white space and diacriticals
-                    if name of item i of torrent_add contains myshow3
-                        if name of item i of torrent_add contains epcodefinal
-                            if name of item i of torrent_add contains vid_comment then
-                                move item i of torrent_add to trash
+                    if name of item i of every_tor contains myshow3 then
+                        if name of item i of every_tor contains epcodefinal then
+                            if name of item i of every_tor contains vid_comment then
+                                set to_delete to name of item i of every_tor
+                                do shell script "rm " & torrentAddFolder & to_delete
+                                set i to (i - 1)
+                                set every_torCount to (every_torCount - 1)
                             end if
                         end if
                     end if
