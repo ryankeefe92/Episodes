@@ -274,7 +274,6 @@ script AppDelegate
                             move (every item of downloads_torrents whose name contains ".torrent") to torrent_add
                         end tell
                         do shell script aria & " --seed-time=0 --on-bt-download-complete=exit -d " & downloadingFolder & " " & torrentAddFolder & torname & " > /dev/null 2>&1 &"
-                        --delay 6 ----IS THIS NEEDED NOW THAT THE DELAY 0.1 HAS BEEN ADDED????
                     end if
                 end if
             end if
