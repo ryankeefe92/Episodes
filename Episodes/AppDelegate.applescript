@@ -310,7 +310,7 @@ script AppDelegate
                         if name of item i of every_tor contains epcodefinal then
                             if name of item i of every_tor contains vid_comment then
                                 set to_delete to name of item i of every_tor
-                                do shell script "rm " & torrentAddFolder & to_delete
+                                do shell script "rm " & torrentAddFolder & quoted form of to_delete
                                 set i to (i - 1)
                                 set every_torCount to (every_torCount - 1)
                             end if
@@ -466,10 +466,11 @@ script AppDelegate
 			set totalfolders to count folders in downloads
 			repeat while totalfolders is greater than 0
 				set downloads2 to folder 1 of downloads
+                set downloads2_delete to name of downloads2
 				set {mkvfiles, mp4files, m4vfiles} to {(every item of downloads2 whose name ends with ".mkv"), (every item of downloads2 whose name ends with ".mp4"), (every item of downloads2 whose name ends with ".m4v")}
 				move {mkvfiles, mp4files, m4vfiles} to downloads with replacing
 				try
-					move downloads2 to trash
+                    do shell script "rm -r " & downloadingCompleteFolder & quoted form of downloads2_delete
 				end try
 				set totalfolders to count folders in downloads
 			end repeat
@@ -703,7 +704,13 @@ script AppDelegate
 							set myair2 to item 1 of tokens as text ---airdate
 							-----fetch artwork
 							tell application "Finder"
-								move (every item of artfolder whose creation date ² ((current date) - 4 * weeks)) to trash
+                                set oldArt to (every item of artfolder whose creation date ² ((current date) - 4 * weeks))
+                                repeat with oa from 1 to count of oldArt
+                                    set deleteArt to name of item oa of oldArt
+                                    if deleteArt does not contain "no_art" then
+                                        do shell script "rm " & showArtFolder & quoted form of deleteArt
+                                    end if
+                                end repeat
 								set artfiles to (every item of artfolder whose name contains myshow2)
 								set artcount to count artfiles
 								try
@@ -829,7 +836,7 @@ script AppDelegate
 					set continue_adding to true
 					if replacefirst is false then set continue_adding to false
 					if continue_adding is false then
-						tell application "Finder" to move (every item of processing whose name does not contain "dummyfile") to trash
+						tell application "Finder" to move (every item of processing whose name does not contain "dummyfile") to trash --trashHere
                         NSTimer's scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(0, me, "trashTorrent:", missing value, false)
                         delay 0.1
 					else if continue_adding is true then
@@ -876,12 +883,12 @@ script AppDelegate
 								end if
 							end tell
 							try
-								move the_file to trash
+								move the_file to trash --trashHere
 							end try
                             set the_file to every item of processing whose name ends with ".mp4"
                             set the_file to every item of processing whose name ends with ".m4v"
                             set delete_files to every item of processing whose name ends with ".mkv"
-                            move delete_files to trash
+                            move delete_files to trash --trashHere
 						end if
 					end if
 				end if
@@ -889,7 +896,7 @@ script AppDelegate
 			try
 				set totalprocessing to count files in processing
 				if totalprocessing is greater than 3 then
-					move (every item of processing whose name does not contain "dummyfile") to trash
+					move (every item of processing whose name does not contain "dummyfile") to trash --trashHere
 				end if
                 if name of item 1 of processing contains "dummyfile"
 				set the_file to item 2 of processing
@@ -917,7 +924,7 @@ script AppDelegate
 						end try
 						try
 							tell application "Finder"
-								move itunesShow to trash
+								move itunesShow to trash --trashHere
 							end tell
 						end try
 						try
@@ -926,7 +933,7 @@ script AppDelegate
 						try
 							add metafiles2
 						on error number -43
-							move (every item of processing whose name does not contain "dummyfile") to trash
+							move (every item of processing whose name does not contain "dummyfile") to trash --trashHere
                             NSTimer's scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(0, me, "trashTorrent:", missing value, false)
                             delay 0.1
 						end try
@@ -945,12 +952,12 @@ script AppDelegate
 					end tell
 					set metafiles3 to metafiles2 as string
 					try
-						move the_file to trash
+						move the_file to trash --trashHere
                         NSTimer's scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(0, me, "trashTorrent:", missing value, false)
                         delay 0.1
 					end try
 					try
-						move metafiles3 to trash
+						move metafiles3 to trash --trashHere
                         NSTimer's scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(0, me, "trashTorrent:", missing value, false)
                         delay 0.1
 					end try
