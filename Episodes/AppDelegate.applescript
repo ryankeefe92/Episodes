@@ -2,7 +2,7 @@
 --  AppDelegate.applescript
 --  Episodes
 --
---  Copyright © 2007-2016 Ryan Keefe
+--  Copyright © 2007-2016 Ryan Keefe.  Some rights reserved.
 
 ----REWRITE, WITH EACH INDEPENDENT PIECE BROKEN UP--EVERY ACTION, BIT OF LOGIC, ETC SHOULD BE ITS OWN SUBROUTINE--THEN STRING BACK TOGETHER.  PERFORMSELECTOR?
 ----DELAY 0.1 (LONGER TIME NECESSARY IF SUBROUTINE CALLED BY PERFORMSELECTOR TAKES A WHILE TO COMPLETE???  IF NOT, IS SHORTER TIME POSSIBLE? 0.01? 0.000001?) MUST BE ADDED ON THE LINE IMMEDIATELY FOLLOWING NSTIMER.  If performselector is used instead of NSTIMER, is this still necessary?
@@ -836,7 +836,7 @@ script AppDelegate
 					set continue_adding to true
 					if replacefirst is false then set continue_adding to false
 					if continue_adding is false then
-						tell application "Finder" to move (every item of processing whose name does not contain "dummyfile") to trash --trashHere
+						do shell script "rm " & processingFolder & "*.[^keep]*"
                         NSTimer's scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(0, me, "trashTorrent:", missing value, false)
                         delay 0.1
 					else if continue_adding is true then
