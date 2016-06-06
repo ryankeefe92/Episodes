@@ -883,12 +883,11 @@ script AppDelegate
 								end if
 							end tell
 							try
-								move the_file to trash --trashHere
+								move the_file to trash --refers to the original mkv file, before repackaging.  --trashHere
 							end try
                             set the_file to every item of processing whose name ends with ".mp4"
                             set the_file to every item of processing whose name ends with ".m4v"
-                            set delete_files to every item of processing whose name ends with ".mkv"
-                            move delete_files to trash --trashHere
+                            do shell script "rm " & processingFolder & "*.mkv"
 						end if
 					end if
 				end if
@@ -896,7 +895,7 @@ script AppDelegate
 			try
 				set totalprocessing to count files in processing
 				if totalprocessing is greater than 3 then
-					move (every item of processing whose name does not contain "dummyfile") to trash --trashHere
+					do shell script "rm " & processingFolder & "*.[^keep]*"
 				end if
                 if name of item 1 of processing contains "dummyfile"
 				set the_file to item 2 of processing
@@ -933,7 +932,7 @@ script AppDelegate
 						try
 							add metafiles2
 						on error number -43
-							move (every item of processing whose name does not contain "dummyfile") to trash --trashHere
+							do shell script "rm " & processingFolder & "*.[^keep]*"
                             NSTimer's scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(0, me, "trashTorrent:", missing value, false)
                             delay 0.1
 						end try
@@ -958,6 +957,7 @@ script AppDelegate
 					end try
 					try
 						move metafiles3 to trash --trashHere
+                        ----replace above line with do shell script "rm " & processingFolder & "*-temp.*" ??? Because metafiles3 refers to metafiles2 which is "(every item of processing whose name contains "temp")".  Run test where it actually lets atomicparsley create the file with "temp" in it, and see if this works.
                         NSTimer's scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(0, me, "trashTorrent:", missing value, false)
                         delay 0.1
 					end try
