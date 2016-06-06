@@ -886,7 +886,7 @@ script AppDelegate
 							end try
                             set the_file to every item of processing whose name ends with ".mp4"
                             set the_file to every item of processing whose name ends with ".m4v"
-                            do shell script "rm " & processingFolder & "*.mkv"
+                            --do shell script "rm " & processingFolder & "*.mkv"
 						end if
 					end if
 				end if
