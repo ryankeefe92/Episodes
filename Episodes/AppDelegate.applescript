@@ -5,7 +5,6 @@
 --  Copyright © 2007-2016 Ryan Keefe.  Some rights reserved.
 
 ----REWRITE, WITH EACH INDEPENDENT PIECE BROKEN UP--EVERY ACTION, BIT OF LOGIC, ETC SHOULD BE ITS OWN SUBROUTINE--THEN STRING BACK TOGETHER.  PERFORMSELECTOR?
-----DELAY 0.1 (LONGER TIME NECESSARY IF SUBROUTINE CALLED BY PERFORMSELECTOR TAKES A WHILE TO COMPLETE???  IF NOT, IS SHORTER TIME POSSIBLE? 0.01? 0.000001?) MUST BE ADDED ON THE LINE IMMEDIATELY FOLLOWING NSTIMER.  If performselector is used instead of NSTIMER, is this still necessary?
 
 script AppDelegate
 	property parent : class "NSObject"
@@ -267,7 +266,7 @@ script AppDelegate
                         ----STATBAR2----
                         set statbar2 to current application's NSString's stringWithFormat_("%@%@%@%@%@%@%@", "Downloading ", showname, " ", theEpcode, " at ", tor_comment, " quality.")
                         (statusLabel's setStringValue:statbar2)
-                        delay 0.1
+                        delay 0.01
                         ----STATBAR2----
                         tell application "Finder"
                             set name of (every item of downloads_torrents whose name contains ".torrent") to torname
@@ -277,7 +276,7 @@ script AppDelegate
                     end if
                 end if
             end if
-            delay 0.1  -- more of these at END of NSTIMER sections, before it returns to main script?
+            delay 0.01  -- more of these at END of NSTIMER sections, before it returns to main script?
     end grabTorrent:
 ############################################################################################################################
     on moveHook:sender
@@ -341,7 +340,7 @@ script AppDelegate
 				end if
 				(statusLabel's setStringValue:statbar)
 				----STATBAR----
-				delay 0.1
+				delay 0.01
 				set text item delimiters of AppleScript to " "
 				set showname2 to text items of showname
 				set text item delimiters of AppleScript to "."
@@ -385,7 +384,7 @@ script AppDelegate
                             set url2 to "https://kat.cr/usearch/%22" & urlshow & "%20" & iTunesEpcode & "%22%20264%20OR%20x264%20category%3Atv/?rss=1" as text
                             set rss_items100 to do shell script "automator -i " & url2 & " " & theFeedChecker
                             NSTimer's scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(0, me, "grabTorrent:",{iTunesEpcode,rss_items100,vidQualFirst,showname2,showname}, false)
-                            delay 0.1
+                            delay 0.01
 						end if
 					end repeat
 				end if
@@ -443,7 +442,7 @@ script AppDelegate
                     set rss_items200 to do shell script "automator -i " & url2 & " " & theFeedChecker
                     if length of rss_items200 is greater than 3 then
                         NSTimer's scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(0, me, "grabTorrent:",{urlepcode,rss_items200,vidQualFirst,showname2,showname}, false)
-                        delay 0.1
+                        delay 0.01
                     else
                         exit repeat
                     end if
@@ -454,7 +453,7 @@ script AppDelegate
 			set statbar3 to current application's NSString's stringWithFormat_("%@", "Idle") --shouldn't always be idle, leave "downloading" statuses up until the episode is added to itunes...then say adding...then idle.
 			progressBar's incrementBy:incrementJump
 			statusLabel's setStringValue:statbar3
-			delay 0.1
+			delay 0.01
 			progressBar's incrementBy:-100
 			----STATBAR3----
 		end if
@@ -838,7 +837,7 @@ script AppDelegate
 					if continue_adding is false then
 						do shell script "rm " & processingFolder & "*.[^keep]*"
                         NSTimer's scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(0, me, "trashTorrent:", missing value, false)
-                        delay 0.1
+                        delay 0.01
 					else if continue_adding is true then
 						if extension1 is ".mkv" then
                             if name of item 1 of processing contains "dummyfile"
@@ -934,7 +933,7 @@ script AppDelegate
 						on error number -43
 							do shell script "rm " & processingFolder & "*.[^keep]*"
                             NSTimer's scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(0, me, "trashTorrent:", missing value, false)
-                            delay 0.1
+                            delay 0.01
 						end try
 						try
 							set existsShows to every track of playlist "TV Shows" whose name contains myname
@@ -953,13 +952,13 @@ script AppDelegate
 					try
 						move the_file to trash --trashHere
                         NSTimer's scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(0, me, "trashTorrent:", missing value, false)
-                        delay 0.1
+                        delay 0.01
 					end try
 					try
 						move metafiles3 to trash --trashHere
                         ----replace above line with do shell script "rm " & processingFolder & "*-temp.*" ??? Because metafiles3 refers to metafiles2 which is "(every item of processing whose name contains "temp")".  Run test where it actually lets atomicparsley create the file with "temp" in it, and see if this works.
                         NSTimer's scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(0, me, "trashTorrent:", missing value, false)
-                        delay 0.1
+                        delay 0.01
 					end try
 					----update epcode in list of shows view
 					set old_data0 to listOfShows's stringValue() as text
@@ -1187,7 +1186,7 @@ script AppDelegate
 						listOfShows's setStringValue:sortedList2
 					end if
                     NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"writeList:" userInfo:"writeList" repeats:false
-                    delay 0.1
+                    delay 0.01
 					showComboField's setStringValue:""
 					seasonField's setStringValue:""
 					episodeField's setStringValue:""
@@ -1209,7 +1208,7 @@ script AppDelegate
 ############################################################################################################################
 	on appQuit:sender
         NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"writeList:" userInfo:"writeList" repeats:false
-        delay 0.1
+        delay 0.01
 		tell current application to quit
 	end appQuit:
 ############################################################################################################################
