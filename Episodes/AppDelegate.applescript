@@ -955,8 +955,7 @@ script AppDelegate
                         delay 0.01
 					end try
 					try
-						do shell script "rm " & processingFolder & "*-temp.*" --replaces below (commented) line because metafiles3 refers to metafiles2 which is "(every item of processing whose name contains "temp")".  Run test where it actually lets atomicparsley create the file with "temp" in it, and see if this works.
-                        --move metafiles3 to trash --trashHere
+						do shell script "rm " & processingFolder & "*-temp-*.*"
                         NSTimer's scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(0, me, "trashTorrent:", missing value, false)
                         delay 0.01
 					end try
