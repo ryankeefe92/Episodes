@@ -982,6 +982,8 @@ script AppDelegate
                         else
                         listOfShows's setStringValue:old_data0
                     end if
+                    NSTimer's scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(0, me, "writeList:", missing value, false)
+                    delay 0.01
                     ---end update epcode block
                     try
 						do shell script "rm " & quoted form of rm2
