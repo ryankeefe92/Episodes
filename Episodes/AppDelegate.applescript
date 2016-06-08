@@ -917,17 +917,12 @@ script AppDelegate
 					end if
 					set metafiles2 to (every item of processing whose name contains "temp") as string
 					tell application "iTunes"
-						try
-							set itunesShow to location of replaceShow
-						end try
-						try
-							tell application "Finder"
-								move itunesShow to trash --trashHere
-							end tell
-						end try
-						try
-							delete replaceShow
-						end try
+                        if replaceShow is not {} then
+                            set itunesShow to location of replaceShow
+                            set i2 to POSIX path of itunesShow as text
+                            do shell script "rm " & quoted form of i2
+                            delete replaceShow
+                        end if
 						try
 							add metafiles2
 						on error number -43
