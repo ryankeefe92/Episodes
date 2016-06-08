@@ -944,9 +944,46 @@ script AppDelegate
 								set bookmark of finalShow to (playbackpos - 5)
 							end if
 						end try
+                            try
+                                update item 3 of every source
+                            end try
+                            try
+                                update item 4 of every source
+                            end try
 					end tell
-					set metafiles3 to metafiles2 as string
-					try
+                    ----update epcode in list of shows view
+                    set old_data0 to listOfShows's stringValue() as text
+                    set newDelim to showname2 & " (S"
+                    set AppleScript's text item delimiters to newDelim
+                    set epcodeTokens to text items of old_data0
+                    set beforeEpcode0 to item 1 of epcodeTokens
+                    set beforeEpcode to beforeEpcode0 & newDelim
+                    set old_data1 to item 2 of epcodeTokens
+                    set AppleScript's text item delimiters to ")"
+                    set epcodeTokens2 to text items of old_data1
+                    set old_data2 to item 1 of epcodeTokens2 ---everything between the parentheses, except for the S.  Ex: 04E01
+                    set AppleScript's text item delimiters to "E"
+                    set eTokens to text items of old_data2
+                    set old_dataSeason to item 1 of eTokens
+                    set old_dataEpisode to item 2 of eTokens
+                    set AppleScript's text item delimiters to old_data2 & ")"
+                    set epcodeTokens3 to text items of old_data1
+                    set afterEpcode to item 2 of epcodeTokens3
+                    set oldnum9 to old_dataSeason & old_dataEpisode as integer
+                    set oldnum0 to oldnum9 + 90000
+                    set newnum0 to mySeason2 & myEpisode2 as integer
+                    set newnum1 to newnum0 + 90001
+                    set newnum7 to newnum1 as text
+                    set oldnum7 to oldnum0 as text
+                    set newnum to text 2 thru 3 of newnum7 & "E" & text 4 thru 5 of newnum7
+                    set newData to beforeEpcode & newnum & ")" & afterEpcode
+                    if newnum1 is greater than oldnum0 then
+                        listOfShows's setStringValue:newData
+                        else
+                        listOfShows's setStringValue:old_data0
+                    end if
+                    ---end update epcode block
+                    try
 						do shell script "rm " & quoted form of rm2
                         NSTimer's scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(0, me, "trashTorrent:", missing value, false)
                         delay 0.01
@@ -956,47 +993,6 @@ script AppDelegate
                         NSTimer's scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(0, me, "trashTorrent:", missing value, false)
                         delay 0.01
 					end try
-					----update epcode in list of shows view
-					set old_data0 to listOfShows's stringValue() as text
-					set newDelim to showname2 & " (S"
-					set AppleScript's text item delimiters to newDelim
-					set epcodeTokens to text items of old_data0
-					set beforeEpcode0 to item 1 of epcodeTokens
-					set beforeEpcode to beforeEpcode0 & newDelim
-					set old_data1 to item 2 of epcodeTokens
-					set AppleScript's text item delimiters to ")"
-					set epcodeTokens2 to text items of old_data1
-					set old_data2 to item 1 of epcodeTokens2 ---everything between the parentheses, except for the S.  Ex: 04E01
-					set AppleScript's text item delimiters to "E"
-					set eTokens to text items of old_data2
-					set old_dataSeason to item 1 of eTokens
-					set old_dataEpisode to item 2 of eTokens
-					set AppleScript's text item delimiters to old_data2 & ")"
-					set epcodeTokens3 to text items of old_data1
-					set afterEpcode to item 2 of epcodeTokens3
-					set oldnum9 to old_dataSeason & old_dataEpisode as integer
-					set oldnum0 to oldnum9 + 90000
-					set newnum0 to mySeason2 & myEpisode2 as integer
-					set newnum1 to newnum0 + 90001
-					set newnum7 to newnum1 as text
-					set oldnum7 to oldnum0 as text
-					set newnum to text 2 thru 3 of newnum7 & "E" & text 4 thru 5 of newnum7
-					set newData to beforeEpcode & newnum & ")" & afterEpcode
-					if newnum1 is greater than oldnum0 then
-						listOfShows's setStringValue:newData
-					else
-						listOfShows's setStringValue:old_data0
-					end if
-					---end update epcode block
-                    
-					tell application "iTunes"
-						try
-							update item 3 of every source
-						end try
-						try
-							update item 4 of every source
-						end try
-					end tell
 				end if
 			end try
 			set the_file to {}
