@@ -902,6 +902,8 @@ script AppDelegate
                 set the_file to item 1 of processing
                 end if
 				set origin to name of the_file
+                set rmfile to the_file as alias
+                set rm2 to POSIX path of rmfile as text
 				--the following two lines:  combine or make subroutine.
 				if origin ends with ".mp4" then set goOn to true
 				if origin ends with ".m4v" then set goOn to true
@@ -945,7 +947,7 @@ script AppDelegate
 					end tell
 					set metafiles3 to metafiles2 as string
 					try
-						move the_file to trash --trashHere
+						do shell script "rm " & quoted form of rm2
                         NSTimer's scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(0, me, "trashTorrent:", missing value, false)
                         delay 0.01
 					end try
