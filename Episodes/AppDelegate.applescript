@@ -2,10 +2,9 @@
 --  AppDelegate.applescript
 --  Episodes
 --
---  Copyright © 2007-2016 Ryan Keefe
+--  Copyright © 2007-2016 Ryan Keefe.  Some rights reserved.
 
 ----REWRITE, WITH EACH INDEPENDENT PIECE BROKEN UP--EVERY ACTION, BIT OF LOGIC, ETC SHOULD BE ITS OWN SUBROUTINE--THEN STRING BACK TOGETHER.  PERFORMSELECTOR?
-----DELAY 0.1 (LONGER TIME NECESSARY IF SUBROUTINE CALLED BY PERFORMSELECTOR TAKES A WHILE TO COMPLETE???  IF NOT, IS SHORTER TIME POSSIBLE? 0.01? 0.000001?) MUST BE ADDED ON THE LINE IMMEDIATELY FOLLOWING NSTIMER.  If performselector is used instead of NSTIMER, is this still necessary?
 
 script AppDelegate
 	property parent : class "NSObject"
@@ -267,7 +266,7 @@ script AppDelegate
                         ----STATBAR2----
                         set statbar2 to current application's NSString's stringWithFormat_("%@%@%@%@%@%@%@", "Downloading ", showname, " ", theEpcode, " at ", tor_comment, " quality.")
                         (statusLabel's setStringValue:statbar2)
-                        delay 0.1
+                        delay 0.01
                         ----STATBAR2----
                         tell application "Finder"
                             set name of (every item of downloads_torrents whose name contains ".torrent") to torname
@@ -277,7 +276,7 @@ script AppDelegate
                     end if
                 end if
             end if
-            delay 0.1  -- more of these at END of NSTIMER sections, before it returns to main script?
+            delay 0.01  -- more of these at END of NSTIMER sections, before it returns to main script?
     end grabTorrent:
 ############################################################################################################################
     on moveHook:sender
@@ -302,14 +301,17 @@ script AppDelegate
 ############################################################################################################################
     on trashTorrent:sender
         tell application "Finder"
-            set every_tor to every item of torrent_add
+            set every_tor to every item of torrent_add whose name contains ".torrent"
             set every_torCount to count every_tor
             repeat with i from 1 to every_torCount
                 ignoring case, hyphens, punctuation, white space and diacriticals
-                    if name of item i of torrent_add contains myshow3
-                        if name of item i of torrent_add contains epcodefinal
-                            if name of item i of torrent_add contains vid_comment then
-                                move item i of torrent_add to trash
+                    if name of item i of every_tor contains myshow3 then
+                        if name of item i of every_tor contains epcodefinal then
+                            if name of item i of every_tor contains vid_comment then
+                                set to_delete to name of item i of every_tor
+                                do shell script "rm " & torrentAddFolder & quoted form of to_delete
+                                set i to (i - 1)
+                                set every_torCount to (every_torCount - 1)
                             end if
                         end if
                     end if
@@ -338,7 +340,7 @@ script AppDelegate
 				end if
 				(statusLabel's setStringValue:statbar)
 				----STATBAR----
-				delay 0.1
+				delay 0.01
 				set text item delimiters of AppleScript to " "
 				set showname2 to text items of showname
 				set text item delimiters of AppleScript to "."
@@ -382,7 +384,7 @@ script AppDelegate
                             set url2 to "https://kat.cr/usearch/%22" & urlshow & "%20" & iTunesEpcode & "%22%20264%20OR%20x264%20category%3Atv/?rss=1" as text
                             set rss_items100 to do shell script "automator -i " & url2 & " " & theFeedChecker
                             NSTimer's scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(0, me, "grabTorrent:",{iTunesEpcode,rss_items100,vidQualFirst,showname2,showname}, false)
-                            delay 0.1
+                            delay 0.01
 						end if
 					end repeat
 				end if
@@ -440,7 +442,7 @@ script AppDelegate
                     set rss_items200 to do shell script "automator -i " & url2 & " " & theFeedChecker
                     if length of rss_items200 is greater than 3 then
                         NSTimer's scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(0, me, "grabTorrent:",{urlepcode,rss_items200,vidQualFirst,showname2,showname}, false)
-                        delay 0.1
+                        delay 0.01
                     else
                         exit repeat
                     end if
@@ -451,7 +453,7 @@ script AppDelegate
 			set statbar3 to current application's NSString's stringWithFormat_("%@", "Idle") --shouldn't always be idle, leave "downloading" statuses up until the episode is added to itunes...then say adding...then idle.
 			progressBar's incrementBy:incrementJump
 			statusLabel's setStringValue:statbar3
-			delay 0.1
+			delay 0.01
 			progressBar's incrementBy:-100
 			----STATBAR3----
 		end if
@@ -463,10 +465,11 @@ script AppDelegate
 			set totalfolders to count folders in downloads
 			repeat while totalfolders is greater than 0
 				set downloads2 to folder 1 of downloads
+                set downloads2_delete to name of downloads2
 				set {mkvfiles, mp4files, m4vfiles} to {(every item of downloads2 whose name ends with ".mkv"), (every item of downloads2 whose name ends with ".mp4"), (every item of downloads2 whose name ends with ".m4v")}
 				move {mkvfiles, mp4files, m4vfiles} to downloads with replacing
 				try
-					move downloads2 to trash
+                    do shell script "rm -r " & downloadingCompleteFolder & quoted form of downloads2_delete
 				end try
 				set totalfolders to count folders in downloads
 			end repeat
@@ -700,7 +703,13 @@ script AppDelegate
 							set myair2 to item 1 of tokens as text ---airdate
 							-----fetch artwork
 							tell application "Finder"
-								move (every item of artfolder whose creation date ² ((current date) - 4 * weeks)) to trash
+                                set oldArt to (every item of artfolder whose creation date ² ((current date) - 4 * weeks))
+                                repeat with oa from 1 to count of oldArt
+                                    set deleteArt to name of item oa of oldArt
+                                    if deleteArt does not contain "no_art" then
+                                        do shell script "rm " & showArtFolder & quoted form of deleteArt
+                                    end if
+                                end repeat
 								set artfiles to (every item of artfolder whose name contains myshow2)
 								set artcount to count artfiles
 								try
@@ -826,9 +835,9 @@ script AppDelegate
 					set continue_adding to true
 					if replacefirst is false then set continue_adding to false
 					if continue_adding is false then
-						tell application "Finder" to move (every item of processing whose name does not contain "dummyfile") to trash
+						do shell script "rm " & processingFolder & "*.[^keep]*"
                         NSTimer's scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(0, me, "trashTorrent:", missing value, false)
-                        delay 0.1
+                        delay 0.01
 					else if continue_adding is true then
 						if extension1 is ".mkv" then
                             if name of item 1 of processing contains "dummyfile"
@@ -873,12 +882,11 @@ script AppDelegate
 								end if
 							end tell
 							try
-								move the_file to trash
+								do shell script "rm " & processingFolder & "*.mkv"
 							end try
                             set the_file to every item of processing whose name ends with ".mp4"
                             set the_file to every item of processing whose name ends with ".m4v"
-                            set delete_files to every item of processing whose name ends with ".mkv"
-                            move delete_files to trash
+                            --do shell script "rm " & processingFolder & "*.mkv"
 						end if
 					end if
 				end if
@@ -886,7 +894,7 @@ script AppDelegate
 			try
 				set totalprocessing to count files in processing
 				if totalprocessing is greater than 3 then
-					move (every item of processing whose name does not contain "dummyfile") to trash
+					do shell script "rm " & processingFolder & "*.[^keep]*"
 				end if
                 if name of item 1 of processing contains "dummyfile"
 				set the_file to item 2 of processing
@@ -894,6 +902,8 @@ script AppDelegate
                 set the_file to item 1 of processing
                 end if
 				set origin to name of the_file
+                set rmfile to the_file as alias
+                set rm2 to POSIX path of rmfile as text
 				--the following two lines:  combine or make subroutine.
 				if origin ends with ".mp4" then set goOn to true
 				if origin ends with ".m4v" then set goOn to true
@@ -909,23 +919,18 @@ script AppDelegate
 					end if
 					set metafiles2 to (every item of processing whose name contains "temp") as string
 					tell application "iTunes"
-						try
-							set itunesShow to location of replaceShow
-						end try
-						try
-							tell application "Finder"
-								move itunesShow to trash
-							end tell
-						end try
-						try
-							delete replaceShow
-						end try
+                        if replaceShow is not {} then
+                            set itunesShow to location of replaceShow
+                            set i2 to POSIX path of itunesShow as text
+                            do shell script "rm " & quoted form of i2
+                            delete replaceShow
+                        end if
 						try
 							add metafiles2
 						on error number -43
-							move (every item of processing whose name does not contain "dummyfile") to trash
+							do shell script "rm " & processingFolder & "*.[^keep]*"
                             NSTimer's scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(0, me, "trashTorrent:", missing value, false)
-                            delay 0.1
+                            delay 0.01
 						end try
 						try
 							set existsShows to every track of playlist "TV Shows" whose name contains myname
@@ -942,14 +947,14 @@ script AppDelegate
 					end tell
 					set metafiles3 to metafiles2 as string
 					try
-						move the_file to trash
+						do shell script "rm " & quoted form of rm2
                         NSTimer's scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(0, me, "trashTorrent:", missing value, false)
-                        delay 0.1
+                        delay 0.01
 					end try
 					try
-						move metafiles3 to trash
+						do shell script "rm " & processingFolder & "*-temp-*.*"
                         NSTimer's scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(0, me, "trashTorrent:", missing value, false)
-                        delay 0.1
+                        delay 0.01
 					end try
 					----update epcode in list of shows view
 					set old_data0 to listOfShows's stringValue() as text
@@ -1177,7 +1182,7 @@ script AppDelegate
 						listOfShows's setStringValue:sortedList2
 					end if
                     NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"writeList:" userInfo:"writeList" repeats:false
-                    delay 0.1
+                    delay 0.01
 					showComboField's setStringValue:""
 					seasonField's setStringValue:""
 					episodeField's setStringValue:""
@@ -1199,7 +1204,7 @@ script AppDelegate
 ############################################################################################################################
 	on appQuit:sender
         NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"writeList:" userInfo:"writeList" repeats:false
-        delay 0.1
+        delay 0.01
 		tell current application to quit
 	end appQuit:
 ############################################################################################################################
