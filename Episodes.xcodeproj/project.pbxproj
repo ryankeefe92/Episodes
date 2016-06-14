@@ -21,6 +21,7 @@
 		1142A7051CDC027700A29AF5 /* Processing in Resources */ = {isa = PBXBuildFile; fileRef = 1142A7041CDC027700A29AF5 /* Processing */; };
 		1142A7091CDC032C00A29AF5 /* RawStreams in Resources */ = {isa = PBXBuildFile; fileRef = 1142A7081CDC032C00A29AF5 /* RawStreams */; };
 		117BF2A31CDD749900BAA3D4 /* aria2c in Resources */ = {isa = PBXBuildFile; fileRef = 117BF2A21CDD749900BAA3D4 /* aria2c */; };
+		11C0CB6F1D1019E400A6DA2D /* Error in Resources */ = {isa = PBXBuildFile; fileRef = 11C0CB6E1D1019E400A6DA2D /* Error */; };
 		11C5E9021CD084DC00450026 /* AppleScriptObjC.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11C5E9011CD084DC00450026 /* AppleScriptObjC.framework */; };
 		11C5E9061CD084DC00450026 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 11C5E9051CD084DC00450026 /* main.m */; };
 		11C5E9081CD084DC00450026 /* AppDelegate.applescript in Sources */ = {isa = PBXBuildFile; fileRef = 11C5E9071CD084DC00450026 /* AppDelegate.applescript */; };
@@ -45,6 +46,7 @@
 		1142A7041CDC027700A29AF5 /* Processing */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Processing; sourceTree = "<group>"; };
 		1142A7081CDC032C00A29AF5 /* RawStreams */ = {isa = PBXFileReference; lastKnownFileType = folder; path = RawStreams; sourceTree = "<group>"; };
 		117BF2A21CDD749900BAA3D4 /* aria2c */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = aria2c; sourceTree = "<group>"; };
+		11C0CB6E1D1019E400A6DA2D /* Error */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Error; sourceTree = "<group>"; };
 		11C5E8FE1CD084DC00450026 /* Episodes.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Episodes.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		11C5E9011CD084DC00450026 /* AppleScriptObjC.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppleScriptObjC.framework; path = System/Library/Frameworks/AppleScriptObjC.framework; sourceTree = SDKROOT; };
 		11C5E9051CD084DC00450026 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
@@ -118,6 +120,7 @@
 				113492BF1CDADF940041DA61 /* mkvextract */,
 				113492C01CDADF940041DA61 /* MP4Box */,
 				11DC8B011CE3144300E1DEB6 /* logo.rsrc */,
+				11C0CB6E1D1019E400A6DA2D /* Error */,
 				11DC8AFB1CE29EE200E1DEB6 /* Downloading */,
 				11DC8AFC1CE29EE200E1DEB6 /* DownloadingComplete */,
 				112D47771CDC8ECF00DE0F97 /* torrentdownloader.workflow */,
@@ -206,6 +209,7 @@
 				117BF2A31CDD749900BAA3D4 /* aria2c in Resources */,
 				113492C51CDADF940041DA61 /* faac in Resources */,
 				113492C61CDADF940041DA61 /* feedchecker.workflow in Resources */,
+				11C0CB6F1D1019E400A6DA2D /* Error in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
