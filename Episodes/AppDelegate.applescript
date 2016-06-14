@@ -150,12 +150,12 @@ script AppDelegate
                 else
                 if wikiShow7 does not contain wikiShow6 then
                     set wikiShow7 to wikiShow7 & "
-                    " & wikiShow6
+" & wikiShow6
                 end if
             end if
         end repeat
         set AppleScript's text item delimiters to "
-        "
+"
         set wikiTokens7 to text items of wikiShow7
         set list_string to (wikiTokens7 as string)
         set new_string to do shell script "echo " & quoted form of list_string & " | sort -f"
@@ -326,7 +326,7 @@ script AppDelegate
     on download:sender
         set showlist to listOfShows's stringValue() as text
         set AppleScript's text item delimiters to "
-        "
+"
         set tokens999 to text items of showlist
         set countshows to count tokens999
         if countshows is greater than 0 then
@@ -747,7 +747,7 @@ script AppDelegate
                                 set text item delimiters of AppleScript to ""
                                 set descrip2 to "" & descrip2
                                 set text item delimiters of AppleScript to "<br>
-                                "
+"
                                 set descrip2 to text items of descrip2
                                 set text item delimiters of AppleScript to "  "
                                 set descrip2 to "" & descrip2
@@ -1318,10 +1318,10 @@ script AppDelegate
                         listOfShows's setStringValue:finalEntry
                         else
                         set newList to current application's NSString's stringWithFormat_("%@%@%@", originalList, "
-                        ", finalEntry)
+", finalEntry)
                         set newList2 to newList as text
                         set AppleScript's text item delimiters to "
-                        "
+"
                         set showtokens to text items of newList2
                         set list_sort to (showtokens as string)
                         set sort_string to do shell script "echo " & quoted form of list_sort & " | sort -f"
