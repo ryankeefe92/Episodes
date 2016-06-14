@@ -356,9 +356,7 @@ script AppDelegate
                 set rss_items to do shell script "automator -i " & url1 & " " & theFeedChecker
                 ---above line might be where the -100024 error is.  wrap it in try/on error?
                 set existsShows to ""
-                tell application "iTunes"
-                    set existsShows to (every track of playlist "TV Shows" whose show contains showname) --show name, ie "Family Guy"
-                end tell
+                tell application "iTunes" to set existsShows to (every track of playlist "TV Shows" whose show contains showname) --show name, ie "Family Guy"
                 set countfiles to count items of existsShows
                 if countfiles is greater than 0 then
                     repeat with f from 1 to countfiles
@@ -1061,9 +1059,7 @@ script AppDelegate
                             end if
                         end tell
                         else -----if the show does not use the standard SxxExx naming format
-                        tell current application
-                            do shell script atomicParsley & " " & processingFolder & origin & " --stik 'TV Show' --TVShowName '" & showname2 & "' --comment '" & final_comment & "' --artwork REMOVE_ALL --artwork " & final_final_artwork & "' --title '" & myname & "'"
-                        end tell
+                        tell current application to do shell script atomicParsley & " " & processingFolder & origin & " --stik 'TV Show' --TVShowName '" & showname2 & "' --comment '" & final_comment & "' --artwork REMOVE_ALL --artwork " & final_final_artwork & "' --title '" & myname & "'"
                     end if
                     set metafiles2 to (every item of processing whose name contains "temp") as string
                     tell application "iTunes"
@@ -1131,9 +1127,9 @@ script AppDelegate
                             else
                             listOfShows's setStringValue:old_data0
                         end if
+                        NSTimer's scheduledTimerWithTimeInterval:0 |target|:me selector:"writeList:" userInfo:(missing value) repeats:false
+                        delay 0.01
                     end try
-                    NSTimer's scheduledTimerWithTimeInterval:0 |target|:me selector:"writeList:" userInfo:(missing value) repeats:false
-                    delay 0.01
                     ---end update epcode block
                     try
                         do shell script "rm " & quoted form of rm2
