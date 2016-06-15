@@ -168,9 +168,9 @@ script AppDelegate
     ############################################################################################################################
     on applicationDidFinishLaunching:aNotification
         NSTimer's scheduledTimerWithTimeInterval:30 target:me selector:"download:" userInfo:(missing value) repeats:false
-        NSTimer's scheduledTimerWithTimeInterval:330 target:me selector:"download:" userInfo:"Download" repeats:true
-        NSTimer's scheduledTimerWithTimeInterval:5 target:me selector:"process:" userInfo:"Process" repeats:true
-        NSTimer's scheduledTimerWithTimeInterval:8 target:me selector:"moveHook:" userInfo:"moveHook" repeats:true
+        NSTimer's scheduledTimerWithTimeInterval:330 target:me selector:"download:" userInfo:(missing value) repeats:true
+        NSTimer's scheduledTimerWithTimeInterval:5 target:me selector:"process:" userInfo:(missing value) repeats:true
+        NSTimer's scheduledTimerWithTimeInterval:8 target:me selector:"moveHook:" userInfo:(missing value) repeats:true
     end applicationDidFinishLaunching:
     ############################################################################################################################
     on grabTorrent:sender
@@ -273,9 +273,15 @@ script AppDelegate
                     ----STATBAR2----
                     tell application "Finder"
                         set name of (every item of downloads_torrents whose name contains ".torrent") to torname
-                        move (every item of downloads_torrents whose name contains ".torrent") to torrent_add
+                        set torrentsDown to (every item of downloads_torrents whose name contains ".torrent")
+                        set torrentsCount to count torrentsDown
+                        repeat with tc from 1 to torrentsCount
+                            set thisTorrent to item tc of torrentsDown
+                            set torname3 to name of thisTorrent
+                            move thisTorrent to torrent_add
+                            do shell script aria & " --seed-time=0 --on-bt-download-complete=exit -d " & downloadingFolder & " " & torrentAddFolder & torname3 & " > /dev/null 2>&1 &"
+                        end repeat
                     end tell
-                    do shell script aria & " --seed-time=0 --on-bt-download-complete=exit -d " & downloadingFolder & " " & torrentAddFolder & torname & " > /dev/null 2>&1 &"
                 end if
             end if
         end if
