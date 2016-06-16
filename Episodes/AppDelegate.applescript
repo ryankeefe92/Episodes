@@ -241,47 +241,46 @@ script AppDelegate
         end repeat
         if bestfeeditem is greater than 0 then
             set final_torrent to item bestfeeditem of tokens
-            set AppleScript's text item delimiters to "?"
-            set tokens3 to text items of final_torrent
-            set final_torrent2 to item 1 of tokens3
-            set torname0 to item 2 of tokens3
-            set AppleScript's text item delimiters to "5D"
-            set tortokens to text items of torname0
+            set AppleScript's text item delimiters to "%5D"
+            set tortokens to text items of final_torrent
             set torname2 to item 2 of tortokens
             set AppleScript's text item delimiters to "\""
             set tortokens2 to text items of torname2
             set torname1 to item 1 of tortokens2
-            set torname to torname1 & ".torrent"
-            set AppleScript's text item delimiters to "torrent/"
-            set nametoken to text items of final_torrent2
-            set the_filename to item 2 of nametoken
-            set AppleScript's text item delimiters to ".torrent"
-            set nametoken2 to text items of the_filename
-            set the_filename_2 to item 1 of nametoken2
             tell application "Finder"
                 set already_downloaded to count (every item of torrent_add whose name contains torname1)
                 set already_downloaded2 to count (every item of downloads_torrents whose name contains torname1)
             end tell
             if already_downloaded is 0 then
                 if already_downloaded2 is 0 then
-                    do shell script "automator -i " & final_torrent2 & " " & theTorrentDownloader
-                    ---is there a way to see if this returns with an error, or warning?  for example, if the URL provided doesn't work, right now it will just move on without downloading the torrent.  it should really be made aware of this warning/error by automator, and select a different torrent for the same episode instead.
+                    do shell script "automator -i " & quoted form of final_torrent & " " & theTorrentDownloader
                     ----STATBAR2----
                     set statbar2 to current application's NSString's stringWithFormat_("%@%@%@%@%@%@%@", "Downloading ", showname, " ", theEpcode, " at ", tor_comment, " quality.")
                     (statusLabel's setStringValue:statbar2)
                     delay 0.01
                     ----STATBAR2----
+                    ---the block below, from line immediately below this one (tell finder) to "end tell" should be its own subroutine that gets called right here, and also once every ten seconds or so.
                     tell application "Finder"
-                        set name of (every item of downloads_torrents whose name contains ".torrent") to torname
                         set torrentsDown to (every item of downloads_torrents whose name contains ".torrent")
-                        set torrentsCount to count torrentsDown
-                        repeat with tc from 1 to torrentsCount
+                        repeat with tc from 1 to count of torrentsDown
                             set thisTorrent to item tc of torrentsDown
-                            set torname3 to name of thisTorrent
-                            move thisTorrent to torrent_add
-                            do shell script aria & " --seed-time=0 --on-bt-download-complete=exit -d " & downloadingFolder & " " & torrentAddFolder & torname3 & " > /dev/null 2>&1 &"
+                            set thisTorrentName to name of thisTorrent
+                            if thisTorrentName contains "kat.cr"
+                                set AppleScript's text item delimiters to "kat.cr%5D"
+                                set katToken to text items of thisTorrentName
+                                set torname03 to item 2 of katToken
+                                set AppleScript's text item delimiters to "\""
+                                set backslashToken to text items of torname03
+                                set torname3 to item 1 of backslashToken
+                            else
+                                set torname3 to thisTorrentName
+                            end if
+                            set name of thisTorrent to torname3 & ".torrent"
+                            move every item of downloads_torrents whose name contains torname3 to torrent_add
+                            do shell script aria & " --seed-time=0 --on-bt-download-complete=exit -d " & downloadingFolder & " " & torrentAddFolder & torname3 & ".torrent" & " > /dev/null 2>&1 &"
                         end repeat
                     end tell
+                ---end subroutine block
                 end if
             end if
         end if
