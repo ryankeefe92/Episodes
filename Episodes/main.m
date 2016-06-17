@@ -2,8 +2,7 @@
 //  main.m
 //  Episodes
 //
-//  Created by Ryan Keefe on 4/27/16.
-//  Copyright © 2016 Ryan Keefe. All rights reserved.
+//  Copyright © 2007-2016 Ryan Keefe.  Some rights reserved.
 //
 
 #import <Cocoa/Cocoa.h>

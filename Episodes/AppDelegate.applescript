@@ -2,7 +2,7 @@
 --  AppDelegate.applescript
 --  Episodes
 --
---  Copyright © 2007-2016 Ryan Keefe.  Some rights reserved.
+--  Copyright Â© 2007-2016 Ryan Keefe.  Some rights reserved.
 
 ----REWRITE, WITH EACH INDEPENDENT PIECE BROKEN UP--EVERY ACTION, BIT OF LOGIC, ETC SHOULD BE ITS OWN SUBROUTINE--THEN STRING BACK TOGETHER.  PERFORMSELECTOR?
 
@@ -165,14 +165,14 @@ script AppDelegate
         end tell
         ---end currently airing wikipedia block
     end applicationWillFinishLaunching:
-    ############################################################################################################################
+############################################################################################################################
     on applicationDidFinishLaunching:aNotification
         NSTimer's scheduledTimerWithTimeInterval:30 target:me selector:"download:" userInfo:(missing value) repeats:false
         NSTimer's scheduledTimerWithTimeInterval:330 target:me selector:"download:" userInfo:(missing value) repeats:true
         NSTimer's scheduledTimerWithTimeInterval:5 target:me selector:"process:" userInfo:(missing value) repeats:true
         NSTimer's scheduledTimerWithTimeInterval:8 target:me selector:"moveHook:" userInfo:(missing value) repeats:true
     end applicationDidFinishLaunching:
-    ############################################################################################################################
+############################################################################################################################
     on grabTorrent:sender
         set theEpcode to item 1 of sender's userInfo as text
         set rss_items300 to item 2 of sender's userInfo as text
@@ -266,27 +266,27 @@ script AppDelegate
                             set thisTorrent to item tc of torrentsDown
                             set thisTorrentName to name of thisTorrent
                             if thisTorrentName contains "kat.cr"
-                                set AppleScript's text item delimiters to "kat.cr%5D"
-                                set katToken to text items of thisTorrentName
-                                set torname03 to item 2 of katToken
-                                set AppleScript's text item delimiters to "\""
-                                set backslashToken to text items of torname03
-                                set torname3 to item 1 of backslashToken
+                            set AppleScript's text item delimiters to "kat.cr%5D"
+                            set katToken to text items of thisTorrentName
+                            set torname03 to item 2 of katToken
+                            set AppleScript's text item delimiters to "\""
+                            set backslashToken to text items of torname03
+                            set torname3 to item 1 of backslashToken
                             else
-                                set torname3 to thisTorrentName
-                            end if
-                            set name of thisTorrent to torname3 & ".torrent"
-                            move every item of downloads_torrents whose name contains torname3 to torrent_add
-                            do shell script aria & " --seed-time=0 --on-bt-download-complete=exit -d " & downloadingFolder & " " & torrentAddFolder & torname3 & ".torrent" & " > /dev/null 2>&1 &"
-                        end repeat
-                    end tell
+                            set torname3 to thisTorrentName
+                        end if
+                        set name of thisTorrent to torname3 & ".torrent"
+                        move every item of downloads_torrents whose name contains torname3 to torrent_add
+                        do shell script aria & " --seed-time=0 --on-bt-download-complete=exit -d " & downloadingFolder & " " & torrentAddFolder & torname3 & ".torrent" & " > /dev/null 2>&1 &"
+                    end repeat
+                end tell
                 ---end subroutine block
-                end if
             end if
         end if
-        delay 0.01 -- more of these at END of NSTIMER sections, before it returns to main script?
+    end if
+    delay 0.01 -- more of these at END of NSTIMER sections, before it returns to main script?
     end grabTorrent:
-    ############################################################################################################################
+############################################################################################################################
     on moveHook:sender
         tell application "Finder"
             set all_aria_downloads to (every item of downloadingFolder_folder whose name does not contain ".aria2")
@@ -298,7 +298,7 @@ script AppDelegate
                     set notComplete to count (every item of downloadingFolder_folder whose name contains theAriaName & ".aria2")
                     if notComplete is less than 1 then
                         set ariaDate to creation date of theAriaFile
-                        if ariaDate ² ((current date) - 2 * minutes) then
+                        if ariaDate â‰¤ ((current date) - 2 * minutes) then
                             move theAriaFile to downloads
                         end if
                     end if
@@ -306,7 +306,7 @@ script AppDelegate
             end repeat
         end tell
     end moveHook:
-    ############################################################################################################################
+############################################################################################################################
     on trashTorrent:sender
         tell application "Finder"
             set every_tor to every item of torrent_add whose name contains ".torrent"
@@ -327,7 +327,7 @@ script AppDelegate
             end repeat
         end tell
     end trashTorrent:
-    ############################################################################################################################
+############################################################################################################################
     on download:sender
         set showlist to listOfShows's stringValue() as text
         set AppleScript's text item delimiters to "
@@ -464,7 +464,7 @@ script AppDelegate
             ----STATBAR3----
         end if
     end download:
-    ############################################################################################################################
+############################################################################################################################
     on process:sender
         tell application "Finder"
             ----From here to the next comment, the script checks downloadcomplete folder for video files, then deletes everything it doesn't need
@@ -766,7 +766,7 @@ script AppDelegate
                             end if
                             -----fetch artwork
                             tell application "Finder"
-                                set oldArt to (every item of artfolder whose creation date ² ((current date) - 4 * weeks))
+                                set oldArt to (every item of artfolder whose creation date â‰¤ ((current date) - 4 * weeks))
                                 repeat with oa from 1 to count of oldArt
                                     set deleteArt to name of item oa of oldArt
                                     if deleteArt does not contain "no_art" then
@@ -997,7 +997,7 @@ script AppDelegate
                                 set newFramerate to do shell script theMediaInfo & " \"--Inform=Video;%FrameRate%\" " & processingFolder & "*.mkv"
                                 ---the below identifies whether the audio codec is AC3 or AAC
                                 set audioCodec to do shell script theMediaInfo & " \"--Inform=Audio;%Format%\" " & processingFolder & "*.mkv"
-                                ---THE BELOW IDENTIFIES WHETHER THE AUDIO OR VIDEO STREAM COMES FIRST, SO THAT MKVEXTRACT KNOWS WHAT IT'S EXPORTINGÉis there a way to combine the two into a single do shell script command??
+                                ---THE BELOW IDENTIFIES WHETHER THE AUDIO OR VIDEO STREAM COMES FIRST, SO THAT MKVEXTRACT KNOWS WHAT IT'S EXPORTINGÃ‰is there a way to combine the two into a single do shell script command??
                                 set aud_pos to do shell script theMediaInfo & " \"--Inform=Audio;%StreamOrder%\" " & processingFolder & "*.mkv"
                                 set vid_pos to do shell script theMediaInfo & " \"--Inform=Video;%StreamOrder%\" " & processingFolder & "*.mkv"
                                 if vid_pos is greater than aud_pos then
@@ -1151,7 +1151,7 @@ script AppDelegate
             set the_file to {}
         end tell
     end process:
-    ############################################################################################################################
+############################################################################################################################
     on populateEpcode:sender
         if showComboField's stringValue as string is not equal to "" then
             set the_index to beginWith's indexOfSelectedItem()
@@ -1277,11 +1277,11 @@ script AppDelegate
     on showCombo:sender
         NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"populateEpcode:" userInfo:"populateEpcode" repeats:false
     end showCombo:
-    ############################################################################################################################
+############################################################################################################################
     on beginWith:sender
         NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"populateEpcode:" userInfo:"populateEpcode" repeats:false
     end beginWith:
-    ############################################################################################################################
+############################################################################################################################
     on addShow:sender
         if showComboField's stringValue as string = "" then
             display dialog "Please enter the name of the show."
@@ -1339,7 +1339,7 @@ script AppDelegate
             end if
         end if
     end addShow:
-    ############################################################################################################################
+############################################################################################################################
     on writeList:sender
         set newText to listOfShows's stringValue() as text
         tell application "Finder"
@@ -1350,13 +1350,13 @@ script AppDelegate
             close access the open_master_file
         end tell
     end writeList:
-    ############################################################################################################################
+############################################################################################################################
     on appQuit:sender
         NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"writeList:" userInfo:"writeList" repeats:false
         delay 0.01
         tell current application to quit
     end appQuit:
-    ############################################################################################################################
+############################################################################################################################
     on applicationShouldTerminate:sender
         -- Insert code here to do any housekeeping before your application quits
         return current application's NSTerminateNow
