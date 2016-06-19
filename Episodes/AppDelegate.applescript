@@ -354,7 +354,7 @@ script AppDelegate
                 set text item delimiters of AppleScript to "%20"
                 set urlshow to "" & urlshow
                 ----the below line might be where the -100024 error is
-                set rss_items to "automator -i https://kat.cr/usearch/%22" & urlshow & "%22%20264%20OR%20x264%20category%3Atv/?rss=1 " & theFeedChecker
+                set rss_items to do shell script "automator -i https://kat.cr/usearch/%22" & urlshow & "%22%20264%20OR%20x264%20category%3Atv/?rss=1 " & theFeedChecker
                 set existsShows to ""
                 tell application "iTunes" to set existsShows to (every track of playlist "TV Shows" whose show contains showname) --show name, ie "Family Guy"
                 set countfiles to count items of existsShows
@@ -397,12 +397,13 @@ script AppDelegate
                 set currentdata to ((text item 1 of currentdata2) & (text item 2 of currentdata2) as integer) + 90000
                 
                 set AppleScript's text item delimiters to " \""
-                set totalTorrents to count text items of rss_items
+                set tokens100 to text items of rss_items
+                set totalTorrents to count tokens100
                 set highestepcode to 0 as integer
                 repeat with t from 2 to totalTorrents
                     set correctTitle to "%5D" & showname2 & "s"
-                    if text item t of rss_items contains correctTitle then
-                        set currentTorrent to text item t of rss_items
+                    if item t of tokens100 contains correctTitle then
+                        set currentTorrent to item t of tokens100
                         set AppleScript's text item delimiters to correctTitle
                         set seasonnum0 to text item 2 of currentTorrent
                         set correctTitle2 to text 1 thru 2 of seasonnum0 & "e"
@@ -427,7 +428,7 @@ script AppDelegate
                 repeat
                     set urlepcode to "S" & text 2 thru 3 of (currentdata as text) & "E" & text 4 thru 5 of (currentdata as text)
                     set vidQualFirst to -1 as integer
-                    set rss_items200 to do shell script "automator -i https://kat.cr/usearch/%22" & urlshow & "%20" & urlepcode & "%22%20264%20OR%20x264%20category%3Atv/?rss=1" & theFeedChecker
+                    set rss_items200 to do shell script "automator -i https://kat.cr/usearch/%22" & urlshow & "%20" & urlepcode & "%22%20264%20OR%20x264%20category%3Atv/?rss=1 " & theFeedChecker
                     if length of rss_items200 is greater than 3 then
                         (NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"grabTorrent:" userInfo:{urlepcode, rss_items200, vidQualFirst, showname2, showname} repeats:false)
                         delay 0.01
