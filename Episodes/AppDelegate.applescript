@@ -332,17 +332,14 @@ script AppDelegate
         set showlist to listOfShows's stringValue() as text
         set AppleScript's text item delimiters to "
 "
-        set tokens999 to text items of showlist
-        set countshows to count tokens999
-        if countshows is greater than 0 then
-            repeat with c from 1 to countshows
-                set showname0 to item c of tokens999
+        if (count of (text items of showlist)) is greater than 0 then
+            repeat with c from 1 to (count of (text items of showlist))
+                set showname0 to text item c of showlist
                 set AppleScript's text item delimiters to " ("
-                set nameToken99 to text items of showname0
-                set showname to item 1 of nameToken99
+                set showname to text item 1 of showname0
                 ----STATBAR----
                 set statbar to current application's NSString's stringWithFormat_("%@%@", "Checking sources for: ", showname)
-                set incrementJump to (100 / (countshows + 1))
+                set incrementJump to (100 / ((count of (text items of showlist)) + 1))
                 if c is greater than 1 then
                     (progressBar's incrementBy:incrementJump)
                 end if
@@ -356,10 +353,8 @@ script AppDelegate
                 set urlshow to text items of showname2
                 set text item delimiters of AppleScript to "%20"
                 set urlshow to "" & urlshow
-                set url1 to "https://kat.cr/usearch/%22" & urlshow & "%22%20264%20OR%20x264%20category%3Atv/?rss=1" as text
                 ----the below line might be where the -100024 error is
-                set rss_items to do shell script "automator -i " & url1 & " " & theFeedChecker
-                ---above line might be where the -100024 error is.  wrap it in try/on error?
+                set rss_items to "automator -i https://kat.cr/usearch/%22" & urlshow & "%22%20264%20OR%20x264%20category%3Atv/?rss=1 " & theFeedChecker
                 set existsShows to ""
                 tell application "iTunes" to set existsShows to (every track of playlist "TV Shows" whose show contains showname) --show name, ie "Family Guy"
                 set countfiles to count items of existsShows
@@ -387,8 +382,7 @@ script AppDelegate
                             end if
                         end repeat
                         if vidQualFirst is less than 3 then --this is where you can set it to a different "max quality" setting
-                            set url2 to "https://kat.cr/usearch/%22" & urlshow & "%20" & iTunesEpcode & "%22%20264%20OR%20x264%20category%3Atv/?rss=1" as text
-                            set rss_items100 to do shell script "automator -i " & url2 & " " & theFeedChecker
+                            set rss_items100 to do shell script "automator -i https://kat.cr/usearch/%22" & urlshow & "%20" & iTunesEpcode & "%22%20264%20OR%20x264%20category%3Atv/?rss=1 " & theFeedChecker
                             (NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"grabTorrent:" userInfo:{iTunesEpcode, rss_items100, vidQualFirst, showname2, showname} repeats:false)
                             delay 0.01
                         end if
@@ -396,41 +390,31 @@ script AppDelegate
                 end if
                 set currentdata0 to listOfShows's stringValue() as text
                 set AppleScript's text item delimiters to showname & " (S"
-                set dataTokens to text items of currentdata0
-                set currentdata1 to item 2 of dataTokens
+                set currentdata1 to text item 2 of currentdata0
                 set AppleScript's text item delimiters to ")"
-                set dataTokens2 to text items of currentdata1
-                set currentdata2 to item 1 of dataTokens2
+                set currentdata2 to text item 1 of currentdata1
                 set AppleScript's text item delimiters to "E"
-                set dataTokens3 to text items of currentdata2
-                set currentdataSeason to item 1 of dataTokens3
-                set currentdataEpisode to item 2 of dataTokens3
-                set currentdata4 to currentdataSeason & currentdataEpisode as integer
-                set currentdata to currentdata4 + 90000
+                set currentdata to ((text item 1 of currentdata2) & (text item 2 of currentdata2) as integer) + 90000
                 
                 set AppleScript's text item delimiters to " \""
-                set tokens100 to text items of rss_items
-                set totalTorrents to count tokens100
+                set totalTorrents to count text items of rss_items
                 set highestepcode to 0 as integer
                 repeat with t from 2 to totalTorrents
                     set correctTitle to "%5D" & showname2 & "s"
-                    if item t of tokens100 contains correctTitle then
-                        set currentTorrent to item t of tokens100
+                    if text item t of rss_items contains correctTitle then
+                        set currentTorrent to text item t of rss_items
                         set AppleScript's text item delimiters to correctTitle
-                        set tokens101 to text items of currentTorrent
-                        set seasonnum0 to item 2 of tokens101
+                        set seasonnum0 to text item 2 of currentTorrent
                         set correctTitle2 to text 1 thru 2 of seasonnum0 & "e"
                         if seasonnum0 contains correctTitle2 then
                             set AppleScript's text item delimiters to correctTitle2
-                            set tokens102 to text items of seasonnum0
                             set seasonnum to text 1 thru 2 of seasonnum0
-                            set epnum0 to item 2 of tokens102
+                            set epnum0 to text item 2 of seasonnum0
                             set AppleScript's text item delimiters to "."
-                            set tokens103 to text items of epnum0
-                            set epnum to item 1 of tokens103
+                            set epnum to text item 1 of epnum0
                             try
                                 set feedepcode0 to seasonnum & epnum as integer
-                                on error
+                            on error
                                 set feedepcode0 to 0
                             end try
                             set feedepcode to feedepcode0 + 90000
@@ -441,11 +425,9 @@ script AppDelegate
                     end if
                 end repeat
                 repeat
-                    set urlepcode00 to currentdata as text
-                    set urlepcode to "S" & text 2 thru 3 of urlepcode00 & "E" & text 4 thru 5 of urlepcode00
+                    set urlepcode to "S" & text 2 thru 3 of (currentdata as text) & "E" & text 4 thru 5 of (currentdata as text)
                     set vidQualFirst to -1 as integer
-                    set url2 to "https://kat.cr/usearch/%22" & urlshow & "%20" & urlepcode & "%22%20264%20OR%20x264%20category%3Atv/?rss=1" as text
-                    set rss_items200 to do shell script "automator -i " & url2 & " " & theFeedChecker
+                    set rss_items200 to do shell script "automator -i https://kat.cr/usearch/%22" & urlshow & "%20" & urlepcode & "%22%20264%20OR%20x264%20category%3Atv/?rss=1" & theFeedChecker
                     if length of rss_items200 is greater than 3 then
                         (NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"grabTorrent:" userInfo:{urlepcode, rss_items200, vidQualFirst, showname2, showname} repeats:false)
                         delay 0.01
