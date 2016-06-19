@@ -332,9 +332,10 @@ script AppDelegate
         set showlist to listOfShows's stringValue() as text
         set AppleScript's text item delimiters to "
 "
+        set tokens999 to text items of showlist
         if (count of (text items of showlist)) is greater than 0 then
             repeat with c from 1 to (count of (text items of showlist))
-                set showname0 to text item c of showlist
+                set showname0 to item c of tokens999
                 set AppleScript's text item delimiters to " ("
                 set showname to text item 1 of showname0
                 ----STATBAR----
@@ -1258,11 +1259,11 @@ script AppDelegate
     --thePanel's makeKeyAndOrderFront_(thePanel)
     --end showPanel_
     on showCombo:sender
-        NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"populateEpcode:" userInfo:"populateEpcode" repeats:false
+        NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"populateEpcode:" userInfo:(missing value) repeats:false
     end showCombo:
 ############################################################################################################################
     on beginWith:sender
-        NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"populateEpcode:" userInfo:"populateEpcode" repeats:false
+        NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"populateEpcode:" userInfo:(missing value) repeats:false
     end beginWith:
 ############################################################################################################################
     on addShow:sender
@@ -1297,27 +1298,38 @@ script AppDelegate
                         set episodeEntry to "0" & episodeEntry
                     end if
                     set originalList to listOfShows's stringValue() as text
-                    set finalEntry to showEntry & " (S" & seasonEntry & "E" & episodeEntry & ")"
-                    if listOfShows's stringValue as string = "" then
-                        listOfShows's setStringValue:finalEntry
+                    set AppleScript's text item delimiters to {"
+", " ("}
+                    set listToken to text items of originalList
+                    set showDupe to false
+                    repeat with i from 1 to count of listToken
+                        if showEntry is equal to item i of listToken then set showDupe to true
+                    end repeat
+                    if showDupe is true
+                        display dialog showEntry & " has already been added to the list."
+                    else
+                        set finalEntry to showEntry & " (S" & seasonEntry & "E" & episodeEntry & ")"
+                        if listOfShows's stringValue as string = "" then
+                            listOfShows's setStringValue:finalEntry
                         else
-                        set newList to current application's NSString's stringWithFormat_("%@%@%@", originalList, "
+                            set newList to current application's NSString's stringWithFormat_("%@%@%@", originalList, "
 ", finalEntry)
-                        set newList2 to newList as text
-                        set AppleScript's text item delimiters to "
+                            set newList2 to newList as text
+                            set AppleScript's text item delimiters to "
 "
-                        set showtokens to text items of newList2
-                        set list_sort to (showtokens as string)
-                        set sort_string to do shell script "echo " & quoted form of list_sort & " | sort -f"
-                        set sortedList to (paragraphs of sort_string)
-                        set sortedList2 to sortedList as text
-                        listOfShows's setStringValue:sortedList2
+                            set showtokens to text items of newList2
+                            set list_sort to (showtokens as string)
+                            set sort_string to do shell script "echo " & quoted form of list_sort & " | sort -f"
+                            set sortedList to (paragraphs of sort_string)
+                            set sortedList2 to sortedList as text
+                            listOfShows's setStringValue:sortedList2
+                        end if
+                        NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"writeList:" userInfo:(missing value) repeats:false
+                        delay 0.01
                     end if
-                    NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"writeList:" userInfo:"writeList" repeats:false
-                    delay 0.01
-                    showComboField's setStringValue:""
-                    seasonField's setStringValue:""
-                    episodeField's setStringValue:""
+                        showComboField's setStringValue:""
+                        seasonField's setStringValue:""
+                        episodeField's setStringValue:""
                 end if
             end if
         end if
