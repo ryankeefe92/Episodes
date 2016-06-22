@@ -165,7 +165,13 @@ script AppDelegate
         end tell
         ---end currently airing wikipedia block
         
+        ----open aria and have it continue downloading any partially downloaded files [aria may just need to launch and do nothing else as long as the flag to resume download is already set for every aria download when it starts...may need to modify aria code throughout the script to include that flag....or right here just tell it to resume any file in the "downloading" folder]
         ----begin downloading anything in the torrentadd folder that has not begun downloading and also isn't in the downloadcomplete or processing folders and has not been added to itunes in that quality.  also on startup:
+        ----delete every file from rawstreams folder (except dummyfile.keep)
+        ----quit atomicparsley, faac, ffmpeg, mediainfo, mkvextract, mp4box CLIs
+        ----if there are items in the "processing" folder
+        ----------move least recently created file from processing folder to downloadComplete folder
+        ----------delete every other file from processing folder (except dummyfile.keep)
     end applicationWillFinishLaunching:
 ############################################################################################################################
     on applicationDidFinishLaunching:aNotification
@@ -470,15 +476,15 @@ script AppDelegate
             if exists item 2 of downloads then
                 if exists item 2 of processing then
                     set moveon to false
-                    else
+                else
                     if name of item 1 of downloads contains "dummyfile" then
                         move item 2 of downloads to processing
-                        else
+                    else
                         move item 1 of downloads to processing
                     end if
                     if name of item 1 of processing contains "dummyfile" then
                         set the_file to item 2 of processing
-                        else
+                    else
                         set the_file to item 1 of processing
                     end if
                     set alldownloads to the_file as text
@@ -544,6 +550,9 @@ script AppDelegate
                         set vid_comment to "4K"
                     end if
                     ----The below checks to see how many audio channels are in the MKV file.  This is used to determine, in a case where the same episode already has been added to iTunes, if the incoming episode should replace it because it has more audio channels.  Later, these variables are used to figure out which raw audio files should be added into the final container. If more than 2 channels, it adds the AC3 file for 5.1 surround sound, as well as a secondary stereo audio track.  If it's just stereo, it only adds in the stereo aac file.
+                    
+                    ----THEORY: FILES AREN'T DELETING FROM PROCESSING FOLDER WHEN THEY **REPLACE** A LOWER-QUALITY VERSION IN ITUNES
+                    
                     set channels2 to "2" as integer --just in case there's a problem retrieving the number of audio channels in the file, we assume it is stereo until the processes below tell us otherwise
                     set channels to do shell script theMediaInfo & " \"--Inform=Audio;%Channels%\" " & processingFolder & "*.{mkv,mp4,m4v}"
                     set stream1 to 0 as integer
@@ -647,25 +656,25 @@ script AppDelegate
                             ----% xferd error (6) MAY occur on following line.
                             try
                                 set find_id to do shell script "curl \"" & url1 & "\""
-                                on error number errorNumber
+                            on error number errorNumber
                                 if errorNumber is equal to 6 then
                                     tell application "Finder"
                                         set name_1 to name of the_file
                                         move the_file to errorQueue
                                         if name of item 1 of errorQueue contains "dummyfile" then
                                             set the_file2 to item 2 of errorQueue
-                                            else
+                                        else
                                             set the_file2 to item 1 of errorQueue
                                         end if
                                         set name of the_file2 to name_1 & "_code6_error1.mkv"
                                     end tell
-                                    else
+                                else
                                     tell application "Finder"
                                         set name_1 to name of the_file
                                         move the_file to errorQueue
                                         if name of item 1 of errorQueue contains "dummyfile" then
                                             set the_file2 to item 2 of errorQueue
-                                            else
+                                        else
                                             set the_file2 to item 1 of errorQueue
                                         end if
                                         set name of the_file2 to name_1 & "_notcode6_error1.mkv"
@@ -681,7 +690,7 @@ script AppDelegate
                             set tvshowID to item 1 of tokens
                             if name of item 1 of processing contains "dummyfile" then
                                 set the_file to item 2 of processing
-                                else
+                            else
                                 set the_file to item 1 of processing
                             end if
                             set mySeason to text 2 through 3 of epcodefinal as number
@@ -768,7 +777,7 @@ script AppDelegate
                             end tell
                             if artcount is greater than 0 then
                                 set final_final_artwork to showArtFolder & artname as string
-                                else
+                            else
                                 set arturl to "squaredtvart.tumblr.com/search/" & myshow2
                                 ----% xferd error (6) MAY occur on following line.
                                 try
@@ -785,7 +794,7 @@ script AppDelegate
                                             end if
                                             set name of the_file2 to name_1 & "_code6_error3.mkv"
                                         end tell
-                                        else
+                                    else
                                         tell application "Finder"
                                             set name_1 to name of the_file
                                             move the_file to errorQueue
@@ -816,18 +825,18 @@ script AppDelegate
                                                 move the_file to errorQueue
                                                 if name of item 1 of errorQueue contains "dummyfile" then
                                                     set the_file2 to item 2 of errorQueue
-                                                    else
+                                                else
                                                     set the_file2 to item 1 of errorQueue
                                                 end if
                                                 set name of the_file2 to name_1 & "_code6_error4.mkv"
                                             end tell
-                                            else
+                                        else
                                             tell application "Finder"
                                                 set name_1 to name of the_file
                                                 move the_file to errorQueue
                                                 if name of item 1 of errorQueue contains "dummyfile" then
                                                     set the_file2 to item 2 of errorQueue
-                                                    else
+                                                else
                                                     set the_file2 to item 1 of errorQueue
                                                 end if
                                                 set name of the_file2 to name_1 & "_notcode6_error4.mkv"
@@ -859,7 +868,7 @@ script AppDelegate
                                                 end if
                                                 set name of the_file2 to name_1 & "_code6_error5.mkv"
                                             end tell
-                                            else
+                                        else
                                             tell application "Finder"
                                                 set name_1 to name of the_file
                                                 move the_file to errorQueue
@@ -878,10 +887,11 @@ script AppDelegate
                                     set final_final_artwork to showArtFolder & "no_art.jpg" as string
                                 end try
                             end if
-                            else
+                        else
                             set myname to showname2
                             set final_final_artwork to showArtFolder & "no_art.jpg" as string
-                        end if
+                        end if --(totaltokens2 is greater than 1)
+                        
                         set text item delimiters of AppleScript to {":", "'"}
                         set showname2 to text items of showname2 ---showname2 = name of the show
                         set myname to text items of myname ---myname = name of the episode
@@ -958,7 +968,7 @@ script AppDelegate
                             if vidQual is equal to vidQualFirst then ---if incoming and itunes are same video resolution
                                 if channels2 is greater than audQualFirst then ---incoming 5.1, itunes stereo
                                     set replacefirst to true
-                                    else if channels2 is equal to audQualFirst then
+                                else if channels2 is equal to audQualFirst then
                                     if sourceQual is greater than sourceQualFirst then
                                         set replacefirst to true
                                     end if
@@ -968,15 +978,18 @@ script AppDelegate
                     end if
                     set continue_adding to true
                     if replacefirst is false then set continue_adding to false
+                    
+                    
+                    
                     if continue_adding is false then
                         do shell script "rm " & processingFolder & "*.[^keep]*"
                         NSTimer's scheduledTimerWithTimeInterval:0 |target|:me selector:"trashTorrent:" userInfo:(missing value) repeats:false
                         delay 0.01
-                        else if continue_adding is true then
+                    else if continue_adding is true then
                         if extension1 is ".mkv" then
                             if name of item 1 of processing contains "dummyfile" then
                                 set filename1 to name of item 2 of processing
-                                else
+                            else
                                 set filename1 to name of item 1 of processing
                             end if
                             tell current application
@@ -988,43 +1001,42 @@ script AppDelegate
                                 set aud_pos to do shell script theMediaInfo & " \"--Inform=Audio;%StreamOrder%\" " & processingFolder & "*.mkv"
                                 set vid_pos to do shell script theMediaInfo & " \"--Inform=Video;%StreamOrder%\" " & processingFolder & "*.mkv"
                                 if vid_pos is greater than aud_pos then
-                                    if channels2 is greater than 2 then
+                                    if channels2 is greater than 2 then --5.1
                                         -----below: first stream is audio, has AC3 5.1 surround
                                         do shell script themkvExtract & " tracks " & processingFolder & "*.mkv 1:" & rawFolder & "DolbySurround.ac3 2:" & rawFolder & "Video.264 && " & theffmpeg & " -i " & rawFolder & "DolbySurround.ac3 -ac 2 -ab 160 " & rawFolder & "stereo_temp.wav && " & thefaac & " --mpeg-vers 4 " & rawFolder & "stereo_temp.wav -o " & rawFolder & "Stereo.aac && " & themp4Box & " -add " & rawFolder & "Video.264:name=Video:fps=" & newFramerate & " -add " & rawFolder & "Stereo.aac:group=1:lang=ENG:name=\"Stereo\" -add " & rawFolder & "DolbySurround.ac3:disable:group=1:lang=ENG:name=\"DD5.1\" -inter 500 " & processingFolder & fileNameNoExt & ".m4v && rm " & rawFolder & "*.{264,ac3,wav,aac}"
-                                        else
+                                    else --(if channel2 is less than or equal to 2) --stereo
                                         if audioCodec is "AC-3" then
                                             -----below: first stream is audio, has stereo only, but is in AC3
                                             do shell script themkvExtract & " tracks " & processingFolder & "*.mkv 1:" & rawFolder & "Stereo.ac3 2:" & rawFolder & "Video.264 && " & theffmpeg & " -i " & rawFolder & "Stereo.ac3 -ac 2 -ab 160 " & rawFolder & "stereo_temp.wav && " & thefaac & " --mpeg-vers 4 " & rawFolder & "stereo_temp.wav -o " & rawFolder & "Stereo_Final.aac && " & themp4Box & " -add " & rawFolder & "Video.264:name=Video:fps=" & newFramerate & " -add " & rawFolder & "Stereo_Final.aac:group=1:lang=ENG:name=\"Stereo\" -inter 500 " & processingFolder & fileNameNoExt & ".m4v && rm " & rawFolder & "*.{264,ac3,wav,aac}"
-                                            else
+                                        else --(if audioCodec is not AC3)
                                             -----below: first stream is audio, has stereo only, is in AAC
                                             do shell script themkvExtract & " tracks " & processingFolder & "*.mkv 1:" & rawFolder & "Stereo.aac 2:" & rawFolder & "Video.264 && " & themp4Box & " -add " & rawFolder & "Video.264:name=Video:fps=" & newFramerate & " -add " & rawFolder & "Stereo.aac:lang=ENG:name=\"Stereo\" -inter 500 " & processingFolder & fileNameNoExt & ".m4v && rm " & rawFolder & "*.{264,aac}"
-                                        end if
-                                    end if
-                                    else
-                                    if channels2 is greater than 2 then
+                                        end if --(if audioCodec is/is not AC3)
+                                    end if --(if channels2 is greater than/less than or equal to 2)
+                                else --(if aud_pos is greater than vid_pos)
+                                    if channels2 is greater than 2 then -- 5.1
                                         -----below: first stream is video, has AC3 5.1 surround
                                         do shell script themkvExtract & " tracks " & processingFolder & "*.mkv 1:" & rawFolder & "Video.264 2:" & rawFolder & "DolbySurround.ac3 && " & theffmpeg & " -i " & rawFolder & "DolbySurround.ac3 -ac 2 -ab 160 " & rawFolder & "stereo_temp.wav && " & thefaac & " --mpeg-vers 4 " & rawFolder & "stereo_temp.wav -o " & rawFolder & "Stereo.aac && " & themp4Box & " -add " & rawFolder & "Video.264:name=Video:fps=" & newFramerate & " -add " & rawFolder & "Stereo.aac:group=1:lang=ENG:name=\"Stereo\" -add " & rawFolder & "DolbySurround.ac3:disable:group=1:lang=ENG:name=\"DD5.1\" -inter 500 " & processingFolder & fileNameNoExt & ".m4v && rm " & rawFolder & "*.{264,ac3,wav,aac}"
-                                        else
+                                    else --(if channel2 is less than or equal to 2) --stereo
                                         if audioCodec is "AC-3" then
                                             -----below: first stream is video, has stereo only, but is in AC3
                                             do shell script themkvExtract & " tracks " & processingFolder & "*.mkv 1:" & rawFolder & "Video.264 2:" & rawFolder & "Stereo.ac3 && " & theffmpeg & " -i " & rawFolder & "Stereo.ac3 -ac 2 -ab 160 " & rawFolder & "stereo_temp.wav && " & thefaac & " --mpeg-vers 4 " & rawFolder & "stereo_temp.wav -o " & rawFolder & "Stereo_Final.aac && " & themp4Box & " -add " & rawFolder & "Video.264:name=Video:fps=" & newFramerate & " -add " & rawFolder & "Stereo_Final.aac:group=1:lang=ENG:name=\"Stereo\" -inter 500 " & processingFolder & fileNameNoExt & ".m4v && rm " & rawFolder & "*.{264,ac3,wav,aac}"
-                                            else
+                                        else --(if audioCodec is not AC3)
                                             -----below: first stream is video, has stereo only, is in AAC
                                             do shell script themkvExtract & " tracks " & processingFolder & "*.mkv 1:" & rawFolder & "Video.264 2:" & rawFolder & "Stereo.aac && " & themp4Box & " -add " & rawFolder & "Video.264:name=Video:fps=" & newFramerate & " -add " & rawFolder & "Stereo.aac:lang=ENG:name=\"Stereo\" -inter 500 " & processingFolder & fileNameNoExt & ".m4v && rm " & rawFolder & "*.{264,aac}"
-                                        end if
-                                    end if
-                                end if
+                                        end if --(if audioCodec is/is not AC3)
+                                    end if --(if channels2 is greater than/less than or equal to 2)
+                                end if --(vid_pos is greater than/less than aud_pos)
                             end tell
                             try
                                 do shell script "rm " & processingFolder & "*.mkv"
                             end try
                             set the_file to every item of processing whose name ends with ".mp4"
                             set the_file to every item of processing whose name ends with ".m4v"
-                            --do shell script "rm " & processingFolder & "*.mkv"
-                        end if
-                    end if
-                end if
-            end if
+                        end if --(extension1 is mkv)
+                    end if --(continue_adding is false/true)
+                end if --(exists item 2 of processing)
+            end if ---(exists item 2 of downloads)
             try
                 set totalprocessing to count files in processing
                 if totalprocessing is greater than 3 then
@@ -1032,7 +1044,7 @@ script AppDelegate
                 end if
                 if name of item 1 of processing contains "dummyfile" then
                     set the_file to item 2 of processing
-                    else
+                else
                     set the_file to item 1 of processing
                 end if
                 set origin to name of the_file
@@ -1046,11 +1058,11 @@ script AppDelegate
                         tell current application
                             if myname1 does not contain "The resource you requested could not be found" then
                                 do shell script atomicParsley & " " & processingFolder & origin & " --stik 'TV Show' --TVShowName '" & showname2 & "' --TVEpisode '" & epcodefinal & "' --comment '" & final_comment & "' --TVSeasonNum '" & mySeason & "' --TVEpisodeNum '" & myEpisode & "' --album '" & showname2 & ", Season " & mySeason & "' --tracknum '" & myEpisode & "' --disk '" & mySeason & "' --artwork REMOVE_ALL --artwork " & final_final_artwork & " --year '" & myair2 & "' --title '" & myname & "' --description '" & showdescrip & "'"
-                                else
+                            else
                                 do shell script atomicParsley & " " & processingFolder & origin & " --stik 'TV Show' --TVShowName '" & showname2 & "' --TVEpisode '" & epcodefinal & "' --comment '" & final_comment & "' --TVSeasonNum '" & mySeason & "' --TVEpisodeNum '" & myEpisode & "' --album '" & showname2 & ", Season " & mySeason & "' --tracknum '" & myEpisode & "' --disk '" & mySeason & "' --artwork REMOVE_ALL --artwork " & final_final_artwork & " --title '" & myname & "' --description '" & showdescrip & "'"
                             end if
                         end tell
-                        else -----if the show does not use the standard SxxExx naming format
+                    else -----if the show does not use the standard SxxExx naming format
                         tell current application to do shell script atomicParsley & " " & processingFolder & origin & " --stik 'TV Show' --TVShowName '" & showname2 & "' --comment '" & final_comment & "' --artwork REMOVE_ALL --artwork " & final_final_artwork & "' --title '" & myname & "'"
                     end if
                     set metafiles2 to (every item of processing whose name contains "temp") as string
@@ -1087,8 +1099,7 @@ script AppDelegate
                             update item 4 of every source
                         end try
                     end tell
-                    ----update epcode in list of shows view
-                    try
+                    try ----below block is update epcode in list of shows view
                         set old_data0 to listOfShows's stringValue() as text
                         set newDelim to showname2 & " (S"
                         set AppleScript's text item delimiters to newDelim
@@ -1121,19 +1132,14 @@ script AppDelegate
                         end if
                         NSTimer's scheduledTimerWithTimeInterval:0 |target|:me selector:"writeList:" userInfo:(missing value) repeats:false
                         delay 0.01
-                    end try
-                    ---end update epcode block
-                    try
+                    end try ---end update epcode block
+                    if count of files in processing is greater than 1 then
                         do shell script "rm " & quoted form of rm2
-                        NSTimer's scheduledTimerWithTimeInterval:0 |target|:me selector:"trashTorrent:" userInfo:(missing value) repeats:false
-                        delay 0.01
-                    end try
-                    try
                         do shell script "rm " & processingFolder & "*-temp-*.*"
                         NSTimer's scheduledTimerWithTimeInterval:0 |target|:me selector:"trashTorrent:" userInfo:(missing value) repeats:false
                         delay 0.01
-                    end try
-                end if
+                    end if
+                end if  --(goOn is true)
             end try
             set the_file to {}
         end tell
