@@ -164,9 +164,12 @@ script AppDelegate
             addItemsWithObjectValues_(wikiShow)
         end tell
         ---end currently airing wikipedia block
+        
+        ----begin downloading anything in the torrentadd folder that has not begun downloading and also isn't in the downloadcomplete or processing folders and has not been added to itunes in that quality.  also on startup:
     end applicationWillFinishLaunching:
 ############################################################################################################################
     on applicationDidFinishLaunching:aNotification
+        ---launch housekeeping is currently at bottom of applicationWillFinishLaunching.  Move here instead if necessary.
         NSTimer's scheduledTimerWithTimeInterval:30 target:me selector:"download:" userInfo:(missing value) repeats:false
         NSTimer's scheduledTimerWithTimeInterval:330 target:me selector:"download:" userInfo:(missing value) repeats:true
         NSTimer's scheduledTimerWithTimeInterval:5 target:me selector:"process:" userInfo:(missing value) repeats:true
@@ -1347,13 +1350,21 @@ script AppDelegate
     end writeList:
 ############################################################################################################################
     on appQuit:sender
+        ----housekeeping is currently in applicationShouldTerminate...move here instead (in addition?) if necessary
         NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"writeList:" userInfo:"writeList" repeats:false
         delay 0.01
         tell current application to quit
     end appQuit:
 ############################################################################################################################
     on applicationShouldTerminate:sender
-        -- Insert code here to do any housekeeping before your application quits
+        ----delete every file from rawstreams folder (except dummyfile.keep)
+        ----quit atomicparsley, faac, ffmpeg, mediainfo, mkvextract, mp4box CLIs (possible to quit via a command, ie, faac -quit?  if not, quit using process ID)
+        ----if there are items in the "processing" folder
+        ----------move least recently created file from processing folder to downloadComplete folder
+        ----------delete every other file from processing folder (except dummyfile.keep)
+        ----ask user: Episodes is currently downloading [a file/files].  It can continue downloading [it/them] after you quit, or it can stop downloading now and resume the next time you launch Episodes.  Which would you prefer? Options: [quit app but continue downloading], [quit app and stop downloading]
+        ----------on continue downloading, just continue quit and do nothing else
+        ----------on stop downloading, quit aria CLI (possible to do one quit command for aria and have it quit all instances of aria?  if not, make sure it quits every running aria process.)
         return current application's NSTerminateNow
     end applicationShouldTerminate:
 end script
