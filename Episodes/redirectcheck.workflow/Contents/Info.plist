@@ -3,6 +3,6 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleName</key>
-	<string>torrentdownloader</string>
+	<string>redirectcheck</string>
 </dict>
 </plist>
