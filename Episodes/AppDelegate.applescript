@@ -184,136 +184,133 @@ script AppDelegate
 		NSTimer's scheduledTimerWithTimeInterval:8 target:me selector:"moveHook:" userInfo:(missing value) repeats:true
 	end applicationDidFinishLaunching:
 	############################################################################################################################
-	on grabTorrent:sender
-		set theEpcode to item 1 of sender's userInfo as text
-		set rss_items300 to item 2 of sender's userInfo as text
-		set vidQualFirst to item 3 of sender's userInfo as integer
-		set showname2 to item 4 of sender's userInfo as text
-		set showname to item 5 of sender's userInfo as text
-		set AppleScript's text item delimiters to ","
-		set tokens to text items of rss_items300
-		set totalTorrents to count tokens
-		set bestquality to 0 as integer
-		set bestfeeditem to 0 as integer
-		set secondbest to 0 as integer
-		set thirdbest to 0 as integer
-		set fourthbest to 0 as integer
-		set fifthbest to 0 as integer
-		repeat with i from 1 to totalTorrents
-			try
-				set current_torrent to item i of tokens
-				set AppleScript's text item delimiters to showname2
-				set tokens2 to text items of current_torrent
-				set torrentTitle to item 2 of tokens2
-				set tor_comment to "SDTV"
-				set torQual to 0 as integer
-				if torrentTitle contains "720p" then
-					set tor_comment to "720p"
-					set torQual to 1
-				end if
-				set torAudQual to 2 as integer
-				---the below (from here to end repeat) sets the torAudQual, but nothing checks the torAudQual later!  Implement something (a few lines down, when it is checking the torQual) to also check the torAudQual
-				ignoring case, hyphens, punctuation and white space
-					if torrentTitle contains "AAC2.0" then
-						set torAudQual to 2 as integer
-					else if torrentTitle contains "DD5.1" then
-						set torAudQual to 6 as integer
-					else if torrentTitle contains "6ch" then
-						set torAudQual to 6 as integer
-						--aac often means 2.0, and if it doesn't say aac2.0 or dd5.1, it is most likely 5.1, so it should prefer 5.1 or ac3 to nothing, and prefer nothing to 2.0 or web-dl or aac, unless web-dl also says 5.1
-					end if
-				end ignoring
-				set chanList to {"Mono", "Stereo", "3ch", "4ch", "5ch", "DD5.1"}
-				repeat with j from 1 to count of chanList
-					if torrentTitle contains item j of chanList then
-						set torAudQual to j as integer
-					end if
-				end repeat
-				set torSourceQual to 2 as integer
-				set sourcList to {"WEB-DL", "TV-Rip", "Blu-Ray"}
-				ignoring case, hyphens, punctuation and white space
-					if torrentTitle contains "Web-Rip" then
-						set torSourceQual to 1 as integer
-					end if
-					repeat with j from 1 to count of sourcList
-						if torrentTitle contains item j of sourcList then
-							set torSourceQual to j as integer
-						end if
-					end repeat
-				end ignoring
-				----make it so if a torrent is nuked and propered, the proper replaces the nuke
-				if torQual is greater than vidQualFirst then
-					----also add in audio and source quality checkers here...torAudQual and torSourceQual are set just a few lines above and should be checked here!!
-					if torQual is greater than or equal to bestquality then
-						set bestquality to torQual as integer
-						try
-							set fifthbest to fourthbest
-						end try
-						try
-							set fourthbest to thirdbest
-						end try
-						try
-							set thirdbest to secondbest
-						end try
-						try
-							set secondbest to bestfeeditem
-						end try
-						set bestfeeditem to i as integer
-					end if
-				end if
-			end try
-		end repeat
-		if bestfeeditem is greater than 0 then
-			set the_order to {bestfeeditem, secondbest, thirdbest, fourthbest, fifthbest}
-			repeat with tho from 1 to count of the_order
-				set tho2 to item tho of the_order
-				set final_torrent to item tho2 of tokens
-				set downloadedTorrentName0 to (paragraphs of final_torrent)
-				repeat with i from 1 to count of downloadedTorrentName0
-					if item i of downloadedTorrentName0 contains showname2 then
-						set downloadedTorrentName to item i of downloadedTorrentName0
-					end if
-				end repeat
-				set tor_comment to "SDTV"
-				set aud_comment to "Stereo"
-				set source_comment to "TV-Rip"
-				if downloadedTorrentName contains "720p" then
-					set tor_comment to "720p" as text
-				end if
-				ignoring case, hyphens, punctuation and white space
-					if downloadedTorrentName contains "DD5.1" then
-						set aud_comment to "DD5.1"
-					else if downloadedTorrentName contains "6ch" then
-						set aud_comment to "DD5.1"
-					end if
-				end ignoring
-				repeat with j2 from 1 to count of chanList
-					if downloadedTorrentName contains item j2 of chanList then
-						set aud_comment to item j2 of chanList as text
-					end if
-				end repeat
-				ignoring case, hyphens, punctuation and white space
-					if downloadedTorrentName contains "webdl" then
-						set source_comment to "Web-DL"
-					else if downloadedTorrentName contains "webrip" then
-						set source_comment to "Web-DL"
-					else if downloadedTorrentName contains "bdrip" then
-						set source_comment to "Blu-Ray"
-					else if downloadedTorrentName contains "bluray" then
-						set source_comment to "Blu-Ray"
-					end if
-				end ignoring
-				set title_appendage to showname2 & theEpcode & "." & tor_comment & "." & aud_comment & "." & source_comment
-				set AppleScript's text item delimiters to "Hash: "
-				set theHash0 to text item 2 of final_torrent
-				set theHash to (paragraph 1 of theHash0) & ".torrent"
-				set final_torrent2 to "http://itorrents.org/torrent/" & theHash & "?title=" & title_appendage
-				set redirectOutput to do shell script "automator -i " & final_torrent2 & " " & theRedirectCheck
-				if redirectOutput does not contain "limetorrents" then
-					set final_torrent3 to final_torrent2
-					exit repeat --make sure it also exits and moves on to the next episode number if it can't download anything from the_order
-				end if
-			end repeat
+    on grabTorrent:sender
+        set theEpcode to item 1 of sender's userInfo as text
+        set rss_items300 to item 2 of sender's userInfo as text
+        set vidQualFirst to item 3 of sender's userInfo as integer
+        set showname2 to item 4 of sender's userInfo as text
+        set showname to item 5 of sender's userInfo as text
+        set urlshow to item 6 of sender's userInfo as text
+        set bestquality to 0 as integer
+        set bestfeeditem to 0 as integer
+        set secondbest to 0 as integer
+        set thirdbest to 0 as integer
+        set fourthbest to 0 as integer
+        set fifthbest to 0 as integer
+        set curlURL to "https://torrentz2.eu/feed?f=" & urlshow & "+" & theEpcode & "+h264%7Cx264"
+        set curlResult to do shell script "curl \"" & curlURL & "\"" as text
+        set AppleScript's text item delimiters to "<item>"
+        set feedtokens to text items of curlResult
+        set totalentries to count of feedtokens
+        -----display dialog "grabtorrent, totalentries: " & totalentries
+        repeat with i from 2 to totalentries
+            set currentEntry to item i of feedtokens
+            set AppleScript's text item delimiters to {"<title>", "</title>"}
+            set feedtorrentTitle to text item 2 of currentEntry
+            -----display dialog "feedtorrentTitle: " & feedtorrentTitle
+            set AppleScript's text item delimiters to {"<link>", "</link>"}
+            set feedtorrentLink to text item 2 of currentEntry
+            -----display dialog "feedtorrentLink: " & feedtorrentLink
+            set tor_comment to "SDTV"
+            set torQual to 0 as integer
+            if feedtorrentTitle contains "720p" then
+                set tor_comment to "720p"
+                set torQual to 1
+            end if
+            --display dialog torQual
+            set torAudQual to 2 as integer
+            ---the below (from here to end repeat) sets the torAudQual, but nothing checks the torAudQual later!  Implement something (a few lines down, when it is checking the torQual) to also check the torAudQual
+            ignoring case, hyphens, punctuation and white space
+                if feedtorrentTitle contains "AAC2.0" then
+                    set torAudQual to 2 as integer
+                    else if feedtorrentTitle contains "DD5.1" then
+                    set torAudQual to 6 as integer
+                    else if feedtorrentTitle contains "6ch" then
+                    set torAudQual to 6 as integer
+                    --aac often means 2.0, and if it doesn't say aac2.0 or dd5.1, it is most likely 5.1, so it should prefer 5.1 or ac3 to nothing, and prefer nothing to 2.0 or web-dl or aac, unless web-dl also says 5.1
+                end if
+            end ignoring
+            set chanList to {"Mono", "Stereo", "3ch", "4ch", "5ch", "DD5.1"}
+            repeat with j from 1 to count of chanList
+                if feedtorrentTitle contains item j of chanList then
+                    set torAudQual to j as integer
+                end if
+            end repeat
+            set torSourceQual to 2 as integer
+            set sourcList to {"WEB-DL", "TV-Rip", "Blu-Ray"}
+            ignoring case, hyphens, punctuation and white space
+                if feedtorrentTitle contains "Web-Rip" then
+                    set torSourceQual to 1 as integer
+                end if
+                repeat with j from 1 to count of sourcList
+                    if feedtorrentTitle contains item j of sourcList then
+                        set torSourceQual to j as integer
+                    end if
+                end repeat
+            end ignoring
+            ----make it so if a torrent is nuked and propered, the proper replaces the nuke
+            if torQual is greater than vidQualFirst then
+                ----also add in audio and source quality checkers here...torAudQual and torSourceQual are set just a few lines above and should be checked here!!
+                if torQual is greater than or equal to bestquality then
+                    set bestquality to torQual as integer
+                    --display dialog bestquality
+                    try
+                        set fifthbest to fourthbest
+                    end try
+                    try
+                        set fourthbest to thirdbest
+                    end try
+                    try
+                        set thirdbest to secondbest
+                    end try
+                    try
+                        set secondbest to bestfeeditem
+                    end try
+                    set bestfeeditem to feedtorrentLink & ": " & feedtorrentTitle
+                end if
+            end if
+        end repeat
+        -----display dialog "bestfeeditem: " & bestfeeditem
+        if bestfeeditem is not "" then
+            set the_order to {bestfeeditem, secondbest, thirdbest, fourthbest, fifthbest}
+            set AppleScript's text item delimiters to {"://torrentz2.eu/", ":"}
+            repeat with tho from 1 to 5
+                set final_torrent to item tho of the_order
+                if final_torrent contains showname2 then set theHash to (text item 2 of final_torrent) & ".torrent"
+                set tor_comment to "SDTV"
+                set aud_comment to "Stereo"
+                set source_comment to "TV-Rip"
+                if final_torrent contains "720p" then set tor_comment to "720p" as text
+                ignoring case, hyphens, punctuation and white space
+                    if final_torrent contains "DD5.1" then
+                        set aud_comment to "DD5.1"
+                        else if final_torrent contains "6ch" then
+                        set aud_comment to "DD5.1"
+                    end if
+                end ignoring
+                repeat with j2 from 1 to count of chanList
+                    if final_torrent contains item j2 of chanList then set aud_comment to item j2 of chanList as text
+                end repeat
+                ignoring case, hyphens, punctuation and white space
+                    if final_torrent contains "webdl" then
+                        set source_comment to "Web-DL"
+                        else if final_torrent contains "webrip" then
+                        set source_comment to "Web-DL"
+                        else if final_torrent contains "bdrip" then
+                        set source_comment to "Blu-Ray"
+                        else if final_torrent contains "bluray" then
+                        set source_comment to "Blu-Ray"
+                    end if
+                end ignoring
+                set title_appendage to showname2 & theEpcode & "." & tor_comment & "." & aud_comment & "." & source_comment
+                set final_torrent2 to "http://itorrents.org/torrent/" & theHash & "?title=" & title_appendage
+                set redirectOutput to do shell script "automator -i " & final_torrent2 & " " & theRedirectCheck
+                if redirectOutput does not contain "limetorrents" then
+                    set final_torrent3 to final_torrent2
+                   -----display dialog "final_torrent3: " & final_torrent3
+                    exit repeat --make sure it also exits and moves on to the next episode number if it can't download anything from the_order
+                end if
+            end repeat
 			tell application "Finder"
 				set already_downloaded to count (every item of torrent_add whose name contains title_appendage)
 				set already_downloaded2 to count (every item of downloads_torrents whose name contains title_appendage)
@@ -384,7 +381,7 @@ script AppDelegate
 		end tell
 	end trashTorrent:
 	############################################################################################################################
-	on download:sender
+    on download:sender
 		set showlist to listOfShows's stringValue() as text
 		set AppleScript's text item delimiters to "
 "
@@ -411,8 +408,9 @@ script AppDelegate
 				set text item delimiters of AppleScript to "+"
 				set urlshow to "" & urlshow
 				----the below line might be where the -100024 error is
-				set rss_items to do shell script "automator -i https://torrentz2.eu/feed?f=" & urlshow & "+h264%7Cx264 " & theFeedChecker
+				-----set rss_items to do shell script "automator -i https://torrentz2.eu/feed?f=" & urlshow & "+h264%7Cx264 " & theFeedChecker
 				set existsShows to ""
+                ---check iTunes block begins here
 				tell application "iTunes" to set existsShows to (every track of playlist "TV Shows" whose show contains showname) --show name, ie "Family Guy"
 				set countfiles to count items of existsShows
 				if countfiles is greater than 0 then
@@ -438,56 +436,64 @@ script AppDelegate
 								set audQualFirst to i as integer
 							end if
 						end repeat
+                        
 						if vidQualFirst is less than 1 then --this is where you can set it to a different "max quality" setting  ----THIS WAS CHANGED FROM 3 TO 1 FOR 720P, SEE "normal--with 1080p" IN EPISODES FOLDER
 							set rss_items100 to do shell script "automator -i https://torrentz2.eu/feed?f=" & urlshow & "+" & iTunesEpcode & "+h264%7Cx264 " & theFeedChecker
-							(NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"grabTorrent:" userInfo:{iTunesEpcode, rss_items100, vidQualFirst, showname2, showname} repeats:false)
+                            (NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"grabTorrent:" userInfo:{iTunesEpcode, rss_items100, vidQualFirst, showname2, showname, urlshow} repeats:false)
 							delay 0.01
 						end if
 					end repeat
 				end if
+                ---check iTunes block ends here
+                ---check showList block begins here
 				set currentdata0 to listOfShows's stringValue() as text
+                
 				set AppleScript's text item delimiters to showname & " (S"
 				set currentdata1 to text item 2 of currentdata0
 				set AppleScript's text item delimiters to ")"
 				set currentdata2 to text item 1 of currentdata1
 				set AppleScript's text item delimiters to "E"
 				set currentdata to ((text item 1 of currentdata2) & (text item 2 of currentdata2) as integer) + 90000
-				
 				set AppleScript's text item delimiters to ","
-				set tokens100 to text items of rss_items
-				set totalTorrents to count tokens100
-				set highestepcode to 0 as integer
-				repeat with t from 2 to totalTorrents
-					set correctTitle to showname2 & "S"
-					if item t of tokens100 contains correctTitle then
-						set currentTorrent to item t of tokens100
-						set AppleScript's text item delimiters to correctTitle
-						set seasonnum0 to text item 2 of currentTorrent
-						set correctTitle2 to text 1 thru 2 of seasonnum0 & "e"
-						if seasonnum0 contains correctTitle2 then
-							set AppleScript's text item delimiters to correctTitle2
-							set seasonnum to text 1 thru 2 of seasonnum0
-							set epnum0 to text item 2 of seasonnum0
-							set AppleScript's text item delimiters to "."
-							set epnum to text item 1 of epnum0
-							try
-								set feedepcode0 to seasonnum & epnum as integer
-							on error
-								set feedepcode0 to 0
-							end try
-							set feedepcode to feedepcode0 + 90000
-							if feedepcode is greater than highestepcode then
-								set highestepcode to feedepcode
-							end if
-						end if
-					end if
-				end repeat
+				-----set tokens100 to text items of rss_items
+				-----set totalTorrents to count tokens100
+				-----set highestepcode to 0 as integer
+				-----repeat with t from 2 to totalTorrents
+					-----set correctTitle to showname2 & "S"
+					-----if item t of tokens100 contains correctTitle then
+						-----set currentTorrent to item t of tokens100
+						
+                        -----set AppleScript's text item delimiters to correctTitle
+						 -----set seasonnum0 to text item 2 of currentTorrent
+						-----set correctTitle2 to text 1 thru 2 of seasonnum0 & "e"
+						-----if seasonnum0 contains correctTitle2 then
+							-----set AppleScript's text item delimiters to correctTitle2
+							-----set seasonnum to text 1 thru 2 of seasonnum0
+							-----set epnum0 to text item 2 of seasonnum0
+							-----set AppleScript's text item delimiters to "."
+							-----set epnum to text item 1 of epnum0
+							-----try
+							-----	set feedepcode0 to seasonnum & epnum as integer
+							-----on error
+							-----	set feedepcode0 to 0
+							-----end try
+							-----set feedepcode to feedepcode0 + 90000
+							-----if feedepcode is greater than highestepcode then
+							-----	set highestepcode to feedepcode
+							-----end if
+						-----end if
+					-----end if
+				-----end repeat
 				repeat
+                    --display dialog "within repeat"
 					set urlepcode to "S" & text 2 thru 3 of (currentdata as text) & "E" & text 4 thru 5 of (currentdata as text)
+                    --display dialog urlepcode
 					set vidQualFirst to -1 as integer
 					set rss_items200 to do shell script "automator -i https://torrentz2.eu/feed?f=" & urlshow & "+" & urlepcode & "+h264%7Cx264 " & theFeedChecker
+                    -----display dialog "in download, rss items: " & (rss_items200)
 					if length of rss_items200 is greater than 4 then
-						(NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"grabTorrent:" userInfo:{urlepcode, rss_items200, vidQualFirst, showname2, showname} repeats:false)
+                        --display dialog "right before grabtorrent"
+						(NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"grabTorrent:" userInfo:{urlepcode, rss_items200, vidQualFirst, showname2, showname, urlshow} repeats:false)
 						delay 0.01
 					else
 						exit repeat
