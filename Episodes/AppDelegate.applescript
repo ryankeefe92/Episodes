@@ -201,9 +201,8 @@ script AppDelegate
         set curlResult to do shell script "curl \"" & curlURL & "\"" as text
         set AppleScript's text item delimiters to "<item>"
         set feedtokens to text items of curlResult
-        set totalentries to count of feedtokens
-        -----display dialog "grabtorrent, totalentries: " & totalentries
-        repeat with i from 2 to totalentries
+        -----display dialog "grabtorrent, count of feedtokens: " & (count of feedtokens)
+        repeat with i from 2 to count of feedtokens
             set currentEntry to item i of feedtokens
             set AppleScript's text item delimiters to {"<title>", "</title>"}
             set feedtorrentTitle to text item 2 of currentEntry
@@ -213,10 +212,12 @@ script AppDelegate
             -----display dialog "feedtorrentLink: " & feedtorrentLink
             set tor_comment to "SDTV"
             set torQual to 0 as integer
+            ###720p BLOCK###
             if feedtorrentTitle contains "720p" then
                 set tor_comment to "720p"
                 set torQual to 1
             end if
+            ###END 720p BLOCK###
             --display dialog torQual
             set torAudQual to 2 as integer
             ---the below (from here to end repeat) sets the torAudQual, but nothing checks the torAudQual later!  Implement something (a few lines down, when it is checking the torQual) to also check the torAudQual
@@ -280,7 +281,9 @@ script AppDelegate
                 set tor_comment to "SDTV"
                 set aud_comment to "Stereo"
                 set source_comment to "TV-Rip"
+                ###720p BLOCK###
                 if final_torrent contains "720p" then set tor_comment to "720p" as text
+                ###END 720p BLOCK###
                 ignoring case, hyphens, punctuation and white space
                     if final_torrent contains "DD5.1" then
                         set aud_comment to "DD5.1"
@@ -407,8 +410,6 @@ script AppDelegate
 				set urlshow to text items of showname2
 				set text item delimiters of AppleScript to "+"
 				set urlshow to "" & urlshow
-				----the below line might be where the -100024 error is
-				-----set rss_items to do shell script "automator -i https://torrentz2.eu/feed?f=" & urlshow & "+h264%7Cx264 " & theFeedChecker
 				set existsShows to ""
                 ---check iTunes block begins here
 				tell application "iTunes" to set existsShows to (every track of playlist "TV Shows" whose show contains showname) --show name, ie "Family Guy"
@@ -436,9 +437,8 @@ script AppDelegate
 								set audQualFirst to i as integer
 							end if
 						end repeat
-                        
-						if vidQualFirst is less than 1 then --this is where you can set it to a different "max quality" setting  ----THIS WAS CHANGED FROM 3 TO 1 FOR 720P, SEE "normal--with 1080p" IN EPISODES FOLDER
-							set rss_items100 to do shell script "automator -i https://torrentz2.eu/feed?f=" & urlshow & "+" & iTunesEpcode & "+h264%7Cx264 " & theFeedChecker
+						if vidQualFirst is less than 1 then --###720p LINE###-- --this is where user can set it to a different "max quality" setting
+                            set rss_items100 to do shell script "automator -i https://torrentz2.eu/feed?f=" & urlshow & "+" & iTunesEpcode & "+h264%7Cx264 " & theFeedChecker
                             (NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"grabTorrent:" userInfo:{iTunesEpcode, rss_items100, vidQualFirst, showname2, showname, urlshow} repeats:false)
 							delay 0.01
 						end if
@@ -447,7 +447,6 @@ script AppDelegate
                 ---check iTunes block ends here
                 ---check showList block begins here
 				set currentdata0 to listOfShows's stringValue() as text
-                
 				set AppleScript's text item delimiters to showname & " (S"
 				set currentdata1 to text item 2 of currentdata0
 				set AppleScript's text item delimiters to ")"
@@ -455,35 +454,6 @@ script AppDelegate
 				set AppleScript's text item delimiters to "E"
 				set currentdata to ((text item 1 of currentdata2) & (text item 2 of currentdata2) as integer) + 90000
 				set AppleScript's text item delimiters to ","
-				-----set tokens100 to text items of rss_items
-				-----set totalTorrents to count tokens100
-				-----set highestepcode to 0 as integer
-				-----repeat with t from 2 to totalTorrents
-					-----set correctTitle to showname2 & "S"
-					-----if item t of tokens100 contains correctTitle then
-						-----set currentTorrent to item t of tokens100
-						
-                        -----set AppleScript's text item delimiters to correctTitle
-						 -----set seasonnum0 to text item 2 of currentTorrent
-						-----set correctTitle2 to text 1 thru 2 of seasonnum0 & "e"
-						-----if seasonnum0 contains correctTitle2 then
-							-----set AppleScript's text item delimiters to correctTitle2
-							-----set seasonnum to text 1 thru 2 of seasonnum0
-							-----set epnum0 to text item 2 of seasonnum0
-							-----set AppleScript's text item delimiters to "."
-							-----set epnum to text item 1 of epnum0
-							-----try
-							-----	set feedepcode0 to seasonnum & epnum as integer
-							-----on error
-							-----	set feedepcode0 to 0
-							-----end try
-							-----set feedepcode to feedepcode0 + 90000
-							-----if feedepcode is greater than highestepcode then
-							-----	set highestepcode to feedepcode
-							-----end if
-						-----end if
-					-----end if
-				-----end repeat
 				repeat
                     --display dialog "within repeat"
 					set urlepcode to "S" & text 2 thru 3 of (currentdata as text) & "E" & text 4 thru 5 of (currentdata as text)
