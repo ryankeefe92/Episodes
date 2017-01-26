@@ -12,7 +12,6 @@
 		112D47781CDC8ECF00DE0F97 /* torrentdownloader.workflow in Resources */ = {isa = PBXBuildFile; fileRef = 112D47771CDC8ECF00DE0F97 /* torrentdownloader.workflow */; };
 		113492C41CDADF940041DA61 /* AtomicParsley64 in Resources */ = {isa = PBXBuildFile; fileRef = 113492BA1CDADF940041DA61 /* AtomicParsley64 */; };
 		113492C51CDADF940041DA61 /* faac in Resources */ = {isa = PBXBuildFile; fileRef = 113492BB1CDADF940041DA61 /* faac */; };
-		113492C61CDADF940041DA61 /* feedchecker.workflow in Resources */ = {isa = PBXBuildFile; fileRef = 113492BC1CDADF940041DA61 /* feedchecker.workflow */; };
 		113492C71CDADF940041DA61 /* ffmpeg in Resources */ = {isa = PBXBuildFile; fileRef = 113492BD1CDADF940041DA61 /* ffmpeg */; };
 		113492C81CDADF940041DA61 /* mediainfo in Resources */ = {isa = PBXBuildFile; fileRef = 113492BE1CDADF940041DA61 /* mediainfo */; };
 		113492C91CDADF940041DA61 /* mkvextract in Resources */ = {isa = PBXBuildFile; fileRef = 113492BF1CDADF940041DA61 /* mkvextract */; };
@@ -38,7 +37,6 @@
 		112D47771CDC8ECF00DE0F97 /* torrentdownloader.workflow */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = torrentdownloader.workflow; sourceTree = "<group>"; };
 		113492BA1CDADF940041DA61 /* AtomicParsley64 */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = AtomicParsley64; sourceTree = "<group>"; };
 		113492BB1CDADF940041DA61 /* faac */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = faac; sourceTree = "<group>"; };
-		113492BC1CDADF940041DA61 /* feedchecker.workflow */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = feedchecker.workflow; sourceTree = "<group>"; };
 		113492BD1CDADF940041DA61 /* ffmpeg */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = ffmpeg; sourceTree = "<group>"; };
 		113492BE1CDADF940041DA61 /* mediainfo */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = mediainfo; sourceTree = "<group>"; };
 		113492BF1CDADF940041DA61 /* mkvextract */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = mkvextract; sourceTree = "<group>"; };
@@ -113,11 +111,9 @@
 		11C5E9041CD084DC00450026 /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
-				110DBA451E2E2CBE0027C560 /* redirectcheck.workflow */,
 				117BF2A21CDD749900BAA3D4 /* aria2c */,
 				113492BA1CDADF940041DA61 /* AtomicParsley64 */,
 				113492BB1CDADF940041DA61 /* faac */,
-				113492BC1CDADF940041DA61 /* feedchecker.workflow */,
 				113492BD1CDADF940041DA61 /* ffmpeg */,
 				113492BE1CDADF940041DA61 /* mediainfo */,
 				113492BF1CDADF940041DA61 /* mkvextract */,
@@ -126,8 +122,9 @@
 				118262D31D13E9E300E3628B /* Error */,
 				11DC8AFB1CE29EE200E1DEB6 /* Downloading */,
 				11DC8AFC1CE29EE200E1DEB6 /* DownloadingComplete */,
-				112D47771CDC8ECF00DE0F97 /* torrentdownloader.workflow */,
+				110DBA451E2E2CBE0027C560 /* redirectcheck.workflow */,
 				113492C11CDADF940041DA61 /* show_list.txt */,
+				112D47771CDC8ECF00DE0F97 /* torrentdownloader.workflow */,
 				1142A7041CDC027700A29AF5 /* Processing */,
 				1142A7081CDC032C00A29AF5 /* RawStreams */,
 				113492C21CDADF940041DA61 /* showart */,
@@ -212,7 +209,6 @@
 				110DBA461E2E2CBE0027C560 /* redirectcheck.workflow in Resources */,
 				117BF2A31CDD749900BAA3D4 /* aria2c in Resources */,
 				113492C51CDADF940041DA61 /* faac in Resources */,
-				113492C61CDADF940041DA61 /* feedchecker.workflow in Resources */,
 				118262D41D13E9E300E3628B /* Error in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

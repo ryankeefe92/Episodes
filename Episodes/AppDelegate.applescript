@@ -23,7 +23,6 @@ script AppDelegate
 	global aria
 	global atomicParsley
 	global thefaac
-	global theFeedChecker
 	global theffmpeg
 	global theMediaInfo
 	global themkvExtract
@@ -79,7 +78,6 @@ script AppDelegate
 			set the listFile to (resourceFolder as string) & "show_list.txt" as string
 			set aria to POSIX path of resourceFolder & "aria2c" as text
 			set atomicParsley to POSIX path of resourceFolder & "AtomicParsley64" as text
-			set theFeedChecker to POSIX path of resourceFolder & "feedchecker.workflow" as text
 			set thefaac to POSIX path of resourceFolder & "faac" as text
 			set theffmpeg to POSIX path of resourceFolder & "ffmpeg" as text
 			set theMediaInfo to POSIX path of resourceFolder & "mediainfo" as text
@@ -186,21 +184,20 @@ script AppDelegate
 	############################################################################################################################
     on grabTorrent:sender
         set theEpcode to item 1 of sender's userInfo as text
-        set rss_items300 to item 2 of sender's userInfo as text
+        set rss_items to item 2 of sender's userInfo as text
         set vidQualFirst to item 3 of sender's userInfo as integer
         set showname2 to item 4 of sender's userInfo as text
         set showname to item 5 of sender's userInfo as text
-        set urlshow to item 6 of sender's userInfo as text
+        
         set bestquality to 0 as integer
         set bestfeeditem to 0 as integer
         set secondbest to 0 as integer
         set thirdbest to 0 as integer
         set fourthbest to 0 as integer
         set fifthbest to 0 as integer
-        set curlURL to "https://torrentz2.eu/feed?f=" & urlshow & "+" & theEpcode & "+h264%7Cx264"
-        set curlResult to do shell script "curl \"" & curlURL & "\"" as text
+        
         set AppleScript's text item delimiters to "<item>"
-        set feedtokens to text items of curlResult
+        set feedtokens to text items of rss_items
         -----display dialog "grabtorrent, count of feedtokens: " & (count of feedtokens)
         repeat with i from 2 to count of feedtokens
             set currentEntry to item i of feedtokens
@@ -428,7 +425,7 @@ script AppDelegate
 						set videoListd to {"SDTV", "720p", "1080p", "4K"}
 						repeat with i from 1 to count of videoListd
 							if iTunesQuality contains item i of videoListd then
-								set vidQualFirst to (i - 1) as integer
+								set vidQualFirst to (i - 1) as integer  --this is so the video qualities correspond to integers 0, 1, 2, and 3 instead of 1, 2, 3, and 4
 							end if
 						end repeat
 						set channelListd to {"Mono", "Stereo", "3ch", "4ch", "5ch", "DD5.1"}
@@ -438,9 +435,12 @@ script AppDelegate
 							end if
 						end repeat
 						if vidQualFirst is less than 1 then --###720p LINE###-- --this is where user can set it to a different "max quality" setting
-                            set rss_items100 to do shell script "automator -i https://torrentz2.eu/feed?f=" & urlshow & "+" & iTunesEpcode & "+h264%7Cx264 " & theFeedChecker
-                            (NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"grabTorrent:" userInfo:{iTunesEpcode, rss_items100, vidQualFirst, showname2, showname, urlshow} repeats:false)
+                            set curliTunes to "https://torrentz2.eu/feed?f=" & urlshow & "+" & iTunesEpcode & "+h264%7Cx264"
+                            set rss_items100 to do shell script "curl \"" & curliTunes & "\"" as text
+                            if (count of paragraphs of rss_items100) is greater than 12 then
+                            (NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"grabTorrent:" userInfo:{iTunesEpcode, rss_items100, vidQualFirst, showname2, showname} repeats:false)
 							delay 0.01
+                            end if
 						end if
 					end repeat
 				end if
@@ -453,17 +453,13 @@ script AppDelegate
 				set currentdata2 to text item 1 of currentdata1
 				set AppleScript's text item delimiters to "E"
 				set currentdata to ((text item 1 of currentdata2) & (text item 2 of currentdata2) as integer) + 90000
-				set AppleScript's text item delimiters to ","
 				repeat
-                    --display dialog "within repeat"
+                    set vidQualFirst to -1 as integer  --there is no original vidQual, since we are not replacing something in itunes, so we set it to -1, so anything found will be downloaded
 					set urlepcode to "S" & text 2 thru 3 of (currentdata as text) & "E" & text 4 thru 5 of (currentdata as text)
-                    --display dialog urlepcode
-					set vidQualFirst to -1 as integer
-					set rss_items200 to do shell script "automator -i https://torrentz2.eu/feed?f=" & urlshow & "+" & urlepcode & "+h264%7Cx264 " & theFeedChecker
-                    -----display dialog "in download, rss items: " & (rss_items200)
-					if length of rss_items200 is greater than 4 then
-                        --display dialog "right before grabtorrent"
-						(NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"grabTorrent:" userInfo:{urlepcode, rss_items200, vidQualFirst, showname2, showname, urlshow} repeats:false)
+                    set curlURL to "https://torrentz2.eu/feed?f=" & urlshow & "+" & urlepcode & "+h264%7Cx264"
+                    set rss_items200 to do shell script "curl \"" & curlURL & "\"" as text
+					if (count of paragraphs of rss_items200) is greater than 12 then
+						(NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"grabTorrent:" userInfo:{urlepcode, rss_items200, vidQualFirst, showname2, showname} repeats:false)
 						delay 0.01
 					else
 						exit repeat

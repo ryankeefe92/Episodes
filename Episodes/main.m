@@ -2,7 +2,7 @@
 //  main.m
 //  Episodes
 //
-//  Copyright © 2007-2016 Ryan Keefe.  Some rights reserved.
+//  Copyright © 2007-2017 Ryan Keefe.  Some rights reserved.
 //
 
 #import <Cocoa/Cocoa.h>
