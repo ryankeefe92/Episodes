@@ -39,9 +39,6 @@ script AppDelegate
 	global torrentAddFolder
 	global torrent_add
 	global errorQueue
-	global theTorrentDownloader
-	global theRedirectCheck
-	global downloads_torrents
 	global currentlyAiring
 	global myshow3
 	global epcodefinal
@@ -54,8 +51,6 @@ script AppDelegate
 		tell application "Finder"
 			set appLocation to (path to current application) as string
 			set resourceFolder to appLocation & "Contents:Resources:" as string
-			set downloadsTorrents0 to path to downloads folder as alias
-			set downloads_torrents to folder downloadsTorrents0
 			set downloadingFolder0 to appLocation & "Contents:Resources:Downloading:" as alias
 			set downloadingFolder to POSIX path of downloadingFolder0 as text
 			set downloadingFolder_folder to folder downloadingFolder0
@@ -83,8 +78,6 @@ script AppDelegate
 			set theMediaInfo to POSIX path of resourceFolder & "mediainfo" as text
 			set themkvExtract to POSIX path of resourceFolder & "mkvextract" as text
 			set themp4Box to POSIX path of resourceFolder & "MP4Box" as text
-			set theTorrentDownloader to POSIX path of resourceFolder & "torrentdownloader.workflow" as text
-			set theRedirectCheck to POSIX path of resourceFolder & "redirectcheck.workflow" as text
 			set the open_target_file to open for access file listFile
 			try
 				set showlist to read the open_target_file
@@ -188,25 +181,20 @@ script AppDelegate
         set vidQualFirst to item 3 of sender's userInfo as integer
         set showname2 to item 4 of sender's userInfo as text
         set showname to item 5 of sender's userInfo as text
-        
         set bestquality to 0 as integer
         set bestfeeditem to 0 as integer
         set secondbest to 0 as integer
         set thirdbest to 0 as integer
         set fourthbest to 0 as integer
         set fifthbest to 0 as integer
-        
         set AppleScript's text item delimiters to "<item>"
         set feedtokens to text items of rss_items
-        -----display dialog "grabtorrent, count of feedtokens: " & (count of feedtokens)
         repeat with i from 2 to count of feedtokens
             set currentEntry to item i of feedtokens
             set AppleScript's text item delimiters to {"<title>", "</title>"}
             set feedtorrentTitle to text item 2 of currentEntry
-            -----display dialog "feedtorrentTitle: " & feedtorrentTitle
             set AppleScript's text item delimiters to {"<link>", "</link>"}
             set feedtorrentLink to text item 2 of currentEntry
-            -----display dialog "feedtorrentLink: " & feedtorrentLink
             set tor_comment to "SDTV"
             set torQual to 0 as integer
             ###720p BLOCK###
@@ -215,7 +203,6 @@ script AppDelegate
                 set torQual to 1
             end if
             ###END 720p BLOCK###
-            --display dialog torQual
             set torAudQual to 2 as integer
             ---the below (from here to end repeat) sets the torAudQual, but nothing checks the torAudQual later!  Implement something (a few lines down, when it is checking the torQual) to also check the torAudQual
             ignoring case, hyphens, punctuation and white space
@@ -303,39 +290,22 @@ script AppDelegate
                     end if
                 end ignoring
                 set title_appendage to showname2 & theEpcode & "." & tor_comment & "." & aud_comment & "." & source_comment
-                set final_torrent2 to "http://itorrents.org/torrent/" & theHash & "?title=" & title_appendage
-                set redirectOutput to do shell script "automator -i " & final_torrent2 & " " & theRedirectCheck
-                if redirectOutput does not contain "limetorrents" then
-                    set final_torrent3 to final_torrent2
-                   -----display dialog "final_torrent3: " & final_torrent3
-                    exit repeat --make sure it also exits and moves on to the next episode number if it can't download anything from the_order
+                tell application "Finder" to set already_downloaded to count (every item of torrent_add whose name contains title_appendage)
+                if already_downloaded is 0 then
+                    set final_torrent2 to "http://itorrents.org/torrent/" & theHash
+                    set torrentRedirect to do shell script "curl -L \"" & final_torrent2 & "\"" as text
+                    if torrentRedirect does not contain "LimeTorrents.cc" then
+                        do shell script "curl " & final_torrent2 & " -o " & "\"" & torrentAddFolder & title_appendage & ".torrent\""
+                        ----STATBAR2----
+                        set statbar2 to current application's NSString's stringWithFormat_("%@%@%@%@%@%@%@", "Downloading ", showname, " ", theEpcode, " in ", tor_comment, " quality.")
+                        (statusLabel's setStringValue:statbar2)
+                        delay 0.01
+                        ----STATBAR2----
+                        do shell script aria & " --seed-time=0 --on-bt-download-complete=exit -d " & downloadingFolder & " " & torrentAddFolder & title_appendage & ".torrent > /dev/null 2>&1 &"
+                        exit repeat --make sure it also exits and moves on to the next episode number if it can't download anything from the_order
+                    end if
                 end if
             end repeat
-			tell application "Finder"
-				set already_downloaded to count (every item of torrent_add whose name contains title_appendage)
-				set already_downloaded2 to count (every item of downloads_torrents whose name contains title_appendage)
-			end tell
-			if already_downloaded is 0 then
-				if already_downloaded2 is 0 then
-					do shell script "automator -i " & final_torrent3 & " " & theTorrentDownloader
-					----STATBAR2----
-					set statbar2 to current application's NSString's stringWithFormat_("%@%@%@%@%@%@%@", "Downloading ", showname, " ", theEpcode, " in ", tor_comment, " quality.")
-					(statusLabel's setStringValue:statbar2)
-					delay 0.01
-					----STATBAR2----
-					---the block below, from line immediately below this one (tell finder) to "end tell" should be its own subroutine that gets called right here, and also once every ten seconds or so.
-					tell application "Finder"
-						set torrentsDown to (every item of downloads_torrents whose name contains ".torrent")
-						repeat with tc from 1 to count of torrentsDown
-							set thisTorrent to item tc of torrentsDown
-							set thisTorrentName to name of thisTorrent
-							move (every item of downloads_torrents whose name contains thisTorrentName) to torrent_add
-							do shell script aria & " --seed-time=0 --on-bt-download-complete=exit -d " & downloadingFolder & " " & torrentAddFolder & thisTorrentName & " > /dev/null 2>&1 &"
-						end repeat
-					end tell
-					---end subroutine block
-				end if
-			end if
 		end if
 		delay 0.01 -- more of these at END of NSTIMER sections, before it returns to main script?
 	end grabTorrent:

@@ -7,9 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		110DBA461E2E2CBE0027C560 /* redirectcheck.workflow in Resources */ = {isa = PBXBuildFile; fileRef = 110DBA451E2E2CBE0027C560 /* redirectcheck.workflow */; };
 		112D47751CDC798700DE0F97 /* TorrentAdd in Resources */ = {isa = PBXBuildFile; fileRef = 112D47731CDC798700DE0F97 /* TorrentAdd */; };
-		112D47781CDC8ECF00DE0F97 /* torrentdownloader.workflow in Resources */ = {isa = PBXBuildFile; fileRef = 112D47771CDC8ECF00DE0F97 /* torrentdownloader.workflow */; };
 		113492C41CDADF940041DA61 /* AtomicParsley64 in Resources */ = {isa = PBXBuildFile; fileRef = 113492BA1CDADF940041DA61 /* AtomicParsley64 */; };
 		113492C51CDADF940041DA61 /* faac in Resources */ = {isa = PBXBuildFile; fileRef = 113492BB1CDADF940041DA61 /* faac */; };
 		113492C71CDADF940041DA61 /* ffmpeg in Resources */ = {isa = PBXBuildFile; fileRef = 113492BD1CDADF940041DA61 /* ffmpeg */; };
@@ -32,9 +30,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		110DBA451E2E2CBE0027C560 /* redirectcheck.workflow */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = redirectcheck.workflow; sourceTree = "<group>"; };
 		112D47731CDC798700DE0F97 /* TorrentAdd */ = {isa = PBXFileReference; lastKnownFileType = folder; path = TorrentAdd; sourceTree = "<group>"; };
-		112D47771CDC8ECF00DE0F97 /* torrentdownloader.workflow */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = torrentdownloader.workflow; sourceTree = "<group>"; };
 		113492BA1CDADF940041DA61 /* AtomicParsley64 */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = AtomicParsley64; sourceTree = "<group>"; };
 		113492BB1CDADF940041DA61 /* faac */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = faac; sourceTree = "<group>"; };
 		113492BD1CDADF940041DA61 /* ffmpeg */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = ffmpeg; sourceTree = "<group>"; };
@@ -122,9 +118,7 @@
 				118262D31D13E9E300E3628B /* Error */,
 				11DC8AFB1CE29EE200E1DEB6 /* Downloading */,
 				11DC8AFC1CE29EE200E1DEB6 /* DownloadingComplete */,
-				110DBA451E2E2CBE0027C560 /* redirectcheck.workflow */,
 				113492C11CDADF940041DA61 /* show_list.txt */,
-				112D47771CDC8ECF00DE0F97 /* torrentdownloader.workflow */,
 				1142A7041CDC027700A29AF5 /* Processing */,
 				1142A7081CDC032C00A29AF5 /* RawStreams */,
 				113492C21CDADF940041DA61 /* showart */,
@@ -202,11 +196,9 @@
 				113492C71CDADF940041DA61 /* ffmpeg in Resources */,
 				113492C91CDADF940041DA61 /* mkvextract in Resources */,
 				11DC8AFD1CE29EE200E1DEB6 /* Downloading in Resources */,
-				112D47781CDC8ECF00DE0F97 /* torrentdownloader.workflow in Resources */,
 				113492CA1CDADF940041DA61 /* MP4Box in Resources */,
 				113492C41CDADF940041DA61 /* AtomicParsley64 in Resources */,
 				11C5E90D1CD084DC00450026 /* MainMenu.xib in Resources */,
-				110DBA461E2E2CBE0027C560 /* redirectcheck.workflow in Resources */,
 				117BF2A31CDD749900BAA3D4 /* aria2c in Resources */,
 				113492C51CDADF940041DA61 /* faac in Resources */,
 				118262D41D13E9E300E3628B /* Error in Resources */,
