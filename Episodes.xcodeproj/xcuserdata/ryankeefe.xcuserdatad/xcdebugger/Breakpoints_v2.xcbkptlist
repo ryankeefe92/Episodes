@@ -10,11 +10,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Episodes/AppDelegate.applescript"
-            timestampString = "507187098.986703"
+            timestampString = "507324684.864131"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "1322"
-            endingLineNumber = "1322">
+            startingLineNumber = "1371"
+            endingLineNumber = "1371">
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>

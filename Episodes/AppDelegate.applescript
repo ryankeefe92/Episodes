@@ -34,6 +34,7 @@ script AppDelegate
 	global processingFolder
 	global processing
 	global rawFolder
+    global rawFolder_folder
 	global showArtFolder
 	global artfolder
 	global torrentAddFolder
@@ -65,6 +66,7 @@ script AppDelegate
 			set artfolder to folder showArtFolder0
 			set rawFolder0 to appLocation & "Contents:Resources:RawStreams:" as alias
 			set rawFolder to POSIX path of rawFolder0 as text
+            set rawFolder_folder to folder rawFolder0
 			set processingFolder0 to appLocation & "Contents:Resources:Processing:" as alias
 			set processingFolder to POSIX path of processingFolder0 as text
 			set processing to folder processingFolder0
@@ -169,8 +171,8 @@ script AppDelegate
 	############################################################################################################################
 	on applicationDidFinishLaunching:aNotification
 		---launch housekeeping is currently at bottom of applicationWillFinishLaunching.  Move here instead if necessary.
-		NSTimer's scheduledTimerWithTimeInterval:30 target:me selector:"download:" userInfo:(missing value) repeats:false
-		NSTimer's scheduledTimerWithTimeInterval:330 target:me selector:"download:" userInfo:(missing value) repeats:true
+		NSTimer's scheduledTimerWithTimeInterval:5 target:me selector:"download:" userInfo:(missing value) repeats:false
+		NSTimer's scheduledTimerWithTimeInterval:620 target:me selector:"download:" userInfo:(missing value) repeats:true
 		NSTimer's scheduledTimerWithTimeInterval:5 target:me selector:"process:" userInfo:(missing value) repeats:true
 		NSTimer's scheduledTimerWithTimeInterval:8 target:me selector:"moveHook:" userInfo:(missing value) repeats:true
 	end applicationDidFinishLaunching:
@@ -290,7 +292,6 @@ script AppDelegate
                     end if
                 end ignoring
                 set title_appendage to showname2 & theEpcode & "." & tor_comment & "." & aud_comment & "." & source_comment
-                tell application "Finder" to set already_downloaded to count (every item of torrent_add whose name contains title_appendage)
                 if already_downloaded is 0 then
                     set final_torrent2 to "http://itorrents.org/torrent/" & theHash
                     set torrentRedirect to do shell script "curl -L \"" & final_torrent2 & "\"" as text
@@ -407,7 +408,6 @@ script AppDelegate
 						if vidQualFirst is less than 1 then --###720p LINE###-- --this is where user can set it to a different "max quality" setting
                             set curliTunes to "https://torrentz2.eu/feed?f=" & urlshow & "+" & iTunesEpcode & "+h264%7Cx264"
                             set rss_items100 to do shell script "curl \"" & curliTunes & "\"" as text
-                            if (count of paragraphs of rss_items100) is greater than 12 then
                             (NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"grabTorrent:" userInfo:{iTunesEpcode, rss_items100, vidQualFirst, showname2, showname} repeats:false)
 							delay 0.01
                             end if
@@ -428,11 +428,9 @@ script AppDelegate
 					set urlepcode to "S" & text 2 thru 3 of (currentdata as text) & "E" & text 4 thru 5 of (currentdata as text)
                     set curlURL to "https://torrentz2.eu/feed?f=" & urlshow & "+" & urlepcode & "+h264%7Cx264"
                     set rss_items200 to do shell script "curl \"" & curlURL & "\"" as text
-					if (count of paragraphs of rss_items200) is greater than 12 then
 						(NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"grabTorrent:" userInfo:{urlepcode, rss_items200, vidQualFirst, showname2, showname} repeats:false)
 						delay 0.01
 					else
-						exit repeat
 					end if
 					set currentdata to currentdata + 1
 				end repeat
@@ -712,7 +710,6 @@ script AppDelegate
 										do shell script "rm " & showArtFolder & quoted form of deleteArt
 									end if
 								end repeat
-								set artfiles to (every item of artfolder whose name contains myshow2)
 								set artcount to count artfiles
 								try
 									set artname to name of item 1 of artfiles
@@ -721,8 +718,6 @@ script AppDelegate
 							if artcount is greater than 0 then
 								set final_final_artwork to showArtFolder & artname as string
 							else
-								set arturl to "squaredtvart.tumblr.com/search/" & myshow2
-								set find_artlink to do shell script "curl \"" & arturl & "\""
 								set AppleScript's text item delimiters to "<a href=\""
 								set arttokens to text items of find_artlink
 								set the_artlink00 to item 6 of arttokens
@@ -746,17 +741,13 @@ script AppDelegate
 								set the_artlink3 to item 1 of preartQualityToke & artquality & "." & the_extension
 								try
 									try
-										do shell script "curl " & the_artlink & " -o " & "\"" & showArtFolder & myshow2 & "." & the_extension & "\""
 									on error
 										try
-											do shell script "curl " & the_artlink2 & " -o " & "\"" & showArtFolder & myshow2 & "." & the_extension & "\""
 										on error
 											try
-												do shell script "curl " & the_artlink3 & " -o " & "\"" & showArtFolder & myshow2 & "." & the_extension & "\""
 											end try
 										end try
 									end try
-									set final_final_artwork to showArtFolder & myshow2 & "." & the_extension as string
 								on error
 									set final_final_artwork to showArtFolder & "no_art.jpg" as string
 								end try
@@ -765,7 +756,6 @@ script AppDelegate
 							set myname to showname2
 							set final_final_artwork to showArtFolder & "no_art.jpg" as string
 						end if --(totaltokens2 is greater than 1)
-						
 						set text item delimiters of AppleScript to {":", "'"}
 						set showname2 to text items of showname2 ---showname2 = name of the show
 						set myname to text items of myname ---myname = name of the episode
