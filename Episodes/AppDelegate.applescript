@@ -240,7 +240,6 @@ script AppDelegate
                 ----also add in audio and source quality checkers here...torAudQual and torSourceQual are set just a few lines above and should be checked here!!
                 if torQual is greater than or equal to bestquality then
                     set bestquality to torQual as integer
-                    --display dialog bestquality
                     try
                         set fifthbest to fourthbest
                     end try
@@ -257,7 +256,6 @@ script AppDelegate
                 end if
             end if
         end repeat
-        -----display dialog "bestfeeditem: " & bestfeeditem
         if bestfeeditem is not "" then
             set the_order to {bestfeeditem, secondbest, thirdbest, fourthbest, fifthbest}
             set AppleScript's text item delimiters to {"://torrentz2.eu/", ":"}
@@ -292,6 +290,7 @@ script AppDelegate
                     end if
                 end ignoring
                 set title_appendage to showname2 & theEpcode & "." & tor_comment & "." & aud_comment & "." & source_comment
+                tell application "Finder" to set already_downloaded to count (every item of torrent_add whose name contains showname2 & theEpcode)
                 if already_downloaded is 0 then
                     set final_torrent2 to "http://itorrents.org/torrent/" & theHash
                     set torrentRedirect to do shell script "curl -L \"" & final_torrent2 & "\"" as text
@@ -408,6 +407,11 @@ script AppDelegate
 						if vidQualFirst is less than 1 then --###720p LINE###-- --this is where user can set it to a different "max quality" setting
                             set curliTunes to "https://torrentz2.eu/feed?f=" & urlshow & "+" & iTunesEpcode & "+h264%7Cx264"
                             set rss_items100 to do shell script "curl \"" & curliTunes & "\"" as text
+                            repeat while rss_items100 contains "last 10 secs"
+                                delay 10
+                                set rss_items100 to do shell script "curl \"" & curlURL & "\"" as text
+                            end repeat
+                            if (count of paragraphs of rss_items100) is greater than 14 then
                             (NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"grabTorrent:" userInfo:{iTunesEpcode, rss_items100, vidQualFirst, showname2, showname} repeats:false)
 							delay 0.01
                             end if
@@ -428,9 +432,15 @@ script AppDelegate
 					set urlepcode to "S" & text 2 thru 3 of (currentdata as text) & "E" & text 4 thru 5 of (currentdata as text)
                     set curlURL to "https://torrentz2.eu/feed?f=" & urlshow & "+" & urlepcode & "+h264%7Cx264"
                     set rss_items200 to do shell script "curl \"" & curlURL & "\"" as text
+                    repeat while rss_items200 contains "last 10 secs"
+                        delay 10
+                        set rss_items200 to do shell script "curl \"" & curlURL & "\"" as text
+                    end repeat
+					if (count of paragraphs of rss_items200) is greater than 14 then
 						(NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"grabTorrent:" userInfo:{urlepcode, rss_items200, vidQualFirst, showname2, showname} repeats:false)
 						delay 0.01
 					else
+                        exit repeat
 					end if
 					set currentdata to currentdata + 1
 				end repeat
@@ -662,6 +672,24 @@ script AppDelegate
 							set myEpisode2 to myEpisode as text
 							set mySeason2 to text 2 through 3 of epcodefinal
 							set myEpisode2 to text 5 through 6 of epcodefinal
+                            set firstmyurl to "api.themoviedb.org/3/tv/" & tvshowID & "?api_key=22c941722d77bc546e751ac90d4bebf6"
+                            try
+                                set firstin2 to do shell script "curl \"" & firstmyurl & "\""
+                            on error
+                                tell application "Finder" to move the_file to errorQueue
+                            end try
+                            set AppleScript's text item delimiters to "\",\"name\":\""
+                            set correctName0 to text item 2 of firstin2
+                            set AppleScript's text item delimiters to "\",\""
+                            set correctName1 to text item 1 of correctName0
+                            set text item delimiters of AppleScript to " "
+                            set correctName2 to text items of correctName1
+                            set text item delimiters of AppleScript to "+"
+                            set correctName2 to "" & correctName2
+                            set text item delimiters of AppleScript to "'"
+                            set correctName to text items of correctName2
+                            set text item delimiters of AppleScript to ""
+                            set correctName to "" & correctName
 							set myurl to "api.themoviedb.org/3/tv/" & tvshowID & "/season/" & mySeason2 & "/episode/" & myEpisode2 & "?api_key=22c941722d77bc546e751ac90d4bebf6"
 							----% xferd error (6) occurs on following line.
 							try
@@ -710,6 +738,7 @@ script AppDelegate
 										do shell script "rm " & showArtFolder & quoted form of deleteArt
 									end if
 								end repeat
+								set artfiles to (every item of artfolder whose name contains correctName)
 								set artcount to count artfiles
 								try
 									set artname to name of item 1 of artfiles
@@ -718,6 +747,9 @@ script AppDelegate
 							if artcount is greater than 0 then
 								set final_final_artwork to showArtFolder & artname as string
 							else
+								set arturl to "squaredtvart.tumblr.com/search/" & correctName2
+								try
+                                set find_artlink to do shell script "curl \"" & arturl & "\""
 								set AppleScript's text item delimiters to "<a href=\""
 								set arttokens to text items of find_artlink
 								set the_artlink00 to item 6 of arttokens
@@ -739,15 +771,20 @@ script AppDelegate
 								set the_artlink to item 1 of preartQualityToke & "1280." & the_extension
 								set the_artlink2 to item 1 of preartQualityToke & "500." & the_extension
 								set the_artlink3 to item 1 of preartQualityToke & artquality & "." & the_extension
+                                end try
 								try
 									try
+										do shell script "curl " & the_artlink & " -o " & "\"" & showArtFolder & correctName & "." & the_extension & "\""
 									on error
 										try
+											do shell script "curl " & the_artlink2 & " -o " & "\"" & showArtFolder & correctName & "." & the_extension & "\""
 										on error
 											try
+												do shell script "curl " & the_artlink3 & " -o " & "\"" & showArtFolder & correctName & "." & the_extension & "\""
 											end try
 										end try
 									end try
+									set final_final_artwork to showArtFolder & correctName & "." & the_extension as string
 								on error
 									set final_final_artwork to showArtFolder & "no_art.jpg" as string
 								end try
