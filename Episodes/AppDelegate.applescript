@@ -311,7 +311,7 @@ script AppDelegate
 	end grabTorrent:
 	############################################################################################################################
 	on moveHook:sender
-		tell application "Finder"
+		tell application "Finder"  ---here to comment below moves files that are done downloading with aria to the downloadcomplete folder
 			set all_aria_downloads to (every item of downloadingFolder_folder whose name does not contain ".aria2")
 			set aria_count to count all_aria_downloads
 			repeat with i from 1 to aria_count
@@ -326,8 +326,75 @@ script AppDelegate
 						end if
 					end if
 				end if
-			end repeat
-		end tell
+			end repeat   -----here to end of this subroutine moves/deletes any files that may have gotten stuck in the processing folder to prevent files from getting stuck in there if they fail to process
+            set stuckProcess to (every item of processing whose name does not contain "dummyfile")
+            if (count of stuckProcess) is 1 then
+                if modification date of item 1 of stuckProcess ² ((current date) - 30 * minutes) then
+                    if name extension of item 1 of stuckProcess is "mkv" then ---mkv alone
+                        if exists item 2 of rawFolder_folder then do shell script "rm " & rawFolder & "*.[^keep]*"
+                        move item 1 of stuckProcess to errorQueue
+                    else if name extension of item 1 of stuckProcess is "m4v" then ---m4v alone, temp or not temp
+                        move item 1 of stuckProcess to downloads
+                    else if name extension of item 1 of stuckProcess is "mp4" then ---mp4 alone
+                        move item 1 of stuckProcess to downloads
+                    end if
+                end if
+            else if (count of stuckProcess) is 2 then
+                if modification date of item 1 of stuckProcess ² ((current date) - 30 * minutes) then
+                    if modification date of item 2 of stuckProcess ² ((current date) - 30 * minutes) then
+                        if name extension of item 1 of stuckProcess is "mkv" then
+                            if name extension of item 2 of stuckProcess is "m4v" then
+                                if exists item 2 of rawFolder_folder then ---1: mkv, 2: m4v temp or not temp, with rawfiles
+                                    ---quit all CLIs
+                                    do shell script "rm " & rawFolder & "*.[^keep]*"
+                                    move (item 1 of stuckProcess) to downloads
+                                    if exists item 2 of processing then do shell script "rm " & processingFolder & "*.[^keep]*"
+                                else ---1: mkv, 2: m4v temp or not temp, no rawfiles
+                                    move (item 2 of stuckProcess) to downloads
+                                    if exists item 2 of processing then do shell script "rm " & processingFolder & "*.[^keep]*"
+                                end if
+                            end if
+                        else if name extension of item 1 of stuckProcess is "m4v" then
+                            if name of item 1 of stuckProcess contains "-temp-" then
+                                if name extension of item 2 of stuckProcess is "m4v" then
+                                    if name of item 2 of stuckProcess does not contain "-temp-" then ---1: m4v temp, 2: m4v not temp
+                                        move (item 2 of stuckProcess) to downloads
+                                        if exists item 2 of processing then do shell script "rm " & processingFolder & "*.[^keep]*"
+                                    end if
+                                else if name extension of item 2 of stuckProcess is "mp4" then ---1: m4v temp, 2: mp4
+                                    move (item 2 of stuckProcess) to downloads
+                                    if exists item 2 of processing then do shell script "rm " & processingFolder & "*.[^keep]*"
+                                end if
+                            else
+                                if name extension of item 2 of stuckProcess is "m4v" then
+                                    if name of item 2 of stuckProcess contains "-temp-" then ---1: m4v not temp, 2: m4v temp
+                                        move (item 1 of stuckProcess) to downloads
+                                        if exists item 2 of processing then do shell script "rm " & processingFolder & "*.[^keep]*"
+                                    end if
+                                else if name extension of item 2 of stuckProcess is "mkv" then
+                                    if exists item 2 of rawFolder_folder then ---1: m4v not temp, 2: mkv, with rawfiles
+                                        ---quit all CLIs
+                                        do shell script "rm " & rawFolder & "*.[^keep]*"
+                                        move (item 2 of stuckProcess) to downloads
+                                        if exists item 2 of processing then do shell script "rm " & processingFolder & "*.[^keep]*"
+                                    else ---1: m4v not temp, 2: mkv, no rawfiles
+                                        move (item 1 of stuckProcess) to downloads
+                                        if exists item 2 of processing then do shell script "rm " & processingFolder & "*.[^keep]*"
+                                    end if
+                                end if
+                            end if
+                        else if name extension of item 1 of stuckProcess is "mp4" then
+                            if name extension of item 2 of stuckProcess is "m4v" then
+                                if name of item 2 of stuckProcess contains "-temp-" then ---1: mp4, 2: m4v temp
+                                    move (item 1 of stuckProcess) to downloads
+                                    if exists item 2 of processing then do shell script "rm " & processingFolder & "*.[^keep]*"
+                                end if
+                            end if
+                        end if
+                    end if
+                end if
+            end if
+        end tell
 	end moveHook:
 	############################################################################################################################
 	on trashTorrent:sender
@@ -881,6 +948,8 @@ script AppDelegate
 					if replacefirst is false then set continue_adding to false
 					if continue_adding is false then
 						do shell script "rm " & processingFolder & "*.[^keep]*"
+                        NSTimer's scheduledTimerWithTimeInterval:0 |target|:me selector:"updateEpcode:" userInfo:{showname2, mySeason2, myEpisode2} repeats:false
+                        delay 0.01
 						NSTimer's scheduledTimerWithTimeInterval:0 |target|:me selector:"trashTorrent:" userInfo:(missing value) repeats:false
 						delay 0.01
 					else if continue_adding is true then
@@ -996,40 +1065,8 @@ script AppDelegate
 							update item 4 of every source
 						end try
 					end tell
-					try ----below block updates epcode in list of shows view
-						set old_data0 to listOfShows's stringValue() as text
-						set newDelim to showname2 & " (S"
-						set AppleScript's text item delimiters to newDelim
-						set epcodeTokens to text items of old_data0
-						set beforeEpcode0 to item 1 of epcodeTokens
-						set beforeEpcode to beforeEpcode0 & newDelim
-						set old_data1 to item 2 of epcodeTokens
-						set AppleScript's text item delimiters to ")"
-						set epcodeTokens2 to text items of old_data1
-						set old_data2 to item 1 of epcodeTokens2 ---everything between the parentheses, except for the S.  Ex: 04E01
-						set AppleScript's text item delimiters to "E"
-						set eTokens to text items of old_data2
-						set old_dataSeason to item 1 of eTokens
-						set old_dataEpisode to item 2 of eTokens
-						set AppleScript's text item delimiters to old_data2 & ")"
-						set epcodeTokens3 to text items of old_data1
-						set afterEpcode to item 2 of epcodeTokens3
-						set oldnum9 to old_dataSeason & old_dataEpisode as integer
-						set oldnum0 to oldnum9 + 90000
-						set newnum0 to mySeason2 & myEpisode2 as integer
-						set newnum1 to newnum0 + 90001
-						set newnum7 to newnum1 as text
-						set oldnum7 to oldnum0 as text
-						set newnum to text 2 thru 3 of newnum7 & "E" & text 4 thru 5 of newnum7
-						set newData to beforeEpcode & newnum & ")" & afterEpcode
-						if newnum1 is greater than oldnum0 then
-							listOfShows's setStringValue:newData
-						else
-							listOfShows's setStringValue:old_data0
-						end if
-						NSTimer's scheduledTimerWithTimeInterval:0 |target|:me selector:"writeList:" userInfo:(missing value) repeats:false
-						delay 0.01
-					end try ---end update epcode block
+					NSTimer's scheduledTimerWithTimeInterval:0 |target|:me selector:"updateEpcode:" userInfo:{showname2, mySeason2, myEpisode2} repeats:false
+                    delay 0.01
 					if (count of files in processing) is greater than 1 then
 						do shell script "rm " & quoted form of rm2
 						do shell script "rm " & processingFolder & "*-temp-*.*"
@@ -1041,6 +1078,44 @@ script AppDelegate
 			set the_file to {}
 		end tell
 	end process:
+    ############################################################################################################################
+    on updateEpcode:sender ----updates epcode in list of shows view
+            set showname2 to item 1 of sender's userInfo as text
+            set mySeason2 to item 2 of sender's userInfo as text
+            set myEpisode2 to item 3 of sender's userInfo as text
+            set old_data0 to listOfShows's stringValue() as text
+            set newDelim to showname2 & " (S"
+            set AppleScript's text item delimiters to newDelim
+            set epcodeTokens to text items of old_data0
+            set beforeEpcode0 to item 1 of epcodeTokens
+            set beforeEpcode to beforeEpcode0 & newDelim
+            set old_data1 to item 2 of epcodeTokens
+            set AppleScript's text item delimiters to ")"
+            set epcodeTokens2 to text items of old_data1
+            set old_data2 to item 1 of epcodeTokens2 ---everything between the parentheses, except for the S.  Ex: 04E01
+            set AppleScript's text item delimiters to "E"
+            set eTokens to text items of old_data2
+            set old_dataSeason to item 1 of eTokens
+            set old_dataEpisode to item 2 of eTokens
+            set AppleScript's text item delimiters to old_data2 & ")"
+            set epcodeTokens3 to text items of old_data1
+            set afterEpcode to item 2 of epcodeTokens3
+            set oldnum9 to old_dataSeason & old_dataEpisode as integer
+            set oldnum0 to oldnum9 + 90000
+            set newnum0 to mySeason2 & myEpisode2 as integer
+            set newnum1 to newnum0 + 90001
+            set newnum7 to newnum1 as text
+            set oldnum7 to oldnum0 as text
+            set newnum to text 2 thru 3 of newnum7 & "E" & text 4 thru 5 of newnum7
+            set newData to beforeEpcode & newnum & ")" & afterEpcode
+            if newnum1 is greater than oldnum0 then
+                listOfShows's setStringValue:newData
+                else
+                listOfShows's setStringValue:old_data0
+            end if
+            NSTimer's scheduledTimerWithTimeInterval:0 |target|:me selector:"writeList:" userInfo:(missing value) repeats:false
+            delay 0.01
+    end upateEpcode:
 	############################################################################################################################
 	on populateEpcode:sender
 		if showComboField's stringValue as string is not equal to "" then
