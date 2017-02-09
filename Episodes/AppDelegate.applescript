@@ -181,8 +181,11 @@ script AppDelegate
         set theEpcode to item 1 of sender's userInfo as text
         set rss_items to item 2 of sender's userInfo as text
         set vidQualFirst to item 3 of sender's userInfo as integer
-        set showname2 to item 4 of sender's userInfo as text
-        set showname to item 5 of sender's userInfo as text
+        set showname to item 4 of sender's userInfo as text
+        set text item delimiters of AppleScript to " "
+        set showname2 to text items of showname
+        set text item delimiters of AppleScript to "."
+        set showname2 to "" & showname2 & "."
         set bestquality to 0 as integer
         set bestfeeditem to 0 as integer
         set secondbest to 0 as integer
@@ -327,74 +330,44 @@ script AppDelegate
 					end if
 				end if
 			end repeat   -----here to end of this subroutine moves/deletes any files that may have gotten stuck in the processing folder to prevent files from getting stuck in there if they fail to process
-            set stuckProcess to (every item of processing whose name does not contain "dummyfile")
-            if (count of stuckProcess) is 1 then
-                if modification date of item 1 of stuckProcess � ((current date) - 30 * minutes) then
-                    if name extension of item 1 of stuckProcess is "mkv" then ---mkv alone
-                        if exists item 2 of rawFolder_folder then do shell script "rm " & rawFolder & "*.[^keep]*"
-                        move item 1 of stuckProcess to errorQueue
-                    else if name extension of item 1 of stuckProcess is "m4v" then ---m4v alone, temp or not temp
-                        move item 1 of stuckProcess to downloads
-                    else if name extension of item 1 of stuckProcess is "mp4" then ---mp4 alone
-                        move item 1 of stuckProcess to downloads
-                    end if
-                end if
-            else if (count of stuckProcess) is 2 then
-                if modification date of item 1 of stuckProcess � ((current date) - 30 * minutes) then
-                    if modification date of item 2 of stuckProcess � ((current date) - 30 * minutes) then
-                        if name extension of item 1 of stuckProcess is "mkv" then
-                            if name extension of item 2 of stuckProcess is "m4v" then
-                                if exists item 2 of rawFolder_folder then ---1: mkv, 2: m4v temp or not temp, with rawfiles
-                                    ---quit all CLIs
-                                    do shell script "rm " & rawFolder & "*.[^keep]*"
-                                    move (item 1 of stuckProcess) to downloads
-                                    if exists item 2 of processing then do shell script "rm " & processingFolder & "*.[^keep]*"
-                                else ---1: mkv, 2: m4v temp or not temp, no rawfiles
-                                    move (item 2 of stuckProcess) to downloads
-                                    if exists item 2 of processing then do shell script "rm " & processingFolder & "*.[^keep]*"
-                                end if
+            set unStuck to false
+                set stuckProcess to (every item of processing whose name does not contain "dummyfile")
+                if modification date of item 1 of stuckProcess � ((current date) - 12 * minutes) then
+                    if (count of stuckProcess) is 1 then
+                        move item 1 of stuckProcess to downloads ---also, somehow mark file being moved?  either save it as a variable here, append something to the filename, or write to a text file?  This way, if it gets stuck in the processing folder a second time, it will be moved to the error folder instead of just moving back and forth between downloadedcomplete and processing folders.
+                        set unStuck to true
+                        if exists item 2 of processing then do shell script "rm " & processingFolder & "*.[^keep]*"
+                        else if (count of stuckProcess) is 2 then
+                        if modification date of item 2 of stuckProcess � ((current date) - 12 * minutes) then
+                            if not (exists item 2 of rawFolder_folder) then
+                                set {x, y} to {1, 2}
+                                repeat 2 times
+                                    try
+                                        if name extension of item x of stuckProcess is "mkv" then
+                                            if name extension of item y of stuckProcess is "m4v" then
+                                                if name of item y of stuckProcess does not contain "-temp-" then
+                                                    move (item y of stuckProcess) to downloads
+                                                    set unStuck to true
+                                                    do shell script "rm " & processingFolder & "*.[^keep]*"
+                                                end if
+                                            end if
+                                        end if
+                                    end try
+                                    set {x, y} to {2, 1}
+                                end repeat
                             end if
-                        else if name extension of item 1 of stuckProcess is "m4v" then
-                            if name of item 1 of stuckProcess contains "-temp-" then
-                                if name extension of item 2 of stuckProcess is "m4v" then
-                                    if name of item 2 of stuckProcess does not contain "-temp-" then ---1: m4v temp, 2: m4v not temp
-                                        move (item 2 of stuckProcess) to downloads
-                                        if exists item 2 of processing then do shell script "rm " & processingFolder & "*.[^keep]*"
-                                    end if
-                                else if name extension of item 2 of stuckProcess is "mp4" then ---1: m4v temp, 2: mp4
-                                    move (item 2 of stuckProcess) to downloads
-                                    if exists item 2 of processing then do shell script "rm " & processingFolder & "*.[^keep]*"
-                                end if
-                            else
-                                if name extension of item 2 of stuckProcess is "m4v" then
-                                    if name of item 2 of stuckProcess contains "-temp-" then ---1: m4v not temp, 2: m4v temp
-                                        move (item 1 of stuckProcess) to downloads
-                                        if exists item 2 of processing then do shell script "rm " & processingFolder & "*.[^keep]*"
-                                    end if
-                                else if name extension of item 2 of stuckProcess is "mkv" then
-                                    if exists item 2 of rawFolder_folder then ---1: m4v not temp, 2: mkv, with rawfiles
-                                        ---quit all CLIs
-                                        do shell script "rm " & rawFolder & "*.[^keep]*"
-                                        move (item 2 of stuckProcess) to downloads
-                                        if exists item 2 of processing then do shell script "rm " & processingFolder & "*.[^keep]*"
-                                    else ---1: m4v not temp, 2: mkv, no rawfiles
-                                        move (item 1 of stuckProcess) to downloads
-                                        if exists item 2 of processing then do shell script "rm " & processingFolder & "*.[^keep]*"
-                                    end if
-                                end if
-                            end if
-                        else if name extension of item 1 of stuckProcess is "mp4" then
-                            if name extension of item 2 of stuckProcess is "m4v" then
-                                if name of item 2 of stuckProcess contains "-temp-" then ---1: mp4, 2: m4v temp
-                                    move (item 1 of stuckProcess) to downloads
-                                    if exists item 2 of processing then do shell script "rm " & processingFolder & "*.[^keep]*"
-                                end if
+                            if unStuck is false then
+                                if creation date of item 1 of stuckProcess is less than or equal to creation date of item 2 of stuckProcess then move (item 1 of stuckProcess) to downloads --item 1 is older than (or exactly the same age as) item 2
+                                try
+                                    if creation date of item 2 of stuckProcess is less than creation date of item 1 of stuckProcess then move (item 2 of stuckProcess) to downloads ---item 2 is older than item 1
+                                end try
+                                if exists item 2 of processing then do shell script "rm " & processingFolder & "*.[^keep]*"
+                                if exists item 2 of rawFolder_folder then do shell script "rm " & rawFolder & "*.[^keep]*"
                             end if
                         end if
                     end if
                 end if
-            end if
-        end tell
+            end tell
 	end moveHook:
 	############################################################################################################################
 	on trashTorrent:sender
@@ -420,106 +393,79 @@ script AppDelegate
 	############################################################################################################################
     on download:sender
 		set showlist to listOfShows's stringValue() as text
-		set AppleScript's text item delimiters to "
-"
-		set tokens999 to text items of showlist
-		if (count of (text items of showlist)) is greater than 0 then
-			repeat with c from 1 to (count of (text items of showlist))
-				set showname0 to item c of tokens999
-				set AppleScript's text item delimiters to " ("
-				set showname to text item 1 of showname0
-				----STATBAR----
-				set statbar to current application's NSString's stringWithFormat_("%@%@", "Checking sources for: ", showname)
-				set incrementJump to (100 / ((count of (text items of showlist)) + 1))
-				if c is greater than 1 then
-					(progressBar's incrementBy:incrementJump)
-				end if
-				(statusLabel's setStringValue:statbar)
-				----STATBAR----
-				delay 0.01
-				set text item delimiters of AppleScript to " "
-				set showname2 to text items of showname
-				set text item delimiters of AppleScript to "."
-				set showname2 to "" & showname2 & "."
-				set urlshow to text items of showname2
-				set text item delimiters of AppleScript to "+"
-				set urlshow to "" & urlshow
-				set existsShows to ""
+        if (count of (text items of showlist)) is greater than 0 then
+            repeat with c from 1 to (count of (paragraphs of showlist))
+                set AppleScript's text item delimiters to {" (S0", " (S1", " (S2", " (S3", " (S4", " (S5", " (S6", " (S7", " (S8", " (S9"}
+                set showname to text item 1 of (item c of (paragraphs of showlist))
+                set AppleScript's text item delimiters to {showname & " (S", "E", ")"}
+                set currentdata to ((text item 2 of (item c of (paragraphs of showlist))) & (text item 3 of (item c of (paragraphs of showlist))) as integer) + 90000
+                ----STATBAR----
+                set statbar to current application's NSString's stringWithFormat_("%@%@", "Checking sources for: ", showname)
+                set incrementJump to (100 / ((count of (paragraphs of showlist)) + 1))
+                if c is greater than 1 then
+                    (progressBar's incrementBy:incrementJump)
+                end if
+                (statusLabel's setStringValue:statbar)
+                ----STATBAR----
+                delay 0.01
+                set text item delimiters of AppleScript to " "
+                set urlshow to text items of showname
+                set text item delimiters of AppleScript to "+"
+                set urlshow to "" & urlshow
                 ---check iTunes block begins here
-				tell application "iTunes" to set existsShows to (every track of playlist "TV Shows" whose show contains showname) --show name, ie "Family Guy"
-				set countfiles to count items of existsShows
-				if countfiles is greater than 0 then
-					repeat with f from 1 to countfiles
-						----PROGBAR------
-						(progressBar's incrementBy:(incrementJump / 2) / countfiles)
-						----PROGBAR------
-						tell application "iTunes"
-							set iTunesEpcode to episode ID of item f of existsShows
-							set iTunesQuality to comment of item f of existsShows
-						end tell
-						set vidQualFirst to "0" as integer
-						set audQualFirst to "2" as integer
-						set videoListd to {"SDTV", "720p", "1080p", "4K"}
-						repeat with i from 1 to count of videoListd
-							if iTunesQuality contains item i of videoListd then
-								set vidQualFirst to (i - 1) as integer  --this is so the video qualities correspond to integers 0, 1, 2, and 3 instead of 1, 2, 3, and 4
-							end if
-						end repeat
-						set channelListd to {"Mono", "Stereo", "3ch", "4ch", "5ch", "DD5.1"}
-						repeat with i from 1 to count of channelListd
-							if iTunesQuality contains item i of channelListd then
-								set audQualFirst to i as integer
-							end if
-						end repeat
-						if vidQualFirst is less than 1 then --###720p LINE###-- --this is where user can set it to a different "max quality" setting
-                            set curliTunes to "https://torrentz2.eu/feed?f=" & urlshow & "+" & iTunesEpcode & "+h264%7Cx264"
-                            set rss_items100 to do shell script "curl \"" & curliTunes & "\"" as text
+                tell application "iTunes"
+                    if (count of (items of (every track of playlist "TV Shows" whose show contains showname))) is greater than 0 then
+                    repeat with f from 1 to (count of (items of (every track of playlist "TV Shows" whose show contains showname)))
+                        ----PROGBAR------
+                        (progressBar's incrementBy:(incrementJump / 2) / (count of (items of (every track of playlist "TV Shows" whose show contains showname))))
+                        ----PROGBAR------
+                        set iTunesEpcode to episode ID of item f of (every track of playlist "TV Shows" whose show contains showname)
+                        set {vidQualFirst, audQualFirst} to {"0" as integer, "2" as integer}
+                        repeat with i from 1 to 4
+                            if (comment of item f of (every track of playlist "TV Shows" whose show contains showname)) contains item i of {"SDTV", "720p", "1080p", "4K"} then set vidQualFirst to (i - 1) as integer --this is so the video qualities correspond to integers 0, 1, 2, and 3 instead of 1, 2, 3, and 4
+                        end repeat
+                        repeat with i from 1 to 6
+                            if (comment of item f of (every track of playlist "TV Shows" whose show contains showname)) contains item i of {"Mono", "Stereo", "3ch", "4ch", "5ch", "DD5.1"} then set audQualFirst to i as integer
+                        end repeat
+                        if vidQualFirst is less than 1 then --###720p LINE###-- --this is where user can set it to a different "max quality" setting
+                            set rss_items100 to do shell script "curl \"https://torrentz2.eu/feed?f=" & urlshow & "+" & iTunesEpcode & "+h264%7Cx264\"" as text
                             repeat while rss_items100 contains "last 10 secs"
                                 delay 10
-                                set rss_items100 to do shell script "curl \"" & curlURL & "\"" as text
                             end repeat
                             if (count of paragraphs of rss_items100) is greater than 14 then
-                            (NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"grabTorrent:" userInfo:{iTunesEpcode, rss_items100, vidQualFirst, showname2, showname} repeats:false)
-							delay 0.01
+                                (NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"grabTorrent:" userInfo:{iTunesEpcode, rss_items100, vidQualFirst, showname} repeats:false)
+                                delay 0.01
                             end if
-						end if
-					end repeat
-				end if
-                ---check iTunes block ends here
-                ---check showList block begins here
-				set currentdata0 to listOfShows's stringValue() as text
-				set AppleScript's text item delimiters to showname & " (S"
-				set currentdata1 to text item 2 of currentdata0
-				set AppleScript's text item delimiters to ")"
-				set currentdata2 to text item 1 of currentdata1
-				set AppleScript's text item delimiters to "E"
-				set currentdata to ((text item 1 of currentdata2) & (text item 2 of currentdata2) as integer) + 90000
-				repeat
-                    set vidQualFirst to -1 as integer  --there is no original vidQual, since we are not replacing something in itunes, so we set it to -1, so anything found will be downloaded
-					set urlepcode to "S" & text 2 thru 3 of (currentdata as text) & "E" & text 4 thru 5 of (currentdata as text)
-                    set curlURL to "https://torrentz2.eu/feed?f=" & urlshow & "+" & urlepcode & "+h264%7Cx264"
-                    set rss_items200 to do shell script "curl \"" & curlURL & "\"" as text
+                        end if
+                    end repeat
+                    end if
+                end tell
+                ---check iTunes block ends here, check showList block begins here
+                repeat
+                    set vidQualFirst to -1 as integer --there is no original vidQual, since we are not replacing something in itunes, so we set it to -1, so anything found will be downloaded
+                    set urlepcode to "S" & text 2 thru 3 of (currentdata as text) & "E" & text 4 thru 5 of (currentdata as text)
+                    set rss_items200 to do shell script "curl \"https://torrentz2.eu/feed?f=" & urlshow & "+" & urlepcode & "+h264%7Cx264\"" as text
                     repeat while rss_items200 contains "last 10 secs"
                         delay 10
-                        set rss_items200 to do shell script "curl \"" & curlURL & "\"" as text
+                        set rss_items200 to do shell script "curl \"https://torrentz2.eu/feed?f=" & urlshow & "+" & urlepcode & "+h264%7Cx264\"" as text
                     end repeat
-					if (count of paragraphs of rss_items200) is greater than 14 then
-						(NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"grabTorrent:" userInfo:{urlepcode, rss_items200, vidQualFirst, showname2, showname} repeats:false)
-						delay 0.01
-					else
+                    if (count of paragraphs of rss_items200) is greater than 14 then
+                        (NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"grabTorrent:" userInfo:{urlepcode, rss_items200, vidQualFirst, showname} repeats:false)
+                        delay 0.01
+                    else
                         exit repeat
-					end if
-					set currentdata to currentdata + 1
-				end repeat
-			end repeat
-			----STATBAR3----
-			set statbar3 to current application's NSString's stringWithFormat_("%@", "Idle") --shouldn't always be idle, leave "downloading" statuses up until the episode is added to itunes...then say adding...then idle.
-			progressBar's incrementBy:incrementJump
-			statusLabel's setStringValue:statbar3
-			delay 0.01
-			progressBar's incrementBy:-100
-			----STATBAR3----
-		end if
+                    end if
+                    set currentdata to currentdata + 1
+                end repeat
+            end repeat
+            ----STATBAR3----
+            set statbar3 to current application's NSString's stringWithFormat_("%@", "Idle") --shouldn't always be idle, leave "downloading" statuses up until the episode is added to itunes...then say adding...then idle.
+            progressBar's incrementBy:incrementJump
+            statusLabel's setStringValue:statbar3
+            delay 0.01
+            progressBar's incrementBy:-100
+            ----STATBAR3----
+        end if
 	end download:
 	############################################################################################################################
 	on process:sender
@@ -805,7 +751,7 @@ script AppDelegate
 										do shell script "rm " & showArtFolder & quoted form of deleteArt
 									end if
 								end repeat
-								set artfiles to (every item of artfolder whose name contains correctName)
+								set artfiles to (every item of artfolder whose name contains myshow2)
 								set artcount to count artfiles
 								try
 									set artname to name of item 1 of artfiles
@@ -839,19 +785,19 @@ script AppDelegate
 								set the_artlink2 to item 1 of preartQualityToke & "500." & the_extension
 								set the_artlink3 to item 1 of preartQualityToke & artquality & "." & the_extension
                                 end try
-								try
+                                try
 									try
-										do shell script "curl " & the_artlink & " -o " & "\"" & showArtFolder & correctName & "." & the_extension & "\""
+										do shell script "curl " & the_artlink & " -o " & "\"" & showArtFolder & myshow2 & "." & the_extension & "\""
 									on error
 										try
-											do shell script "curl " & the_artlink2 & " -o " & "\"" & showArtFolder & correctName & "." & the_extension & "\""
+											do shell script "curl " & the_artlink2 & " -o " & "\"" & showArtFolder & myshow2 & "." & the_extension & "\""
 										on error
 											try
-												do shell script "curl " & the_artlink3 & " -o " & "\"" & showArtFolder & correctName & "." & the_extension & "\""
+												do shell script "curl " & the_artlink3 & " -o " & "\"" & showArtFolder & myshow2 & "." & the_extension & "\""
 											end try
 										end try
 									end try
-									set final_final_artwork to showArtFolder & correctName & "." & the_extension as string
+									set final_final_artwork to showArtFolder & myshow2 & "." & the_extension as string
 								on error
 									set final_final_artwork to showArtFolder & "no_art.jpg" as string
 								end try
@@ -1046,6 +992,8 @@ script AppDelegate
 							NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"trashTorrent:" userInfo:(missing value) repeats:false
 							delay 0.01
 						end try
+                        NSTimer's scheduledTimerWithTimeInterval:0 |target|:me selector:"updateEpcode:" userInfo:{showname2, mySeason2, myEpisode2} repeats:false
+                        delay 0.01
 						try
 							set existsShows to every track of playlist "TV Shows" whose name contains myname
 							set countfiles to count items of existsShows
@@ -1056,7 +1004,7 @@ script AppDelegate
 									end if
 								end repeat
 								set bookmark of finalShow to (playbackpos - 5)
-							end if
+                            end if
 						end try
 						try
 							update item 3 of every source
@@ -1065,8 +1013,7 @@ script AppDelegate
 							update item 4 of every source
 						end try
 					end tell
-					NSTimer's scheduledTimerWithTimeInterval:0 |target|:me selector:"updateEpcode:" userInfo:{showname2, mySeason2, myEpisode2} repeats:false
-                    delay 0.01
+					
 					if (count of files in processing) is greater than 1 then
 						do shell script "rm " & quoted form of rm2
 						do shell script "rm " & processingFolder & "*-temp-*.*"
@@ -1115,7 +1062,7 @@ script AppDelegate
             end if
             NSTimer's scheduledTimerWithTimeInterval:0 |target|:me selector:"writeList:" userInfo:(missing value) repeats:false
             delay 0.01
-    end upateEpcode:
+    end updateEpcode:
 	############################################################################################################################
 	on populateEpcode:sender
 		if showComboField's stringValue as string is not equal to "" then
