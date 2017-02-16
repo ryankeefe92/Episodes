@@ -9,15 +9,10 @@
 /* Begin PBXBuildFile section */
 		112D47751CDC798700DE0F97 /* TorrentAdd in Resources */ = {isa = PBXBuildFile; fileRef = 112D47731CDC798700DE0F97 /* TorrentAdd */; };
 		113492C41CDADF940041DA61 /* AtomicParsley64 in Resources */ = {isa = PBXBuildFile; fileRef = 113492BA1CDADF940041DA61 /* AtomicParsley64 */; };
-		113492C51CDADF940041DA61 /* faac in Resources */ = {isa = PBXBuildFile; fileRef = 113492BB1CDADF940041DA61 /* faac */; };
-		113492C71CDADF940041DA61 /* ffmpeg in Resources */ = {isa = PBXBuildFile; fileRef = 113492BD1CDADF940041DA61 /* ffmpeg */; };
 		113492C81CDADF940041DA61 /* mediainfo in Resources */ = {isa = PBXBuildFile; fileRef = 113492BE1CDADF940041DA61 /* mediainfo */; };
-		113492C91CDADF940041DA61 /* mkvextract in Resources */ = {isa = PBXBuildFile; fileRef = 113492BF1CDADF940041DA61 /* mkvextract */; };
-		113492CA1CDADF940041DA61 /* MP4Box in Resources */ = {isa = PBXBuildFile; fileRef = 113492C01CDADF940041DA61 /* MP4Box */; };
 		113492CB1CDADF940041DA61 /* show_list.txt in Resources */ = {isa = PBXBuildFile; fileRef = 113492C11CDADF940041DA61 /* show_list.txt */; };
 		113492CC1CDADF940041DA61 /* showart in Resources */ = {isa = PBXBuildFile; fileRef = 113492C21CDADF940041DA61 /* showart */; };
 		1142A7051CDC027700A29AF5 /* Processing in Resources */ = {isa = PBXBuildFile; fileRef = 1142A7041CDC027700A29AF5 /* Processing */; };
-		1142A7091CDC032C00A29AF5 /* RawStreams in Resources */ = {isa = PBXBuildFile; fileRef = 1142A7081CDC032C00A29AF5 /* RawStreams */; };
 		117BF2A31CDD749900BAA3D4 /* aria2c in Resources */ = {isa = PBXBuildFile; fileRef = 117BF2A21CDD749900BAA3D4 /* aria2c */; };
 		118262D41D13E9E300E3628B /* Error in Resources */ = {isa = PBXBuildFile; fileRef = 118262D31D13E9E300E3628B /* Error */; };
 		11C5E9021CD084DC00450026 /* AppleScriptObjC.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11C5E9011CD084DC00450026 /* AppleScriptObjC.framework */; };
@@ -27,20 +22,16 @@
 		11C5E90D1CD084DC00450026 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 11C5E90B1CD084DC00450026 /* MainMenu.xib */; };
 		11DC8AFD1CE29EE200E1DEB6 /* Downloading in Resources */ = {isa = PBXBuildFile; fileRef = 11DC8AFB1CE29EE200E1DEB6 /* Downloading */; };
 		11DC8AFE1CE29EE200E1DEB6 /* DownloadingComplete in Resources */ = {isa = PBXBuildFile; fileRef = 11DC8AFC1CE29EE200E1DEB6 /* DownloadingComplete */; };
+		11E419C51E53060600FAF1DE /* ffmpeg in Resources */ = {isa = PBXBuildFile; fileRef = 11E419C41E53060600FAF1DE /* ffmpeg */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		112D47731CDC798700DE0F97 /* TorrentAdd */ = {isa = PBXFileReference; lastKnownFileType = folder; path = TorrentAdd; sourceTree = "<group>"; };
 		113492BA1CDADF940041DA61 /* AtomicParsley64 */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = AtomicParsley64; sourceTree = "<group>"; };
-		113492BB1CDADF940041DA61 /* faac */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = faac; sourceTree = "<group>"; };
-		113492BD1CDADF940041DA61 /* ffmpeg */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = ffmpeg; sourceTree = "<group>"; };
 		113492BE1CDADF940041DA61 /* mediainfo */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = mediainfo; sourceTree = "<group>"; };
-		113492BF1CDADF940041DA61 /* mkvextract */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = mkvextract; sourceTree = "<group>"; };
-		113492C01CDADF940041DA61 /* MP4Box */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = MP4Box; sourceTree = "<group>"; };
 		113492C11CDADF940041DA61 /* show_list.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = show_list.txt; sourceTree = "<group>"; };
 		113492C21CDADF940041DA61 /* showart */ = {isa = PBXFileReference; lastKnownFileType = folder; path = showart; sourceTree = "<group>"; };
 		1142A7041CDC027700A29AF5 /* Processing */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Processing; sourceTree = "<group>"; };
-		1142A7081CDC032C00A29AF5 /* RawStreams */ = {isa = PBXFileReference; lastKnownFileType = folder; path = RawStreams; sourceTree = "<group>"; };
 		117BF2A21CDD749900BAA3D4 /* aria2c */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = aria2c; sourceTree = "<group>"; };
 		118262D31D13E9E300E3628B /* Error */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Error; sourceTree = "<group>"; };
 		11C5E8FE1CD084DC00450026 /* Episodes.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Episodes.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -53,6 +44,7 @@
 		11DC8AFB1CE29EE200E1DEB6 /* Downloading */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Downloading; sourceTree = "<group>"; };
 		11DC8AFC1CE29EE200E1DEB6 /* DownloadingComplete */ = {isa = PBXFileReference; lastKnownFileType = folder; path = DownloadingComplete; sourceTree = "<group>"; };
 		11DC8B011CE3144300E1DEB6 /* logo.rsrc */ = {isa = PBXFileReference; lastKnownFileType = archive.rsrc; path = logo.rsrc; sourceTree = "<group>"; };
+		11E419C41E53060600FAF1DE /* ffmpeg */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = ffmpeg; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -109,18 +101,14 @@
 			children = (
 				117BF2A21CDD749900BAA3D4 /* aria2c */,
 				113492BA1CDADF940041DA61 /* AtomicParsley64 */,
-				113492BB1CDADF940041DA61 /* faac */,
-				113492BD1CDADF940041DA61 /* ffmpeg */,
+				11E419C41E53060600FAF1DE /* ffmpeg */,
 				113492BE1CDADF940041DA61 /* mediainfo */,
-				113492BF1CDADF940041DA61 /* mkvextract */,
-				113492C01CDADF940041DA61 /* MP4Box */,
 				11DC8B011CE3144300E1DEB6 /* logo.rsrc */,
 				118262D31D13E9E300E3628B /* Error */,
 				11DC8AFB1CE29EE200E1DEB6 /* Downloading */,
 				11DC8AFC1CE29EE200E1DEB6 /* DownloadingComplete */,
 				113492C11CDADF940041DA61 /* show_list.txt */,
 				1142A7041CDC027700A29AF5 /* Processing */,
-				1142A7081CDC032C00A29AF5 /* RawStreams */,
 				113492C21CDADF940041DA61 /* showart */,
 				112D47731CDC798700DE0F97 /* TorrentAdd */,
 				11C5E9051CD084DC00450026 /* main.m */,
@@ -185,7 +173,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				1142A7091CDC032C00A29AF5 /* RawStreams in Resources */,
 				112D47751CDC798700DE0F97 /* TorrentAdd in Resources */,
 				11C5E90A1CD084DC00450026 /* Assets.xcassets in Resources */,
 				1142A7051CDC027700A29AF5 /* Processing in Resources */,
@@ -193,14 +180,11 @@
 				113492CC1CDADF940041DA61 /* showart in Resources */,
 				11DC8AFE1CE29EE200E1DEB6 /* DownloadingComplete in Resources */,
 				113492C81CDADF940041DA61 /* mediainfo in Resources */,
-				113492C71CDADF940041DA61 /* ffmpeg in Resources */,
-				113492C91CDADF940041DA61 /* mkvextract in Resources */,
 				11DC8AFD1CE29EE200E1DEB6 /* Downloading in Resources */,
-				113492CA1CDADF940041DA61 /* MP4Box in Resources */,
 				113492C41CDADF940041DA61 /* AtomicParsley64 in Resources */,
+				11E419C51E53060600FAF1DE /* ffmpeg in Resources */,
 				11C5E90D1CD084DC00450026 /* MainMenu.xib in Resources */,
 				117BF2A31CDD749900BAA3D4 /* aria2c in Resources */,
-				113492C51CDADF940041DA61 /* faac in Resources */,
 				118262D41D13E9E300E3628B /* Error in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

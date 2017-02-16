@@ -22,19 +22,14 @@ script AppDelegate
 	global listFile
 	global aria
 	global atomicParsley
-	global thefaac
 	global theffmpeg
 	global theMediaInfo
-	global themkvExtract
-	global themp4Box
 	global downloadingFolder
 	global downloadingFolder_folder
 	global downloadingCompleteFolder
 	global downloads
 	global processingFolder
 	global processing
-	global rawFolder
-    global rawFolder_folder
 	global showArtFolder
 	global artfolder
 	global torrentAddFolder
@@ -64,9 +59,6 @@ script AppDelegate
 			set showArtFolder0 to appLocation & "Contents:Resources:showart:" as alias
 			set showArtFolder to POSIX path of showArtFolder0 as text
 			set artfolder to folder showArtFolder0
-			set rawFolder0 to appLocation & "Contents:Resources:RawStreams:" as alias
-			set rawFolder to POSIX path of rawFolder0 as text
-            set rawFolder_folder to folder rawFolder0
 			set processingFolder0 to appLocation & "Contents:Resources:Processing:" as alias
 			set processingFolder to POSIX path of processingFolder0 as text
 			set processing to folder processingFolder0
@@ -75,11 +67,8 @@ script AppDelegate
 			set the listFile to (resourceFolder as string) & "show_list.txt" as string
 			set aria to POSIX path of resourceFolder & "aria2c" as text
 			set atomicParsley to POSIX path of resourceFolder & "AtomicParsley64" as text
-			set thefaac to POSIX path of resourceFolder & "faac" as text
 			set theffmpeg to POSIX path of resourceFolder & "ffmpeg" as text
 			set theMediaInfo to POSIX path of resourceFolder & "mediainfo" as text
-			set themkvExtract to POSIX path of resourceFolder & "mkvextract" as text
-			set themp4Box to POSIX path of resourceFolder & "MP4Box" as text
 			set the open_target_file to open for access file listFile
 			try
 				set showlist to read the open_target_file
@@ -162,8 +151,7 @@ script AppDelegate
 		
 		----open aria and have it continue downloading any partially downloaded files [aria may just need to launch and do nothing else as long as the flag to resume download is already set for every aria download when it starts...may need to modify aria code throughout the script to include that flag....or right here just tell it to resume any file in the "downloading" folder]
 		----begin downloading anything in the torrentadd folder that has not begun downloading and also isn't in the downloadcomplete or processing folders and has not been added to itunes in that quality.  also on startup:
-		----delete every file from rawstreams folder (except dummyfile.keep)
-		----quit atomicparsley, faac, ffmpeg, mediainfo, mkvextract, mp4box CLIs
+		----quit atomicparsley, ffmpeg, mediainfo, mp4box CLIs
 		----if there are items in the "processing" folder
 		----------move least recently created file from processing folder to downloadComplete folder
 		----------delete every other file from processing folder (except dummyfile.keep)
@@ -172,7 +160,7 @@ script AppDelegate
 	on applicationDidFinishLaunching:aNotification
 		---launch housekeeping is currently at bottom of applicationWillFinishLaunching.  Move here instead if necessary.
 		NSTimer's scheduledTimerWithTimeInterval:5 target:me selector:"download:" userInfo:(missing value) repeats:false
-		NSTimer's scheduledTimerWithTimeInterval:620 target:me selector:"download:" userInfo:(missing value) repeats:true
+		NSTimer's scheduledTimerWithTimeInterval:615 target:me selector:"download:" userInfo:(missing value) repeats:true
 		NSTimer's scheduledTimerWithTimeInterval:5 target:me selector:"process:" userInfo:(missing value) repeats:true
 		NSTimer's scheduledTimerWithTimeInterval:8 target:me selector:"moveHook:" userInfo:(missing value) repeats:true
 	end applicationDidFinishLaunching:
@@ -182,10 +170,7 @@ script AppDelegate
         set rss_items to item 2 of sender's userInfo as text
         set vidQualFirst to item 3 of sender's userInfo as integer
         set showname to item 4 of sender's userInfo as text
-        set text item delimiters of AppleScript to " "
-        set showname2 to text items of showname
-        set text item delimiters of AppleScript to "."
-        set showname2 to "" & showname2 & "."
+        set showname2 to item 5 of sender's userInfo as text
         set bestquality to 0 as integer
         set bestfeeditem to 0 as integer
         set secondbest to 0 as integer
@@ -293,20 +278,17 @@ script AppDelegate
                     end if
                 end ignoring
                 set title_appendage to showname2 & theEpcode & "." & tor_comment & "." & aud_comment & "." & source_comment
-                tell application "Finder" to set already_downloaded to count (every item of torrent_add whose name contains showname2 & theEpcode)
-                if already_downloaded is 0 then
-                    set final_torrent2 to "http://itorrents.org/torrent/" & theHash
-                    set torrentRedirect to do shell script "curl -L \"" & final_torrent2 & "\"" as text
-                    if torrentRedirect does not contain "LimeTorrents.cc" then
-                        do shell script "curl " & final_torrent2 & " -o " & "\"" & torrentAddFolder & title_appendage & ".torrent\""
-                        ----STATBAR2----
-                        set statbar2 to current application's NSString's stringWithFormat_("%@%@%@%@%@%@%@", "Downloading ", showname, " ", theEpcode, " in ", tor_comment, " quality.")
-                        (statusLabel's setStringValue:statbar2)
-                        delay 0.01
-                        ----STATBAR2----
-                        do shell script aria & " --seed-time=0 --on-bt-download-complete=exit -d " & downloadingFolder & " " & torrentAddFolder & title_appendage & ".torrent > /dev/null 2>&1 &"
-                        exit repeat --make sure it also exits and moves on to the next episode number if it can't download anything from the_order
-                    end if
+                set final_torrent2 to "http://itorrents.org/torrent/" & theHash
+                set torrentRedirect to do shell script "curl -L \"" & final_torrent2 & "\"" as text
+                if torrentRedirect does not contain "LimeTorrents.cc" then
+                    do shell script "curl " & final_torrent2 & " -o " & "\"" & torrentAddFolder & title_appendage & ".torrent\""
+                    ----STATBAR2----
+                    set statbar2 to current application's NSString's stringWithFormat_("%@%@%@%@%@%@%@", "Downloading ", showname, " ", theEpcode, " in ", tor_comment, " quality.")
+                    (statusLabel's setStringValue:statbar2)
+                    delay 0.01
+                    ----STATBAR2----
+                    do shell script aria & " --seed-time=0 --on-bt-download-complete=exit -d " & downloadingFolder & " " & torrentAddFolder & title_appendage & ".torrent > /dev/null 2>&1 &"
+                    exit repeat --make sure it also exits and moves on to the next episode number if it can't download anything from the_order
                 end if
             end repeat
 		end if
@@ -324,50 +306,26 @@ script AppDelegate
 					set notComplete to count (every item of downloadingFolder_folder whose name contains theAriaName & ".aria2")
 					if notComplete is less than 1 then
 						set ariaDate to creation date of theAriaFile
-						if ariaDate � ((current date) - 2 * minutes) then
-							move theAriaFile to downloads
-						end if
+						if ariaDate � ((current date) - 2 * minutes) then move theAriaFile to downloads
 					end if
 				end if
-			end repeat   -----here to end of this subroutine moves/deletes any files that may have gotten stuck in the processing folder to prevent files from getting stuck in there if they fail to process
-            set unStuck to false
-                set stuckProcess to (every item of processing whose name does not contain "dummyfile")
-                if modification date of item 1 of stuckProcess � ((current date) - 12 * minutes) then
-                    if (count of stuckProcess) is 1 then
-                        move item 1 of stuckProcess to downloads ---also, somehow mark file being moved?  either save it as a variable here, append something to the filename, or write to a text file?  This way, if it gets stuck in the processing folder a second time, it will be moved to the error folder instead of just moving back and forth between downloadedcomplete and processing folders.
-                        set unStuck to true
+			end repeat
+            set stuckProcess to (every item of processing whose name does not contain "dummyfile") --here to end of this subroutine moves/deletes any files that may have gotten stuck in the processing folder to prevent files from getting stuck in there if they fail to process
+            if modification date of item 1 of stuckProcess � ((current date) - 12 * minutes) then
+                if (count of stuckProcess) is 1 then
+                    move item 1 of stuckProcess to downloads ---also, somehow mark file being moved?  either save it as a variable here, append something to the filename, or write to a text file?  This way, if it gets stuck in the processing folder a second time, it will be moved to the error folder instead of just moving back and forth between downloadedcomplete and processing folders.
+                    if exists item 2 of processing then do shell script "rm " & processingFolder & "*.[^keep]*"
+                else if (count of stuckProcess) is 2 then
+                    if modification date of item 2 of stuckProcess � ((current date) - 12 * minutes) then
+                        if creation date of item 1 of stuckProcess is less than or equal to creation date of item 2 of stuckProcess then move (item 1 of stuckProcess) to downloads --item 1 is older than (or exactly the same age as) item 2
+                        try
+                            if creation date of item 2 of stuckProcess is less than creation date of item 1 of stuckProcess then move (item 2 of stuckProcess) to downloads ---item 2 is older than item 1
+                        end try
                         if exists item 2 of processing then do shell script "rm " & processingFolder & "*.[^keep]*"
-                        else if (count of stuckProcess) is 2 then
-                        if modification date of item 2 of stuckProcess � ((current date) - 12 * minutes) then
-                            if not (exists item 2 of rawFolder_folder) then
-                                set {x, y} to {1, 2}
-                                repeat 2 times
-                                    try
-                                        if name extension of item x of stuckProcess is "mkv" then
-                                            if name extension of item y of stuckProcess is "m4v" then
-                                                if name of item y of stuckProcess does not contain "-temp-" then
-                                                    move (item y of stuckProcess) to downloads
-                                                    set unStuck to true
-                                                    do shell script "rm " & processingFolder & "*.[^keep]*"
-                                                end if
-                                            end if
-                                        end if
-                                    end try
-                                    set {x, y} to {2, 1}
-                                end repeat
-                            end if
-                            if unStuck is false then
-                                if creation date of item 1 of stuckProcess is less than or equal to creation date of item 2 of stuckProcess then move (item 1 of stuckProcess) to downloads --item 1 is older than (or exactly the same age as) item 2
-                                try
-                                    if creation date of item 2 of stuckProcess is less than creation date of item 1 of stuckProcess then move (item 2 of stuckProcess) to downloads ---item 2 is older than item 1
-                                end try
-                                if exists item 2 of processing then do shell script "rm " & processingFolder & "*.[^keep]*"
-                                if exists item 2 of rawFolder_folder then do shell script "rm " & rawFolder & "*.[^keep]*"
-                            end if
-                        end if
                     end if
                 end if
-            end tell
+            end if
+        end tell
 	end moveHook:
 	############################################################################################################################
 	on trashTorrent:sender
@@ -412,48 +370,59 @@ script AppDelegate
                 set urlshow to text items of showname
                 set text item delimiters of AppleScript to "+"
                 set urlshow to "" & urlshow
+                set text item delimiters of AppleScript to " "
+                set showname2 to text items of showname
+                set text item delimiters of AppleScript to "."
+                set showname2 to "" & showname2 & "."
                 ---check iTunes block begins here
                 tell application "iTunes"
                     if (count of (items of (every track of playlist "TV Shows" whose show contains showname))) is greater than 0 then
-                    repeat with f from 1 to (count of (items of (every track of playlist "TV Shows" whose show contains showname)))
-                        ----PROGBAR------
-                        (progressBar's incrementBy:(incrementJump / 2) / (count of (items of (every track of playlist "TV Shows" whose show contains showname))))
-                        ----PROGBAR------
-                        set iTunesEpcode to episode ID of item f of (every track of playlist "TV Shows" whose show contains showname)
-                        set {vidQualFirst, audQualFirst} to {"0" as integer, "2" as integer}
-                        repeat with i from 1 to 4
-                            if (comment of item f of (every track of playlist "TV Shows" whose show contains showname)) contains item i of {"SDTV", "720p", "1080p", "4K"} then set vidQualFirst to (i - 1) as integer --this is so the video qualities correspond to integers 0, 1, 2, and 3 instead of 1, 2, 3, and 4
-                        end repeat
-                        repeat with i from 1 to 6
-                            if (comment of item f of (every track of playlist "TV Shows" whose show contains showname)) contains item i of {"Mono", "Stereo", "3ch", "4ch", "5ch", "DD5.1"} then set audQualFirst to i as integer
-                        end repeat
-                        if vidQualFirst is less than 1 then --###720p LINE###-- --this is where user can set it to a different "max quality" setting
-                            set rss_items100 to do shell script "curl \"https://torrentz2.eu/feed?f=" & urlshow & "+" & iTunesEpcode & "+h264%7Cx264\"" as text
-                            repeat while rss_items100 contains "last 10 secs"
-                                delay 10
+                        repeat with f from 1 to (count of (items of (every track of playlist "TV Shows" whose show contains showname)))
+                            ----PROGBAR------
+                            (progressBar's incrementBy:(incrementJump / 2) / (count of (items of (every track of playlist "TV Shows" whose show contains showname))))
+                            ----PROGBAR------
+                            set iTunesEpcode to episode ID of item f of (every track of playlist "TV Shows" whose show contains showname)
+                            set {vidQualFirst, audQualFirst} to {"0" as integer, "2" as integer}
+                            repeat with i from 1 to 4
+                                if (comment of item f of (every track of playlist "TV Shows" whose show contains showname)) contains item i of {"SDTV", "720p", "1080p", "4K"} then set vidQualFirst to (i - 1) as integer --this is so the video qualities correspond to integers 0, 1, 2, and 3 instead of 1, 2, 3, and 4
                             end repeat
-                            if (count of paragraphs of rss_items100) is greater than 14 then
-                                (NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"grabTorrent:" userInfo:{iTunesEpcode, rss_items100, vidQualFirst, showname} repeats:false)
-                                delay 0.01
+                            repeat with i from 1 to 6
+                                if (comment of item f of (every track of playlist "TV Shows" whose show contains showname)) contains item i of {"Mono", "Stereo", "3ch", "4ch", "5ch", "DD5.1"} then set audQualFirst to i as integer
+                            end repeat
+                            if vidQualFirst is less than 1 then --###720p LINE###-- --this is where user can set it to a different "max quality" setting
+                                tell application "Finder" to set already_downloaded to count (every item of torrent_add whose name contains showname2 & iTunesEpcode)
+                                if already_downloaded is 0 then
+                                    set rss_items100 to do shell script "curl \"https://torrentz2.eu/feed?f=" & urlshow & "+" & iTunesEpcode & "+h264%7Cx264\"" as text
+                                    repeat while rss_items100 contains "last 10 secs"
+                                        delay 10
+                                        set rss_items100 to do shell script "curl \"https://torrentz2.eu/feed?f=" & urlshow & "+" & iTunesEpcode & "+h264%7Cx264\"" as text
+                                    end repeat
+                                    if (count of paragraphs of rss_items100) is greater than 14 then
+                                        (NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"grabTorrent:" userInfo:{iTunesEpcode, rss_items100, vidQualFirst, showname, showname2} repeats:false)
+                                        delay 0.01
+                                    end if
+                                end if
                             end if
-                        end if
-                    end repeat
+                        end repeat
                     end if
                 end tell
                 ---check iTunes block ends here, check showList block begins here
                 repeat
                     set vidQualFirst to -1 as integer --there is no original vidQual, since we are not replacing something in itunes, so we set it to -1, so anything found will be downloaded
                     set urlepcode to "S" & text 2 thru 3 of (currentdata as text) & "E" & text 4 thru 5 of (currentdata as text)
-                    set rss_items200 to do shell script "curl \"https://torrentz2.eu/feed?f=" & urlshow & "+" & urlepcode & "+h264%7Cx264\"" as text
-                    repeat while rss_items200 contains "last 10 secs"
-                        delay 10
+                    tell application "Finder" to set already_downloaded to count (every item of torrent_add whose name contains showname2 & urlepcode)
+                    if already_downloaded is 0 then
                         set rss_items200 to do shell script "curl \"https://torrentz2.eu/feed?f=" & urlshow & "+" & urlepcode & "+h264%7Cx264\"" as text
-                    end repeat
-                    if (count of paragraphs of rss_items200) is greater than 14 then
-                        (NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"grabTorrent:" userInfo:{urlepcode, rss_items200, vidQualFirst, showname} repeats:false)
-                        delay 0.01
-                    else
-                        exit repeat
+                        repeat while rss_items200 contains "last 10 secs"
+                            delay 10
+                            set rss_items200 to do shell script "curl \"https://torrentz2.eu/feed?f=" & urlshow & "+" & urlepcode & "+h264%7Cx264\"" as text
+                        end repeat
+                        if (count of paragraphs of rss_items200) is greater than 14 then
+                            (NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"grabTorrent:" userInfo:{urlepcode, rss_items200, vidQualFirst, showname, showname2} repeats:false)
+                            delay 0.01
+                        else
+                            exit repeat
+                        end if
                     end if
                     set currentdata to currentdata + 1
                 end repeat
@@ -471,36 +440,21 @@ script AppDelegate
 	on process:sender
 		tell application "Finder"
 			----From here to the next comment, the script checks downloadcomplete folder for video files, then deletes everything it doesn't need
-			set totalfolders to count folders in downloads
-			repeat while totalfolders is greater than 0
-				set downloads2 to folder 1 of downloads
-				set downloads2_delete to name of downloads2
-				set {mkvfiles, mp4files, m4vfiles} to {(every item of downloads2 whose name ends with ".mkv"), (every item of downloads2 whose name ends with ".mp4"), (every item of downloads2 whose name ends with ".m4v")}
-				move {mkvfiles, mp4files, m4vfiles} to downloads with replacing
+			repeat while (count of folders in downloads) is greater than 0
+				set downloads2_delete to name of (folder 1 of downloads)
+				move {(every item of (folder 1 of downloads) whose name ends with ".mkv"), (every item of (folder 1 of downloads) whose name ends with ".mp4"), (every item of (folder 1 of downloads) whose name ends with ".m4v")} to downloads with replacing
 				try
 					do shell script "rm -r " & downloadingCompleteFolder & quoted form of downloads2_delete
 				end try
-				set totalfolders to count folders in downloads
 			end repeat
 			--The below renames the file to the proper naming format
 			if exists item 2 of downloads then
-				if exists item 2 of processing then
-					set moveon to false
-				else
-					if name of item 1 of downloads contains "dummyfile" then
-						move item 2 of downloads to processing
-					else
-						move item 1 of downloads to processing
-					end if
-					if name of item 1 of processing contains "dummyfile" then
-						set the_file to item 2 of processing
-					else
-						set the_file to item 1 of processing
-					end if
-					set alldownloads to the_file as text
+				if not exists item 2 of processing then
+					move item 1 of (every item of downloads whose name does not contain "dummyfile") to processing
+                    set the_file to item 1 of (every item of processing whose name does not contain "dummyfile")
 					---the 2 lines below set the variable to just the filename (everything after the last colon), as opposed to the whole path
 					set AppleScript's text item delimiters to ":"
-					set allfilenames to last text item of alldownloads
+					set allfilenames to last text item of (the_file as text)
 					tell current application
 						----the 4 lines below change any dashes in the filename to dots
 						set text item delimiters of AppleScript to {" - ", " "}
@@ -559,8 +513,7 @@ script AppDelegate
 						set vidQual to "3" as integer
 						set vid_comment to "4K"
 					end if
-					----The below checks to see how many audio channels are in the MKV file.  This is used to determine, in a case where the same episode already has been added to iTunes, if the incoming episode should replace it because it has more audio channels.  Later, these variables are used to figure out which raw audio files should be added into the final container. If more than 2 channels, it adds the AC3 file for 5.1 surround sound, as well as a secondary stereo audio track.  If it's just stereo, it only adds in the stereo aac file.
-					----THEORY: FILES AREN'T DELETING FROM PROCESSING FOLDER WHEN THEY **REPLACE** A LOWER-QUALITY VERSION IN ITUNES
+					----The below checks to see how many audio channels are in the MKV file.  This is used to determine, in a case where the same episode already has been added to iTunes, if the incoming episode should replace it because it has more audio channels.
 					set channels2 to "2" as integer --just in case there's a problem retrieving the number of audio channels in the file, we assume it is stereo until the processes below tell us otherwise
 					set channels to do shell script theMediaInfo & " \"--Inform=Audio;%Channels%\" " & processingFolder & "*.{mkv,mp4,m4v}"
 					set stream1 to 0 as integer
@@ -667,18 +620,15 @@ script AppDelegate
 							on error
 								tell application "Finder" to move the_file to errorQueue
 							end try
-							--see if script will know what to do/continue running properly if the_file is moved to error folder.  Its just the one file that needs to be moved, m4vs and rawstreams have not yet been created.
-							set text item delimiters of AppleScript to "<a id=\"tv_"
+							if exists item 2 of processing
+                            set text item delimiters of AppleScript to "<a id=\"tv_"
 							set tokens to text items of find_id
 							set id0 to item 2 of tokens
 							set text item delimiters of AppleScript to "\""
 							set tokens to text items of id0
 							set tvshowID to item 1 of tokens
-							if name of item 1 of processing contains "dummyfile" then
-								set the_file to item 2 of processing
-							else
-								set the_file to item 1 of processing
-							end if
+							
+                            
 							set mySeason to text 2 through 3 of epcodefinal as number
 							set mySeason2 to mySeason as text
 							set myEpisode to text 5 through 6 of epcodefinal as number
@@ -691,6 +641,7 @@ script AppDelegate
                             on error
                                 tell application "Finder" to move the_file to errorQueue
                             end try
+                            if exists item 2 of processing
                             set AppleScript's text item delimiters to "\",\"name\":\""
                             set correctName0 to text item 2 of firstin2
                             set AppleScript's text item delimiters to "\",\""
@@ -710,6 +661,7 @@ script AppDelegate
 							on error
 								tell application "Finder" to move the_file to errorQueue
 							end try
+                            if exists item 2 of processing
 							set showdescrip to "No description available."
 							set myname to "Season " & mySeason & ", Episode " & myEpisode
 							set AppleScript's text item delimiters to "\",\"overview\":\""
@@ -805,6 +757,9 @@ script AppDelegate
 						else
 							set myname to showname2
 							set final_final_artwork to showArtFolder & "no_art.jpg" as string
+                        end if
+                        end if
+                        end if
 						end if --(totaltokens2 is greater than 1)
 						set text item delimiters of AppleScript to {":", "'"}
 						set showname2 to text items of showname2 ---showname2 = name of the show
@@ -900,57 +855,16 @@ script AppDelegate
 						delay 0.01
 					else if continue_adding is true then
 						if extension1 is ".mkv" then
-							if name of item 1 of processing contains "dummyfile" then
-								set filename1 to name of item 2 of processing
-							else
-								set filename1 to name of item 1 of processing
-							end if
-							tell current application
-								----a way to combine the do shell scripts that all use mediainfo?
-								set newFramerate to do shell script theMediaInfo & " \"--Inform=Video;%FrameRate%\" " & processingFolder & "*.mkv"
-								---the below identifies whether the audio codec is AC3 or AAC
-								set audioCodec to do shell script theMediaInfo & " \"--Inform=Audio;%Format%\" " & processingFolder & "*.mkv"
-								---THE BELOW IDENTIFIES WHETHER THE AUDIO OR VIDEO STREAM COMES FIRST, SO THAT MKVEXTRACT KNOWS WHAT IT'S EXPORTING긥s there a way to combine the two into a single do shell script command??
-								set aud_pos to do shell script theMediaInfo & " \"--Inform=Audio;%StreamOrder%\" " & processingFolder & "*.mkv"
-								set vid_pos to do shell script theMediaInfo & " \"--Inform=Video;%StreamOrder%\" " & processingFolder & "*.mkv"
-								if vid_pos is greater than aud_pos then
-									if channels2 is greater than 2 then --5.1
-										-----below: first stream is audio, has AC3 5.1 surround
-										do shell script themkvExtract & " tracks " & processingFolder & "*.mkv 1:" & rawFolder & "DolbySurround.ac3 2:" & rawFolder & "Video.264 && " & theffmpeg & " -i " & rawFolder & "DolbySurround.ac3 -ac 2 -ab 160 " & rawFolder & "stereo_temp.wav && " & thefaac & " --mpeg-vers 4 " & rawFolder & "stereo_temp.wav -o " & rawFolder & "Stereo.aac && " & themp4Box & " -add " & rawFolder & "Video.264:name=Video:fps=" & newFramerate & " -add " & rawFolder & "Stereo.aac:group=1:lang=ENG:name=\"Stereo\" -add " & rawFolder & "DolbySurround.ac3:disable:group=1:lang=ENG:name=\"DD5.1\" -inter 500 " & processingFolder & fileNameNoExt & ".m4v && rm " & rawFolder & "*.{264,ac3,wav,aac}"
-									else --(if channel2 is less than or equal to 2) --stereo
-										if audioCodec is "AC-3" then
-											-----below: first stream is audio, has stereo only, but is in AC3
-											do shell script themkvExtract & " tracks " & processingFolder & "*.mkv 1:" & rawFolder & "Stereo.ac3 2:" & rawFolder & "Video.264 && " & theffmpeg & " -i " & rawFolder & "Stereo.ac3 -ac 2 -ab 160 " & rawFolder & "stereo_temp.wav && " & thefaac & " --mpeg-vers 4 " & rawFolder & "stereo_temp.wav -o " & rawFolder & "Stereo_Final.aac && " & themp4Box & " -add " & rawFolder & "Video.264:name=Video:fps=" & newFramerate & " -add " & rawFolder & "Stereo_Final.aac:group=1:lang=ENG:name=\"Stereo\" -inter 500 " & processingFolder & fileNameNoExt & ".m4v && rm " & rawFolder & "*.{264,ac3,wav,aac}"
-										else --(if audioCodec is not AC3)
-											-----below: first stream is audio, has stereo only, is in AAC
-											do shell script themkvExtract & " tracks " & processingFolder & "*.mkv 1:" & rawFolder & "Stereo.aac 2:" & rawFolder & "Video.264 && " & themp4Box & " -add " & rawFolder & "Video.264:name=Video:fps=" & newFramerate & " -add " & rawFolder & "Stereo.aac:lang=ENG:name=\"Stereo\" -inter 500 " & processingFolder & fileNameNoExt & ".m4v && rm " & rawFolder & "*.{264,aac}"
-										end if --(if audioCodec is/is not AC3)
-									end if --(if channels2 is greater than/less than or equal to 2)
-								else --(if aud_pos is greater than vid_pos)
-									if channels2 is greater than 2 then -- 5.1
-										-----below: first stream is video, has AC3 5.1 surround
-										do shell script themkvExtract & " tracks " & processingFolder & "*.mkv 1:" & rawFolder & "Video.264 2:" & rawFolder & "DolbySurround.ac3 && " & theffmpeg & " -i " & rawFolder & "DolbySurround.ac3 -ac 2 -ab 160 " & rawFolder & "stereo_temp.wav && " & thefaac & " --mpeg-vers 4 " & rawFolder & "stereo_temp.wav -o " & rawFolder & "Stereo.aac && " & themp4Box & " -add " & rawFolder & "Video.264:name=Video:fps=" & newFramerate & " -add " & rawFolder & "Stereo.aac:group=1:lang=ENG:name=\"Stereo\" -add " & rawFolder & "DolbySurround.ac3:disable:group=1:lang=ENG:name=\"DD5.1\" -inter 500 " & processingFolder & fileNameNoExt & ".m4v && rm " & rawFolder & "*.{264,ac3,wav,aac}"
-									else --(if channel2 is less than or equal to 2) --stereo
-										if audioCodec is "AC-3" then
-											-----below: first stream is video, has stereo only, but is in AC3
-											do shell script themkvExtract & " tracks " & processingFolder & "*.mkv 1:" & rawFolder & "Video.264 2:" & rawFolder & "Stereo.ac3 && " & theffmpeg & " -i " & rawFolder & "Stereo.ac3 -ac 2 -ab 160 " & rawFolder & "stereo_temp.wav && " & thefaac & " --mpeg-vers 4 " & rawFolder & "stereo_temp.wav -o " & rawFolder & "Stereo_Final.aac && " & themp4Box & " -add " & rawFolder & "Video.264:name=Video:fps=" & newFramerate & " -add " & rawFolder & "Stereo_Final.aac:group=1:lang=ENG:name=\"Stereo\" -inter 500 " & processingFolder & fileNameNoExt & ".m4v && rm " & rawFolder & "*.{264,ac3,wav,aac}"
-										else --(if audioCodec is not AC3)
-											-----below: first stream is video, has stereo only, is in AAC
-											do shell script themkvExtract & " tracks " & processingFolder & "*.mkv 1:" & rawFolder & "Video.264 2:" & rawFolder & "Stereo.aac && " & themp4Box & " -add " & rawFolder & "Video.264:name=Video:fps=" & newFramerate & " -add " & rawFolder & "Stereo.aac:lang=ENG:name=\"Stereo\" -inter 500 " & processingFolder & fileNameNoExt & ".m4v && rm " & rawFolder & "*.{264,aac}"
-										end if --(if audioCodec is/is not AC3)
-									end if --(if channels2 is greater than/less than or equal to 2)
-								end if --(vid_pos is greater than/less than aud_pos)
-							end tell
-							try
-								do shell script "rm " & processingFolder & "*.mkv"
-							end try
+							tell current application to	do shell script theffmpeg & " -i " & processingFolder & "*.mkv -c:v copy -c:a copy " & processingFolder & fileNameNoExt & ".m4v && rm " & processingFolder & "*.mkv"
 							set the_file to every item of processing whose name ends with ".mp4"
 							set the_file to every item of processing whose name ends with ".m4v"
 						end if --(extension1 is mkv)
 					end if --(continue_adding is false/true)
-				end if --(exists item 2 of processing)
-			end if ---(exists item 2 of downloads)
-			try
+				end if --(not exists item 2 of processing)
+			end if ---(not exists item 2 of downloads)
+			
+            
+            try
 				set totalprocessing to count files in processing
 				if totalprocessing is greater than 3 then
 					do shell script "rm " & processingFolder & "*.[^keep]*"
@@ -989,11 +903,14 @@ script AppDelegate
 							add metafiles2
 						on error number -43 --why does the below happen ONLY on error number 43??
 							do shell script "rm " & processingFolder & "*.[^keep]*"
-							NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"trashTorrent:" userInfo:(missing value) repeats:false
-							delay 0.01
 						end try
-                        NSTimer's scheduledTimerWithTimeInterval:0 |target|:me selector:"updateEpcode:" userInfo:{showname2, mySeason2, myEpisode2} repeats:false
-                        delay 0.01
+                        tell current application
+                            do shell script "rm " & processingFolder & "*.[^keep]*"
+                            NSTimer's scheduledTimerWithTimeInterval:0 |target|:me selector:"updateEpcode:" userInfo:{showname2, mySeason2, myEpisode2} repeats:false
+                            delay 0.01
+                            NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"trashTorrent:" userInfo:(missing value) repeats:false
+                            delay 0.01
+                        end tell
 						try
 							set existsShows to every track of playlist "TV Shows" whose name contains myname
 							set countfiles to count items of existsShows
@@ -1013,7 +930,6 @@ script AppDelegate
 							update item 4 of every source
 						end try
 					end tell
-					
 					if (count of files in processing) is greater than 1 then
 						do shell script "rm " & quoted form of rm2
 						do shell script "rm " & processingFolder & "*-temp-*.*"
@@ -1282,8 +1198,7 @@ script AppDelegate
 	end appQuit:
 	############################################################################################################################
 	on applicationShouldTerminate:sender
-		----delete every file from rawstreams folder (except dummyfile.keep)
-		----quit atomicparsley, faac, ffmpeg, mediainfo, mkvextract, mp4box CLIs (possible to quit via a command, ie, faac -quit?  if not, quit using process ID)
+		----quit atomicparsley, ffmpeg, mediainfo CLIs (possible to quit via a command, ie, faac -quit?  if not, quit using process ID)
 		----if there are items in the "processing" folder
 		----------move least recently created file from processing folder to downloadComplete folder
 		----------delete every other file from processing folder (except dummyfile.keep)
