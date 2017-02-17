@@ -754,12 +754,12 @@ script AppDelegate
 									set final_final_artwork to showArtFolder & "no_art.jpg" as string
 								end try
 							end if --(artcount is greater than 0)
-						else
+                            end if
+                        end if
+                        end if
+                        else
 							set myname to showname2
 							set final_final_artwork to showArtFolder & "no_art.jpg" as string
-                        end if
-                        end if
-                        end if
 						end if --(totaltokens2 is greater than 1)
 						set text item delimiters of AppleScript to {":", "'"}
 						set showname2 to text items of showname2 ---showname2 = name of the show
