@@ -148,13 +148,14 @@ script AppDelegate
 			addItemsWithObjectValues_(wikiShow)
 		end tell
 		---end currently airing wikipedia block
-		
-		----open aria and have it continue downloading any partially downloaded files [aria may just need to launch and do nothing else as long as the flag to resume download is already set for every aria download when it starts...may need to modify aria code throughout the script to include that flag....or right here just tell it to resume any file in the "downloading" folder]
-		----begin downloading anything in the torrentadd folder that has not begun downloading and also isn't in the downloadcomplete or processing folders and has not been added to itunes in that quality.  also on startup:
-		----quit atomicparsley, ffmpeg, mediainfo, mp4box CLIs
-		----if there are items in the "processing" folder
-		----------move least recently created file from processing folder to downloadComplete folder
-		----------delete every other file from processing folder (except dummyfile.keep)
+        NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"theStuckProcess:" userInfo:(missing value) repeats:false
+        tell application "Finder" ---this block continues downloading any partially downloaded files in the downloading directory that have corresponding .torrent files in the torrentadd directory
+            repeat with i from 1 to (count of (every item of torrent_add whose name contains ".torrent"))
+                set theTorrentName to (name of item i of (every item of torrent_add whose name contains ".torrent"))
+                do shell script aria & " --seed-time=0 --on-bt-download-complete=exit -d " & downloadingFolder & " " & torrentAddFolder & theTorrentName & " > /dev/null 2>&1 &"
+            end repeat
+        end tell
+        ---Have it delete any partially downloaded files from the downloading directory that do not have a corresponding .torrent.  IT BECOMES CLEAR WHICH PARTIALLY DOWNLOADED FILES HAVE A CORRESPONDING .TORRENT BECAUSE AFTER THE .TORRENT IS OPENED AGAIN AND THE VIDEO FILE CONTINUES DOWNLOADING, THE DATE CREATED/DATE MODIFIED VALUES OF THE .ARIA2 FILE IN THE DOWNLOADING DIRECTORY WILL BE THE PAST COUPLE OF MINUTES...if .aria2 file hasn't been updated in past 5-10 min, have it check the torrentadd folder for corresponding .torrent (same show name, episode id, video quality), and if none exists, delete it from the downloading directory.
 	end applicationWillFinishLaunching:
 	############################################################################################################################
 	on applicationDidFinishLaunching:aNotification
@@ -162,7 +163,7 @@ script AppDelegate
 		NSTimer's scheduledTimerWithTimeInterval:5 target:me selector:"download:" userInfo:(missing value) repeats:false
 		NSTimer's scheduledTimerWithTimeInterval:615 target:me selector:"download:" userInfo:(missing value) repeats:true
 		NSTimer's scheduledTimerWithTimeInterval:5 target:me selector:"process:" userInfo:(missing value) repeats:true
-		NSTimer's scheduledTimerWithTimeInterval:8 target:me selector:"moveHook:" userInfo:(missing value) repeats:true
+		NSTimer's scheduledTimerWithTimeInterval:8 target:me selector:"regularIntervals:" userInfo:(missing value) repeats:true
 	end applicationDidFinishLaunching:
 	############################################################################################################################
     on grabTorrent:sender
@@ -294,6 +295,11 @@ script AppDelegate
 		end if
 		delay 0.01 -- more of these at END of NSTIMER sections, before it returns to main script?
 	end grabTorrent:
+    ############################################################################################################################
+    on regularIntervals:sender
+        NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"moveHook:" userInfo:(missing value) repeats:false
+        NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"theStuckProcess:" userInfo:(missing value) repeats:false
+    end regularIntervals:
 	############################################################################################################################
 	on moveHook:sender
 		tell application "Finder"  ---here to comment below moves files that are done downloading with aria to the downloadcomplete folder
@@ -310,12 +316,17 @@ script AppDelegate
 					end if
 				end if
 			end repeat
+        end tell
+	end moveHook:
+    ############################################################################################################################
+    on theStuckProcess:sender
+        tell application "Finder"
             set stuckProcess to (every item of processing whose name does not contain "dummyfile") --here to end of this subroutine moves/deletes any files that may have gotten stuck in the processing folder to prevent files from getting stuck in there if they fail to process
             if modification date of item 1 of stuckProcess ² ((current date) - 12 * minutes) then
                 if (count of stuckProcess) is 1 then
                     move item 1 of stuckProcess to downloads ---also, somehow mark file being moved?  either save it as a variable here, append something to the filename, or write to a text file?  This way, if it gets stuck in the processing folder a second time, it will be moved to the error folder instead of just moving back and forth between downloadedcomplete and processing folders.
                     if exists item 2 of processing then do shell script "rm " & processingFolder & "*.[^keep]*"
-                else if (count of stuckProcess) is 2 then
+                    else if (count of stuckProcess) is 2 then
                     if modification date of item 2 of stuckProcess ² ((current date) - 12 * minutes) then
                         if creation date of item 1 of stuckProcess is less than or equal to creation date of item 2 of stuckProcess then move (item 1 of stuckProcess) to downloads --item 1 is older than (or exactly the same age as) item 2
                         try
@@ -326,7 +337,7 @@ script AppDelegate
                 end if
             end if
         end tell
-	end moveHook:
+    end theStuckProcess:
 	############################################################################################################################
 	on trashTorrent:sender
 		tell application "Finder"
@@ -1199,9 +1210,7 @@ script AppDelegate
 	############################################################################################################################
 	on applicationShouldTerminate:sender
 		----quit atomicparsley, ffmpeg, mediainfo CLIs (possible to quit via a command, ie, faac -quit?  if not, quit using process ID)
-		----if there are items in the "processing" folder
-		----------move least recently created file from processing folder to downloadComplete folder
-		----------delete every other file from processing folder (except dummyfile.keep)
+		NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"theStuckProcess:" userInfo:(missing value) repeats:false
 		----ask user: Episodes is currently downloading [a file/files].  It can continue downloading [it/them] after you quit, or it can stop downloading now and resume the next time you launch Episodes.  Which would you prefer? Options: [quit app but continue downloading], [quit app and stop downloading]
 		----------on continue downloading, just continue quit and do nothing else
 		----------on stop downloading, quit aria CLI (possible to do one quit command for aria and have it quit all instances of aria?  if not, make sure it quits every running aria process.)
