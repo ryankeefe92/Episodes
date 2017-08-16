@@ -149,23 +149,18 @@ script AppDelegate
 		end tell
 		---end currently airing wikipedia block
         NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"theStuckProcess:" userInfo:(missing value) repeats:false
-        tell application "Finder" ---this block continues downloading any partially downloaded files in the downloading directory that have corresponding .torrent files in the torrentadd directory
-            repeat with i from 1 to (count of (every item of torrent_add whose name contains ".torrent"))
-                set theTorrentName to (name of item i of (every item of torrent_add whose name contains ".torrent"))
-                do shell script aria & " --seed-time=0 --on-bt-download-complete=exit -d " & downloadingFolder & " " & torrentAddFolder & theTorrentName & " > /dev/null 2>&1 &"
-            end repeat
-        end tell
-        ---Have it delete any partially downloaded files from the downloading directory that do not have a corresponding .torrent.  IT BECOMES CLEAR WHICH PARTIALLY DOWNLOADED FILES HAVE A CORRESPONDING .TORRENT BECAUSE AFTER THE .TORRENT IS OPENED AGAIN AND THE VIDEO FILE CONTINUES DOWNLOADING, THE DATE CREATED/DATE MODIFIED VALUES OF THE .ARIA2 FILE IN THE DOWNLOADING DIRECTORY WILL BE THE PAST COUPLE OF MINUTES...if .aria2 file hasn't been updated in past 5-10 min, have it check the torrentadd folder for corresponding .torrent (same show name, episode id, video quality), and if none exists, delete it from the downloading directory.
+        NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"resumeTorrent:" userInfo:(missing value) repeats:false
 	end applicationWillFinishLaunching:
-	############################################################################################################################
+	###########################################################################
 	on applicationDidFinishLaunching:aNotification
 		---launch housekeeping is currently at bottom of applicationWillFinishLaunching.  Move here instead if necessary.
 		NSTimer's scheduledTimerWithTimeInterval:5 target:me selector:"download:" userInfo:(missing value) repeats:false
 		NSTimer's scheduledTimerWithTimeInterval:615 target:me selector:"download:" userInfo:(missing value) repeats:true
 		NSTimer's scheduledTimerWithTimeInterval:5 target:me selector:"process:" userInfo:(missing value) repeats:true
 		NSTimer's scheduledTimerWithTimeInterval:8 target:me selector:"regularIntervals:" userInfo:(missing value) repeats:true
+        NSTimer's scheduledTimerWithTimeInterval:60 target:me selector:"theStuckProcess:" userInfo:(missing value) repeats:true
 	end applicationDidFinishLaunching:
-	############################################################################################################################
+	###########################################################################
     on grabTorrent:sender
         set theEpcode to item 1 of sender's userInfo as text
         set rss_items to item 2 of sender's userInfo as text
@@ -188,64 +183,66 @@ script AppDelegate
             set feedtorrentLink to text item 2 of currentEntry
             set tor_comment to "SDTV"
             set torQual to 0 as integer
-            ###720p BLOCK###
-            if feedtorrentTitle contains "720p" then
-                set tor_comment to "720p"
-                set torQual to 1
-            end if
-            ###END 720p BLOCK###
-            set torAudQual to 2 as integer
-            ---the below (from here to end repeat) sets the torAudQual, but nothing checks the torAudQual later!  Implement something (a few lines down, when it is checking the torQual) to also check the torAudQual
-            ignoring case, hyphens, punctuation and white space
-                if feedtorrentTitle contains "AAC2.0" then
-                    set torAudQual to 2 as integer
-                    else if feedtorrentTitle contains "DD5.1" then
-                    set torAudQual to 6 as integer
-                    else if feedtorrentTitle contains "6ch" then
-                    set torAudQual to 6 as integer
-                    --aac often means 2.0, and if it doesn't say aac2.0 or dd5.1, it is most likely 5.1, so it should prefer 5.1 or ac3 to nothing, and prefer nothing to 2.0 or web-dl or aac, unless web-dl also says 5.1
+            if feedtorrentTitle contains theEpcode
+                ###720p BLOCK###
+                if feedtorrentTitle contains "720p" then
+                    set tor_comment to "720p"
+                    set torQual to 1
                 end if
-            end ignoring
-            set chanList to {"Mono", "Stereo", "3ch", "4ch", "5ch", "DD5.1"}
-            repeat with j from 1 to count of chanList
-                if feedtorrentTitle contains item j of chanList then
-                    set torAudQual to j as integer
-                end if
-            end repeat
-            set torSourceQual to 2 as integer
-            set sourcList to {"WEB-DL", "TV-Rip", "Blu-Ray"}
-            ignoring case, hyphens, punctuation and white space
-                if feedtorrentTitle contains "Web-Rip" then
-                    set torSourceQual to 1 as integer
-                end if
-                repeat with j from 1 to count of sourcList
-                    if feedtorrentTitle contains item j of sourcList then
-                        set torSourceQual to j as integer
+                ###END 720p BLOCK###
+                set torAudQual to 2 as integer
+                ---the below (from here to end repeat) sets the torAudQual, but nothing checks the torAudQual later!  Implement something (a few lines down, when it is checking the torQual) to also check the torAudQual
+                ignoring case, hyphens, punctuation and white space
+                    if feedtorrentTitle contains "AAC2.0" then
+                        set torAudQual to 2 as integer
+                        else if feedtorrentTitle contains "DD5.1" then
+                        set torAudQual to 6 as integer
+                        else if feedtorrentTitle contains "6ch" then
+                        set torAudQual to 6 as integer
+                        --aac often means 2.0, and if it doesn't say aac2.0 or dd5.1, it is most likely 5.1, so it should prefer 5.1 or ac3 to nothing, and prefer nothing to 2.0 or web-dl or aac, unless web-dl also says 5.1
+                    end if
+                end ignoring
+                set chanList to {"Mono", "Stereo", "3ch", "4ch", "5ch", "DD5.1"}
+                repeat with j from 1 to count of chanList
+                    if feedtorrentTitle contains item j of chanList then
+                        set torAudQual to j as integer
                     end if
                 end repeat
-            end ignoring
-            ----make it so if a torrent is nuked and propered, the proper replaces the nuke
-            if torQual is greater than vidQualFirst then
-                ----also add in audio and source quality checkers here...torAudQual and torSourceQual are set just a few lines above and should be checked here!!
-                if torQual is greater than or equal to bestquality then
-                    set bestquality to torQual as integer
-                    try
-                        set fifthbest to fourthbest
-                    end try
-                    try
-                        set fourthbest to thirdbest
-                    end try
-                    try
-                        set thirdbest to secondbest
-                    end try
-                    try
-                        set secondbest to bestfeeditem
-                    end try
-                    set bestfeeditem to feedtorrentLink & ": " & feedtorrentTitle
+                set torSourceQual to 2 as integer
+                set sourcList to {"WEB-DL", "TV-Rip", "Blu-Ray"}
+                ignoring case, hyphens, punctuation and white space
+                    if feedtorrentTitle contains "Web-Rip" then
+                        set torSourceQual to 1 as integer
+                    end if
+                    repeat with j from 1 to count of sourcList
+                        if feedtorrentTitle contains item j of sourcList then
+                            set torSourceQual to j as integer
+                        end if
+                    end repeat
+                end ignoring
+                ----make it so if a torrent is nuked and propered, the proper replaces the nuke
+                if torQual is greater than vidQualFirst then
+                    ----also add in audio and source quality checkers here...torAudQual and torSourceQual are set just a few lines above and should be checked here!!
+                    if torQual is greater than or equal to bestquality then
+                        set bestquality to torQual as integer
+                        try
+                            set fifthbest to fourthbest
+                        end try
+                        try
+                            set fourthbest to thirdbest
+                        end try
+                        try
+                            set thirdbest to secondbest
+                        end try
+                        try
+                            set secondbest to bestfeeditem
+                        end try
+                        set bestfeeditem to feedtorrentLink & ": " & feedtorrentTitle
+                    end if
                 end if
             end if
         end repeat
-        if bestfeeditem is not "" then
+        if bestfeeditem is not 0 then
             set the_order to {bestfeeditem, secondbest, thirdbest, fourthbest, fifthbest}
             set AppleScript's text item delimiters to {"://torrentz2.eu/", ":"}
             repeat with tho from 1 to 5
@@ -295,14 +292,14 @@ script AppDelegate
 		end if
 		delay 0.01 -- more of these at END of NSTIMER sections, before it returns to main script?
 	end grabTorrent:
-    ############################################################################################################################
+    ###########################################################################
     on regularIntervals:sender
         NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"moveHook:" userInfo:(missing value) repeats:false
-        NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"theStuckProcess:" userInfo:(missing value) repeats:false
+        --NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"resumeTorrent:" userInfo:(missing value) repeats:false
     end regularIntervals:
-	############################################################################################################################
+	###########################################################################
 	on moveHook:sender
-		tell application "Finder"  ---here to comment below moves files that are done downloading with aria to the downloadcomplete folder
+		tell application "Finder"  ---this block moves files that are done downloading with aria to the downloadcomplete folder
 			set all_aria_downloads to (every item of downloadingFolder_folder whose name does not contain ".aria2")
 			set aria_count to count all_aria_downloads
 			repeat with i from 1 to aria_count
@@ -318,27 +315,145 @@ script AppDelegate
 			end repeat
         end tell
 	end moveHook:
-    ############################################################################################################################
+    ###########################################################################
     on theStuckProcess:sender
         tell application "Finder"
             set stuckProcess to (every item of processing whose name does not contain "dummyfile") --here to end of this subroutine moves/deletes any files that may have gotten stuck in the processing folder to prevent files from getting stuck in there if they fail to process
-            if modification date of item 1 of stuckProcess � ((current date) - 12 * minutes) then
-                if (count of stuckProcess) is 1 then
-                    move item 1 of stuckProcess to downloads ---also, somehow mark file being moved?  either save it as a variable here, append something to the filename, or write to a text file?  This way, if it gets stuck in the processing folder a second time, it will be moved to the error folder instead of just moving back and forth between downloadedcomplete and processing folders.
-                    if exists item 2 of processing then do shell script "rm " & processingFolder & "*.[^keep]*"
-                    else if (count of stuckProcess) is 2 then
-                    if modification date of item 2 of stuckProcess � ((current date) - 12 * minutes) then
-                        if creation date of item 1 of stuckProcess is less than or equal to creation date of item 2 of stuckProcess then move (item 1 of stuckProcess) to downloads --item 1 is older than (or exactly the same age as) item 2
-                        try
-                            if creation date of item 2 of stuckProcess is less than creation date of item 1 of stuckProcess then move (item 2 of stuckProcess) to downloads ---item 2 is older than item 1
-                        end try
+            if count of stuckProcess is greater than 0
+                if modification date of item 1 of stuckProcess � ((current date) - 12 * minutes) then  --if the file in the processing folder hasn't been modified in the last 12 minutes
+                    if (count of stuckProcess) is 1 then
+                        move item 1 of stuckProcess to downloads ---moves the file that got stuck during processing back to the downloadingcomplete folder.  also, somehow mark file being moved?  either save it as a variable here, append something to the filename, or write to a text file?  This way, if it gets stuck in the processing folder a second time, it can be moved to the error folder instead of just moving back and forth between downloadedcomplete and processing folders.
                         if exists item 2 of processing then do shell script "rm " & processingFolder & "*.[^keep]*"
+                    else if (count of stuckProcess) is 2 then
+                        if modification date of item 2 of stuckProcess � ((current date) - 12 * minutes) then
+                            if creation date of item 1 of stuckProcess is less than or equal to creation date of item 2 of stuckProcess then move (item 1 of stuckProcess) to downloads --item 1 is older than (or exactly the same age as) item 2
+                            try
+                                if creation date of item 2 of stuckProcess is less than creation date of item 1 of stuckProcess then move (item 2 of stuckProcess) to downloads ---item 2 is older than item 1
+                            end try
+                            if exists item 2 of processing then do shell script "rm " & processingFolder & "*.[^keep]*"
+                        end if
                     end if
                 end if
             end if
         end tell
     end theStuckProcess:
-	############################################################################################################################
+	###########################################################################
+    on resumeTorrent:sender  --this subroutine checks all the .torrent files in the torrent_add folder, and for each one, if it doesn't already have a corresponding video file in the downloadcomplete or processing folder, it has aria start downloading that episode
+        
+        ----RIGHT NOW, THE PART THAT CONTINUES A PARTIALLY DOWNLOADED FILE IS "COMMENTED" SINCE THAT SEEMS TO BE THE PART CAUSING ARIA TO RUN A TON OF PROCESSES
+        ----THERE ARE PROBLEMS WITH THIS LOGIC!!!  SEE RESUMETORRENTWALKTHROUGH APPLESCRIPT, WHICH IS SAVED ON THE DESKTOP...IT IS ALSO INCOMPLETE...FINISH IT TO SEE THE FULL EFFECT OF THIS SUBROUTINE  FOR ONE, THE MATCHSHOWNAME AND MATCHSEASON SHOULD BE CONNECTED AS A SINGLE VARIABLE CALLED MATCHEPISODE, WHICH WOULD BE "FAMILY.GUY.S15E19" RATHER THAN HAVING MATCHSHOWNAME AS "FAMILY.GUY" AND MATCHSEASON AS "S15E19".  ALSO TEST AGAIN USING JUST THIS SUBROUTINE IN AN APPLESCRIPT, WITH DISPLAY DIALOG AND FILES IN DIFFERENT FOLDERS---FILES IN ONE FOLDER ONLY (EACH OF THEM) FILES IN 2 OF 3 FOLDERS (DOWNLOADING AND PROCESSING, DOWNLOADING AND DOWNLOADED, PROCESSING AND DOWNLOADED), FILES IN ALL 3 FOLDERS, WITH JUST ONE FILE, AND MULTIPLE FILES--MULTIPLE EPISODES OF SAME SHOW, EPISODES OF FROM MORE THAN ONE SERIES, ETC...ALL KINDS OF COMBINATIONS TO MAKE SURE EVERYTHING WORKS.  DO THE EXIT REPEATS SCREW ANYTHING UP?  OR ARE MORE EXIT REPEATS NEEDED?  INSTEAD OF SETTING SHOULDDOWNLOAD TO TRUE, SHOULD IT JUST RUN THE ARIA SHELL SCRIPT RIGHT THERE?  RIGHT NOW CHECKPROCESSMATCH AND CHECKDOWNLOADINGMATCH ARE SET TO TRUE BY DEFAULT, AND SET TO FALSE WHEN THE FILES ARE FOUND IN OTHER FOLDERS...SHOULD THIS BE REVERSED, AND THEN INSTEAD OF SETTING CHECKPROCESSMATCH AND CHECKDOWNLOADINGMATCH TO TRUE, SHOULD IT JUST RUN THAT CODE WITHIN THE EARLIER REPEAT LOOPS?  OR SHOULD THEY BE MADE INTO SUBROUTINES THAT CAN BE CALLED WITHIN THE EARLIER REPEAT LOOPS?  ARE THERE OTHER PROBLEMS?? ALSO, SHOULD A DELAY BE ADDED, OR SHOULD IT RUN LESS OFTEN THAN EVERY 8 SECONDS, SO THAT WHEN A DOWNLOAD IS CONTINUED AFTER BEING ASSUMED TO HAVE BEEN STOPPED [BECAUSE THE ARIA FILE HASN'T BEEN MODIFIED IN MORE THAN 10 MINUTES], IT HAS A CHANCE TO DISPLAY A NEW .ARIA2 FILE WITH A MORE RECENT CREATED/MODIFIED DATE?  AND FINALLY, IS 10 MINUTES SUFFICIENT TO DETERMINE THAT THE DOWNLOAD HAS STOPPED?  PERHAPS IT IS STALLED DUE TO LACK OF SEEDERS OR SOMETHING...IS THERE A BETTER WAY TO DETERMINE THAT THE FILE HAS STOPPED DOWNLOADING ALTOGETHER?  MAYBE CHECK PROCESSES IN ACTIVITY MONITOR INSTEAD TO DETERMINE IF THE DOWNLOAD IS STILL OCCURRING, ALBEIT SLOWLY??
+        
+        
+        tell application "Finder"
+            repeat with i from 1 to (count of (every item of torrent_add whose name contains ".torrent"))
+                set shouldDownload to false
+                set theTorrentName to (name of item i of (every item of torrent_add whose name contains ".torrent"))
+                --display dialog "current .torrent: " & theTorrentName
+                set AppleScript's text item delimiters to {".S0", ".S1", ".S2", ".S3", ".S4", ".S5", ".S6", ".S7", ".S8", ".S9"}
+                set matchShowName0 to text item 1 of theTorrentName
+                
+                set matchShowName to matchShowName0 as text
+                
+                set AppleScript's text item delimiters to {matchShowName & ".", "."}
+                set matchSeason to text item 2 of theTorrentName
+                set matchVidQuality to {"SDTV", "HDTV", "720p", "1080p", "4K"} -----HERE!!!
+                set matchQuality to ""
+                repeat with y from 1 to count of matchVidQuality
+                    if theTorrentName contains item y of matchVidQuality then set matchQuality to item y of matchVidQuality as text
+                end repeat
+                
+                set checkProcessMatch to true
+                set checkDownloadingMatch to true
+                
+                ignoring case, hyphens, punctuation and white space
+                    if (count of (every item of downloads whose name does not contain "dummyfile")) is greater than 0 then
+                        set downloadMatch0 to (name of every item of downloads whose name does not contain "dummyfile")
+                        --display dialog "downloadMatch0: " & downloadMatch0
+                        repeat with z in downloadMatch0
+                            --display dialog "downloadMatch text of z: " & z & ": " & (text of z)
+                            if text of z contains matchShowName then
+                                if text of z contains matchSeason then
+                                    if text of z contains matchQuality then
+                                        set checkProcessMatch to false
+                                        set checkDownloadingMatch to false
+                                        exit repeat
+                                    end if
+                                end if
+                            end if
+                        end repeat
+                    end if
+                    
+                    --display dialog "checkProcessMatch: " & checkProcessMatch
+                    --display dialog "checkDownloadingMatch: " & checkDownloadingMatch
+                    
+                    if checkProcessMatch is true then
+                        if (count of (every item of processing whose name does not contain "dummyfile")) is greater than 0 then
+                            set processMatch0 to (name of every item of processing whose name does not contain "dummyfile")
+                            --display dialog "processMatch0: " & processMatch0
+                            repeat with z in processMatch0
+                                --display dialog "processMatch text of z: " & z & ": " & (text of z)
+                                if text of z contains matchShowName then
+                                    if text of z contains matchSeason then
+                                        if text of z contains matchQuality then
+                                            set checkDownloadingMatch to false
+                                            exit repeat
+                                        end if
+                                    end if
+                                end if
+                            end repeat
+                        end if
+                    end if
+                    
+                    --display dialog "checkDownloadingMatch: " & checkDownloadingMatch
+                    
+                    if checkDownloadingMatch is true then
+                        if (count of (every item of downloadingFolder_folder whose name does not contain "dummyfile")) is greater than 0 then
+                            set downloadingMatch0 to (name of every item of downloadingFolder_folder whose name does not contain "dummyfile")
+                            --display dialog "downloadingMatch0: " & downloadingMatch0
+                            repeat with z in downloadingMatch0
+                                --display dialog "downloadingMatch text of z: " & z & ": " & (text of z)
+                                if text of z contains matchShowName then
+                                    if text of z contains matchSeason then
+                                        if text of z contains matchQuality then
+                                            --set downloadingMatchName to (text of z)
+                                            --set ariaMatchCount to count (every item of downloadingFolder_folder whose name contains downloadingMatchName & ".aria2") ----IF THERE IS NO .ARIA2 FILE WHOSE NAME CONTAINS DOWNLOADINGMATCHNAME, WILL THIS THROW AN ERROR?  IF SO, PUT THIS WITHIN A "TRY" OR "IF EXISTS" OR "IF COUNT OF" BLOCK
+                                            --display dialog "ariaMatchCount: " & ariaMatchCount
+                                            --if ariaMatchCount is greater than 0 then
+                                                --set ariaMatchDate to creation date of (item 1 of downloadingFolder_folder whose name contains downloadingMatchName & ".aria2")
+                                                --display dialog "ariaMatchDate: " & ariaMatchDate
+                                                --if ariaMatchDate � ((current date) - 10 * minutes) then
+                                                    --set shouldDownload to true
+                                                --else
+                                                    --exit repeat
+                                                --end if
+                                            --else
+                                                --exit repeat
+                                            --end if
+                                        else
+                                            set shouldDownload to true
+                                        end if
+                                    else
+                                        set shouldDownload to true
+                                    end if
+                                else
+                                    set shouldDownload to true
+                                end if
+                            end repeat
+                        else
+                            set shouldDownload to true
+                        end if
+                    end if
+                end ignoring
+                
+                if shouldDownload is true then
+                    --display dialog theTorrentName & ": true!"
+                    do shell script aria & " --seed-time=0 --on-bt-download-complete=exit -d " & downloadingFolder & " " & torrentAddFolder & theTorrentName & " > /dev/null 2>&1 &"
+                end if
+            end repeat
+        end tell
+        ---ALSO: Have it delete any partially downloaded files from the downloading directory that do not have a corresponding .torrent.  IT BECOMES CLEAR WHICH PARTIALLY DOWNLOADED FILES HAVE A CORRESPONDING .TORRENT BECAUSE AFTER THE .TORRENT IS OPENED AGAIN AND THE VIDEO FILE CONTINUES DOWNLOADING, THE DATE CREATED/DATE MODIFIED VALUES OF THE .ARIA2 FILE IN THE DOWNLOADING DIRECTORY WILL BE THE PAST COUPLE OF MINUTES...if .aria2 file hasn't been updated in past 5-10 min, have it check the torrentadd folder for corresponding .torrent (same show name, episode id, video quality), and if none exists, delete it from the downloading directory.  Also run this at regular intervals, not just on launch.
+    end resumeTorrent:
+    ###########################################################################
 	on trashTorrent:sender
 		tell application "Finder"
 			set every_tor to every item of torrent_add whose name contains ".torrent"
@@ -359,8 +474,8 @@ script AppDelegate
 			end repeat
 		end tell
 	end trashTorrent:
-	############################################################################################################################
-    on download:sender
+	###########################################################################
+    on download:sender --looks at list of shows in GUI as well as iTunes library to determine which TV episodes need to be fetched, then passes this information on to the grabTorrent: subroutine
 		set showlist to listOfShows's stringValue() as text
         if (count of (text items of showlist)) is greater than 0 then
             repeat with c from 1 to (count of (paragraphs of showlist))
@@ -403,10 +518,10 @@ script AppDelegate
                             if vidQualFirst is less than 1 then --###720p LINE###-- --this is where user can set it to a different "max quality" setting
                                 tell application "Finder" to set already_downloaded to count (every item of torrent_add whose name contains showname2 & iTunesEpcode)
                                 if already_downloaded is 0 then
-                                    set rss_items100 to do shell script "curl \"https://torrentz2.eu/feed?f=" & urlshow & "+" & iTunesEpcode & "+h264%7Cx264\"" as text
+                                    set rss_items100 to do shell script "curl \"https://torrentz2.eu/feed?f=^" & urlshow & "+" & iTunesEpcode & "+h264%7Cx264\"" as text
                                     repeat while rss_items100 contains "last 10 secs"
                                         delay 10
-                                        set rss_items100 to do shell script "curl \"https://torrentz2.eu/feed?f=" & urlshow & "+" & iTunesEpcode & "+h264%7Cx264\"" as text
+                                        set rss_items100 to do shell script "curl \"https://torrentz2.eu/feed?f=^" & urlshow & "+" & iTunesEpcode & "+h264%7Cx264\"" as text
                                     end repeat
                                     if (count of paragraphs of rss_items100) is greater than 14 then
                                         (NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"grabTorrent:" userInfo:{iTunesEpcode, rss_items100, vidQualFirst, showname, showname2} repeats:false)
@@ -423,10 +538,10 @@ script AppDelegate
                     set urlepcode to "S" & text 2 thru 3 of (currentdata as text) & "E" & text 4 thru 5 of (currentdata as text)
                     tell application "Finder" to set already_downloaded to count (every item of torrent_add whose name contains showname2 & urlepcode)
                     if already_downloaded is 0 then
-                        set rss_items200 to do shell script "curl \"https://torrentz2.eu/feed?f=" & urlshow & "+" & urlepcode & "+h264%7Cx264\"" as text
+                        set rss_items200 to do shell script "curl \"https://torrentz2.eu/feed?f=^" & urlshow & "+" & urlepcode & "+h264%7Cx264\"" as text
                         repeat while rss_items200 contains "last 10 secs"
                             delay 10
-                            set rss_items200 to do shell script "curl \"https://torrentz2.eu/feed?f=" & urlshow & "+" & urlepcode & "+h264%7Cx264\"" as text
+                            set rss_items200 to do shell script "curl \"https://torrentz2.eu/feed?f=^" & urlshow & "+" & urlepcode & "+h264%7Cx264\"" as text
                         end repeat
                         if (count of paragraphs of rss_items200) is greater than 14 then
                             (NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"grabTorrent:" userInfo:{urlepcode, rss_items200, vidQualFirst, showname, showname2} repeats:false)
@@ -447,7 +562,7 @@ script AppDelegate
             ----STATBAR3----
         end if
 	end download:
-	############################################################################################################################
+	###########################################################################
 	on process:sender
 		tell application "Finder"
 			----From here to the next comment, the script checks downloadcomplete folder for video files, then deletes everything it doesn't need
@@ -952,7 +1067,7 @@ script AppDelegate
 			set the_file to {}
 		end tell
 	end process:
-    ############################################################################################################################
+    ###########################################################################
     on updateEpcode:sender ----updates epcode in list of shows view
             set showname2 to item 1 of sender's userInfo as text
             set mySeason2 to item 2 of sender's userInfo as text
@@ -990,7 +1105,7 @@ script AppDelegate
             NSTimer's scheduledTimerWithTimeInterval:0 |target|:me selector:"writeList:" userInfo:(missing value) repeats:false
             delay 0.01
     end updateEpcode:
-	############################################################################################################################
+	###########################################################################
 	on populateEpcode:sender
 		if showComboField's stringValue as string is not equal to "" then
 			set the_index to beginWith's indexOfSelectedItem()
@@ -1116,11 +1231,11 @@ script AppDelegate
 	on showCombo:sender
 		NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"populateEpcode:" userInfo:(missing value) repeats:false
 	end showCombo:
-	############################################################################################################################
+	###########################################################################
 	on beginWith:sender
 		NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"populateEpcode:" userInfo:(missing value) repeats:false
 	end beginWith:
-	############################################################################################################################
+	###########################################################################
 	on addShow:sender
 		if showComboField's stringValue as string = "" then
 			display dialog "Please enter the name of the show."
@@ -1189,7 +1304,7 @@ script AppDelegate
 			end if
 		end if
 	end addShow:
-	############################################################################################################################
+	###########################################################################
 	on writeList:sender
 		set newText to listOfShows's stringValue() as text
 		tell application "Finder"
@@ -1200,14 +1315,14 @@ script AppDelegate
 			close access the open_master_file
 		end tell
 	end writeList:
-	############################################################################################################################
+	###########################################################################
 	on appQuit:sender
 		----housekeeping is currently in applicationShouldTerminate...move here instead (in addition?) if necessary
 		NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"writeList:" userInfo:"writeList" repeats:false
 		delay 0.01
 		tell current application to quit
 	end appQuit:
-	############################################################################################################################
+	###########################################################################
 	on applicationShouldTerminate:sender
 		----quit atomicparsley, ffmpeg, mediainfo CLIs (possible to quit via a command, ie, faac -quit?  if not, quit using process ID)
 		NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"theStuckProcess:" userInfo:(missing value) repeats:false
