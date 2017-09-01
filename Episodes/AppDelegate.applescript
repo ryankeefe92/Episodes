@@ -562,46 +562,48 @@ script AppDelegate
             set AppleScript's text item delimiters to {"://torrentz2.eu/", ":"}
             repeat with tho from 1 to 5
                 set final_torrent to item tho of the_order
-                if final_torrent contains showname2 then set theHash to (text item 2 of final_torrent) & ".torrent"
-                set tor_comment to "SDTV"
-                set aud_comment to "Stereo"
-                set source_comment to "TV-Rip"
-                ###720p BLOCK###
-                if final_torrent contains "720p" then set tor_comment to "720p" as text
-                ###END 720p BLOCK###
-                ignoring case, hyphens, punctuation and white space
-                    if final_torrent contains "DD5.1" then
-                        set aud_comment to "DD5.1"
-                    else if final_torrent contains "6ch" then
-                        set aud_comment to "DD5.1"
+                if final_torrent contains showname2
+                    set theHash to (text item 2 of final_torrent) & ".torrent"
+                    set tor_comment to "SDTV"
+                    set aud_comment to "Stereo"
+                    set source_comment to "TV-Rip"
+                    ###720p BLOCK###
+                    if final_torrent contains "720p" then set tor_comment to "720p" as text
+                    ###END 720p BLOCK###
+                    ignoring case, hyphens, punctuation and white space
+                        if final_torrent contains "DD5.1" then
+                            set aud_comment to "DD5.1"
+                        else if final_torrent contains "6ch" then
+                            set aud_comment to "DD5.1"
+                        end if
+                    end ignoring
+                    repeat with j2 from 1 to count of chanList
+                        if final_torrent contains item j2 of chanList then set aud_comment to item j2 of chanList as text
+                    end repeat
+                    ignoring case, hyphens, punctuation and white space
+                        if final_torrent contains "webdl" then
+                            set source_comment to "Web-DL"
+                        else if final_torrent contains "webrip" then
+                            set source_comment to "Web-DL"
+                        else if final_torrent contains "bdrip" then
+                            set source_comment to "Blu-Ray"
+                        else if final_torrent contains "bluray" then
+                            set source_comment to "Blu-Ray"
+                        end if
+                    end ignoring
+                    set title_appendage to showname2 & theEpcode & "." & tor_comment & "." & aud_comment & "." & source_comment
+                    set final_torrent2 to "http://itorrents.org/torrent/" & theHash
+                    set torrentRedirect to do shell script "curl -L \"" & final_torrent2 & "\"" as text
+                    if torrentRedirect does not contain "LimeTorrents.cc" then
+                        do shell script "curl " & final_torrent2 & " -o " & "\"" & torrentAddFolder & title_appendage & ".torrent\""
+                        ----STATBAR2----
+                        set statbar2 to current application's NSString's stringWithFormat_("%@%@%@%@%@%@%@", "Downloading ", showname, " ", theEpcode, " in ", tor_comment, " quality.")
+                        (statusLabel's setStringValue:statbar2)
+                        delay 0.01
+                        ----STATBAR2----
+                        do shell script aria & " --seed-time=0 --on-bt-download-complete=exit -d " & downloadingFolder & " " & torrentAddFolder & title_appendage & ".torrent > /dev/null 2>&1 &"
+                        exit repeat --make sure it also exits and moves on to the next episode number if it can't download anything from the_order
                     end if
-                end ignoring
-                repeat with j2 from 1 to count of chanList
-                    if final_torrent contains item j2 of chanList then set aud_comment to item j2 of chanList as text
-                end repeat
-                ignoring case, hyphens, punctuation and white space
-                    if final_torrent contains "webdl" then
-                        set source_comment to "Web-DL"
-                    else if final_torrent contains "webrip" then
-                        set source_comment to "Web-DL"
-                    else if final_torrent contains "bdrip" then
-                        set source_comment to "Blu-Ray"
-                    else if final_torrent contains "bluray" then
-                        set source_comment to "Blu-Ray"
-                    end if
-                end ignoring
-                set title_appendage to showname2 & theEpcode & "." & tor_comment & "." & aud_comment & "." & source_comment
-                set final_torrent2 to "http://itorrents.org/torrent/" & theHash
-                set torrentRedirect to do shell script "curl -L \"" & final_torrent2 & "\"" as text
-                if torrentRedirect does not contain "LimeTorrents.cc" then
-                    do shell script "curl " & final_torrent2 & " -o " & "\"" & torrentAddFolder & title_appendage & ".torrent\""
-                    ----STATBAR2----
-                    set statbar2 to current application's NSString's stringWithFormat_("%@%@%@%@%@%@%@", "Downloading ", showname, " ", theEpcode, " in ", tor_comment, " quality.")
-                    (statusLabel's setStringValue:statbar2)
-                    delay 0.01
-                    ----STATBAR2----
-                    do shell script aria & " --seed-time=0 --on-bt-download-complete=exit -d " & downloadingFolder & " " & torrentAddFolder & title_appendage & ".torrent > /dev/null 2>&1 &"
-                    exit repeat --make sure it also exits and moves on to the next episode number if it can't download anything from the_order
                 end if
             end repeat
 		end if
