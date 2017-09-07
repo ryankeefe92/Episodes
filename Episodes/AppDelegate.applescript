@@ -1199,9 +1199,9 @@ script AppDelegate
 		end tell
 	end process:
     ###########################################################################
-    on theStuckProcess:sender
+    on theStuckProcess:sender --this subroutine moves/deletes any files that may have gotten stuck in the processing folder to prevent files from getting stuck in there if they fail to process
         tell application "Finder"
-            set stuckProcess to (every item of processing whose name does not contain "dummyfile") --here to end of this subroutine moves/deletes any files that may have gotten stuck in the processing folder to prevent files from getting stuck in there if they fail to process
+            set stuckProcess to (every item of processing whose name does not contain "dummyfile")
             if count of stuckProcess is greater than 0
                 if modification date of item 1 of stuckProcess ² ((current date) - 12 * minutes) then  --if the file in the processing folder hasn't been modified in the last 12 minutes
                     if (count of stuckProcess) is 1 then
@@ -1288,11 +1288,9 @@ script AppDelegate
 	end appQuit:
 	###########################################################################
 	on applicationShouldTerminate:sender
-		----quit atomicparsley, ffmpeg, mediainfo CLIs (possible to quit via a command, ie, faac -quit?  if not, quit using process ID)
 		NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"theStuckProcess:" userInfo:(missing value) repeats:false
-		----ask user: Episodes is currently downloading [a file/files].  It can continue downloading [it/them] after you quit, or it can stop downloading now and resume the next time you launch Episodes.  Which would you prefer? Options: [quit app but continue downloading], [quit app and stop downloading]
-		----------on continue downloading, just continue quit and do nothing else
-		----------on stop downloading, quit aria CLI (possible to do one quit command for aria and have it quit all instances of aria?  if not, make sure it quits every running aria process.)
+        do shell script "pkill aria2c"
+        --also use the above pkill command to quit atomicparsley, ffmpeg, mediainfo
 		return current application's NSTerminateNow
 	end applicationShouldTerminate:
 end script
