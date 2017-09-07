@@ -155,10 +155,11 @@ script AppDelegate
 	on applicationDidFinishLaunching:aNotification
 		---launch housekeeping is currently at bottom of applicationWillFinishLaunching.  Move here instead if necessary.
 		NSTimer's scheduledTimerWithTimeInterval:5 target:me selector:"download:" userInfo:(missing value) repeats:false
-		NSTimer's scheduledTimerWithTimeInterval:615 target:me selector:"download:" userInfo:(missing value) repeats:true
+		NSTimer's scheduledTimerWithTimeInterval:605 target:me selector:"download:" userInfo:(missing value) repeats:true --it's this long because of rate limit restrictions on torrentz2.eu
 		NSTimer's scheduledTimerWithTimeInterval:5 target:me selector:"process:" userInfo:(missing value) repeats:true
-		NSTimer's scheduledTimerWithTimeInterval:8 target:me selector:"regularIntervals:" userInfo:(missing value) repeats:true
-        NSTimer's scheduledTimerWithTimeInterval:60 target:me selector:"theStuckProcess:" userInfo:(missing value) repeats:true
+		NSTimer's scheduledTimerWithTimeInterval:8 target:me selector:"moveHook:" userInfo:(missing value) repeats:true
+        NSTimer's scheduledTimerWithTimeInterval:120 target:me selector:"theStuckProcess:" userInfo:(missing value) repeats:true
+        NSTimer's scheduledTimerWithTimeInterval:300 target:me selector:"resumeTorrent:" userInfo:(missing value) repeats:true
 	end applicationDidFinishLaunching:
 	###########################################################################
     on populateEpcode:sender
@@ -610,119 +611,64 @@ script AppDelegate
 		delay 0.01 -- more of these at END of NSTIMER sections, before it returns to main script?
 	end grabTorrent:
     ###########################################################################
-    on regularIntervals:sender
-        NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"moveHook:" userInfo:(missing value) repeats:false
-        --NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"resumeTorrent:" userInfo:(missing value) repeats:false
-    end regularIntervals:
-	###########################################################################
-    on resumeTorrent:sender  --this subroutine checks all the .torrent files in the torrent_add folder, and for each one, if it doesn't already have a corresponding video file in the downloadcomplete or processing folder, it has aria start downloading that episode
-        
-        ----RIGHT NOW, THE PART THAT CONTINUES A PARTIALLY DOWNLOADED FILE IS "COMMENTED" SINCE THAT SEEMS TO BE THE PART CAUSING ARIA TO RUN A TON OF PROCESSES
-        ----THERE ARE PROBLEMS WITH THIS LOGIC!!!  SEE RESUMETORRENTWALKTHROUGH APPLESCRIPT, WHICH IS SAVED ON THE DESKTOP...IT IS ALSO INCOMPLETE...FINISH IT TO SEE THE FULL EFFECT OF THIS SUBROUTINE  FOR ONE, THE MATCHSHOWNAME AND MATCHSEASON SHOULD BE CONNECTED AS A SINGLE VARIABLE CALLED MATCHEPISODE, WHICH WOULD BE "FAMILY.GUY.S15E19" RATHER THAN HAVING MATCHSHOWNAME AS "FAMILY.GUY" AND MATCHSEASON AS "S15E19".  ALSO TEST AGAIN USING JUST THIS SUBROUTINE IN AN APPLESCRIPT, WITH DISPLAY DIALOG AND FILES IN DIFFERENT FOLDERS---FILES IN ONE FOLDER ONLY (EACH OF THEM) FILES IN 2 OF 3 FOLDERS (DOWNLOADING AND PROCESSING, DOWNLOADING AND DOWNLOADED, PROCESSING AND DOWNLOADED), FILES IN ALL 3 FOLDERS, WITH JUST ONE FILE, AND MULTIPLE FILES--MULTIPLE EPISODES OF SAME SHOW, EPISODES OF FROM MORE THAN ONE SERIES, ETC...ALL KINDS OF COMBINATIONS TO MAKE SURE EVERYTHING WORKS.  DO THE EXIT REPEATS SCREW ANYTHING UP?  OR ARE MORE EXIT REPEATS NEEDED?  INSTEAD OF SETTING SHOULDDOWNLOAD TO TRUE, SHOULD IT JUST RUN THE ARIA SHELL SCRIPT RIGHT THERE?  RIGHT NOW CHECKPROCESSMATCH AND CHECKDOWNLOADINGMATCH ARE SET TO TRUE BY DEFAULT, AND SET TO FALSE WHEN THE FILES ARE FOUND IN OTHER FOLDERS...SHOULD THIS BE REVERSED, AND THEN INSTEAD OF SETTING CHECKPROCESSMATCH AND CHECKDOWNLOADINGMATCH TO TRUE, SHOULD IT JUST RUN THAT CODE WITHIN THE EARLIER REPEAT LOOPS?  OR SHOULD THEY BE MADE INTO SUBROUTINES THAT CAN BE CALLED WITHIN THE EARLIER REPEAT LOOPS?  ARE THERE OTHER PROBLEMS?? ALSO, SHOULD A DELAY BE ADDED, OR SHOULD IT RUN LESS OFTEN THAN EVERY 8 SECONDS, SO THAT WHEN A DOWNLOAD IS CONTINUED AFTER BEING ASSUMED TO HAVE BEEN STOPPED [BECAUSE THE ARIA FILE HASN'T BEEN MODIFIED IN MORE THAN 10 MINUTES], IT HAS A CHANCE TO DISPLAY A NEW .ARIA2 FILE WITH A MORE RECENT CREATED/MODIFIED DATE?
+    on resumeTorrent:sender  --this subroutine checks all the .torrent files in the torrent_add folder, and for each one, if it doesn't already have a corresponding video file in the downloadcomplete, processing, or downloading directories, it has aria start downloading that episode.  It also starts downloading any episode in the downloading directory that has not been modified in the past 10 minutes.
         
         tell application "Finder"
             repeat with i from 1 to (count of (every item of torrent_add whose name contains ".torrent"))
                 set shouldDownload to false
+                set inDownload to false
+                set inProcessing to false
+                set inDownloading to false
                 set theTorrentName to (name of item i of (every item of torrent_add whose name contains ".torrent"))
-                --display dialog "current .torrent: " & theTorrentName
                 set AppleScript's text item delimiters to {".S0", ".S1", ".S2", ".S3", ".S4", ".S5", ".S6", ".S7", ".S8", ".S9"}
-                set matchShowName0 to text item 1 of theTorrentName
-                
-                set matchShowName to matchShowName0 as text
-                
+                set matchShowName to (text item 1 of theTorrentName) as text
                 set AppleScript's text item delimiters to {matchShowName & ".", "."}
                 set matchSeason to text item 2 of theTorrentName
+                set matchEpisode to matchShowName & "." & matchSeason
                 set matchVidQuality to {"SDTV", "HDTV", "720p", "1080p", "4K"} -----HERE!!!
                 set matchQuality to ""
                 repeat with y from 1 to count of matchVidQuality
                     if theTorrentName contains item y of matchVidQuality then set matchQuality to item y of matchVidQuality as text
                 end repeat
-                
-                set checkProcessMatch to true
-                set checkDownloadingMatch to true
-                
                 ignoring case, hyphens, punctuation and white space
-                    if (count of (every item of downloads whose name does not contain "dummyfile")) is greater than 0 then
-                        set downloadMatch0 to (name of every item of downloads whose name does not contain "dummyfile")
-                        --display dialog "downloadMatch0: " & downloadMatch0
-                        repeat with z in downloadMatch0
-                            --display dialog "downloadMatch text of z: " & z & ": " & (text of z)
-                            if text of z contains matchShowName then
-                                if text of z contains matchSeason then
-                                    if text of z contains matchQuality then
-                                        set checkProcessMatch to false
-                                        set checkDownloadingMatch to false
-                                        exit repeat
-                                    end if
-                                end if
-                            end if
-                        end repeat
-                    end if
-                    
-                    --display dialog "checkProcessMatch: " & checkProcessMatch
-                    --display dialog "checkDownloadingMatch: " & checkDownloadingMatch
-                    
-                    if checkProcessMatch is true then
-                        if (count of (every item of processing whose name does not contain "dummyfile")) is greater than 0 then
-                            set processMatch0 to (name of every item of processing whose name does not contain "dummyfile")
-                            --display dialog "processMatch0: " & processMatch0
-                            repeat with z in processMatch0
-                                --display dialog "processMatch text of z: " & z & ": " & (text of z)
-                                if text of z contains matchShowName then
-                                    if text of z contains matchSeason then
-                                        if text of z contains matchQuality then
-                                            set checkDownloadingMatch to false
-                                            exit repeat
-                                        end if
-                                    end if
-                                end if
-                            end repeat
+                    set downloadMatch to (every item of downloads whose name contains matchEpisode)
+                    set countMatches1 to count items of downloadMatch
+                    set processMatch to (every item of processing whose name contains matchEpisode)
+                    set countMatches2 to count items of processMatch
+                    set downloadingMatch to (every item of downloadingFolder_folder whose name contains matchEpisode)
+                    set countMatches3 to count items of downloadingMatch
+                    repeat with z from 1 to countMatches1
+                        if name of item z of downloadMatch contains matchQuality then
+                            set inDownload to true
                         end if
-                    end if
-                    
-                    --display dialog "checkDownloadingMatch: " & checkDownloadingMatch
-                    
-                    if checkDownloadingMatch is true then
-                        if (count of (every item of downloadingFolder_folder whose name does not contain "dummyfile")) is greater than 0 then
-                            set downloadingMatch0 to (name of every item of downloadingFolder_folder whose name does not contain "dummyfile")
-                            --display dialog "downloadingMatch0: " & downloadingMatch0
-                            repeat with z in downloadingMatch0
-                                --display dialog "downloadingMatch text of z: " & z & ": " & (text of z)
-                                if text of z contains matchShowName then
-                                    if text of z contains matchSeason then
-                                        if text of z contains matchQuality then
-                                            --set downloadingMatchName to (text of z)
-                                            --set ariaMatchCount to count (every item of downloadingFolder_folder whose name contains downloadingMatchName & ".aria2") ----IF THERE IS NO .ARIA2 FILE WHOSE NAME CONTAINS DOWNLOADINGMATCHNAME, WILL THIS THROW AN ERROR?  IF SO, PUT THIS WITHIN A "TRY" OR "IF EXISTS" OR "IF COUNT OF" BLOCK
-                                            --display dialog "ariaMatchCount: " & ariaMatchCount
-                                            --if ariaMatchCount is greater than 0 then
-                                            --set ariaMatchDate to creation date of (item 1 of downloadingFolder_folder whose name contains downloadingMatchName & ".aria2")
-                                            --display dialog "ariaMatchDate: " & ariaMatchDate
-                                            --if ariaMatchDate ² ((current date) - 10 * minutes) then
-                                            --set shouldDownload to true
-                                            --else
-                                            --exit repeat
-                                            --end if
-                                            --else
-                                            --exit repeat
-                                            --end if
-                                            else
-                                            set shouldDownload to true
-                                        end if
-                                        else
-                                        set shouldDownload to true
-                                    end if
-                                    else
+                    end repeat
+                    repeat with z from 1 to countMatches2
+                        if name of item z of processMatch contains matchQuality then
+                            set inProcessing to true
+                        end if
+                    end repeat
+                    repeat with z from 1 to countMatches3
+                        if name of item z of downloadingMatch contains matchQuality then
+                            set inDownloading to true
+                            set downloadingMatchName to (name of item z of downloadingMatch)
+                            set ariaMatchCount to count (every item of downloadingFolder_folder whose name contains downloadingMatchName & ".aria2")
+                            if ariaMatchCount is greater than 0 then
+                                set ariaMatchDate to creation date of (item 1 of downloadingFolder_folder whose name contains downloadingMatchName & ".aria2")
+                                if ariaMatchDate ² ((current date) - 10 * minutes) then
                                     set shouldDownload to true
                                 end if
-                            end repeat
-                            else
+                            end if
+                        end if
+                    end repeat
+                end ignoring
+                if inDownload is false then
+                    if inProcessing is false then
+                        if inDownloading is false then
                             set shouldDownload to true
                         end if
                     end if
-                end ignoring
-                
+                end if
                 if shouldDownload is true then
-                    --display dialog theTorrentName & ": true!"
                     do shell script aria & " --seed-time=0 --on-bt-download-complete=exit -d " & downloadingFolder & " " & torrentAddFolder & theTorrentName & " > /dev/null 2>&1 &"
                 end if
             end repeat
