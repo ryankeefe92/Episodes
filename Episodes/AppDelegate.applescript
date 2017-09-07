@@ -1289,8 +1289,9 @@ script AppDelegate
 	###########################################################################
 	on applicationShouldTerminate:sender
 		NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"theStuckProcess:" userInfo:(missing value) repeats:false
+        try
         do shell script "pkill aria2c"
-        --also use the above pkill command to quit atomicparsley, ffmpeg, mediainfo
+        end try
 		return current application's NSTerminateNow
 	end applicationShouldTerminate:
 end script
