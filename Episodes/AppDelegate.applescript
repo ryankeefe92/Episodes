@@ -39,6 +39,8 @@ script AppDelegate
 	global myshow3
 	global epcodefinal
 	global vid_comment
+    global killedAria
+    global secondKill
 	--property showTable : missing value
 	--property qualitySelect : missing value
 	--property theFirstRun : 0
@@ -70,6 +72,8 @@ script AppDelegate
 			set theffmpeg to POSIX path of resourceFolder & "ffmpeg" as text
 			set theMediaInfo to POSIX path of resourceFolder & "mediainfo" as text
 			set the open_target_file to open for access file listFile
+            set killedAria to "0"
+            set secondKill to false
 			try
 				set showlist to read the open_target_file
 				listOfShows's setStringValue:showlist
@@ -157,7 +161,7 @@ script AppDelegate
 		NSTimer's scheduledTimerWithTimeInterval:5 target:me selector:"download:" userInfo:(missing value) repeats:false
 		NSTimer's scheduledTimerWithTimeInterval:605 target:me selector:"download:" userInfo:(missing value) repeats:true --it's this long because of rate limit restrictions on torrentz2.eu
 		NSTimer's scheduledTimerWithTimeInterval:5 target:me selector:"process:" userInfo:(missing value) repeats:true
-		NSTimer's scheduledTimerWithTimeInterval:8 target:me selector:"moveHook:" userInfo:(missing value) repeats:true
+		NSTimer's scheduledTimerWithTimeInterval:6 target:me selector:"moveHook:" userInfo:(missing value) repeats:true
         NSTimer's scheduledTimerWithTimeInterval:120 target:me selector:"theStuckProcess:" userInfo:(missing value) repeats:true
         NSTimer's scheduledTimerWithTimeInterval:300 target:me selector:"resumeTorrent:" userInfo:(missing value) repeats:true
 	end applicationDidFinishLaunching:
@@ -405,12 +409,8 @@ script AppDelegate
                             if vidQualFirst is less than 1 then --###720p LINE###-- --this is where user can set it to a different "max quality" setting
                                 tell application "Finder" to set already_downloaded to count (every item of torrent_add whose name contains showname2 & iTunesEpcode)
                                 if already_downloaded is 0 then
-                                    set rss_items100 to do shell script "curl \"https://torrentz2.eu/feed?f=^" & urlshow & "+" & iTunesEpcode & "+h264%7Cx264\"" as text
-                                    repeat while rss_items100 contains "last 10 secs"
-                                        delay 10
-                                        set rss_items100 to do shell script "curl \"https://torrentz2.eu/feed?f=^" & urlshow & "+" & iTunesEpcode & "+h264%7Cx264\"" as text
-                                    end repeat
-                                    if (count of paragraphs of rss_items100) is greater than 14 then
+                                    set rss_items100 to do shell script "curl \"https://zooqle.com/search?q=%22" & urlshow & "%22+" & iTunesEpcode & "+x264+category%3ATV&fmt=rss\"" as text
+                                    if (count of paragraphs of rss_items100) is greater than 18 then
                                         (NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"grabTorrent:" userInfo:{iTunesEpcode, rss_items100, vidQualFirst, showname, showname2} repeats:false)
                                         delay 0.01
                                     end if
@@ -428,12 +428,8 @@ script AppDelegate
                     set urlepcode to "S" & text 2 thru 3 of (currentdata as text) & "E" & text 4 thru 5 of (currentdata as text)
                     tell application "Finder" to set already_downloaded to count (every item of torrent_add whose name contains showname2 & urlepcode)
                     if already_downloaded is 0 then
-                        set rss_items200 to do shell script "curl \"https://torrentz2.eu/feed?f=^" & urlshow & "+" & urlepcode & "+h264%7Cx264\"" as text
-                        repeat while rss_items200 contains "last 10 secs"
-                            delay 10
-                            set rss_items200 to do shell script "curl \"https://torrentz2.eu/feed?f=^" & urlshow & "+" & urlepcode & "+h264%7Cx264\"" as text
-                        end repeat
-                        if (count of paragraphs of rss_items200) is greater than 14 then
+                        set rss_items200 to do shell script "curl \"https://zooqle.com/search?q=%22" & urlshow & "%22+" & urlepcode & "+x264+category%3ATV&fmt=rss\"" as text
+                        if (count of paragraphs of rss_items200) is greater than 18 then
                             (NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"grabTorrent:" userInfo:{urlepcode, rss_items200, vidQualFirst, showname, showname2} repeats:false)
                             delay 0.01
                             set notFound to 0
@@ -495,7 +491,7 @@ script AppDelegate
             set currentEntry to item i of feedtokens
             set AppleScript's text item delimiters to {"<title>", "</title>"}
             set feedtorrentTitle to text item 2 of currentEntry
-            set AppleScript's text item delimiters to {"<link>", "</link>"}
+            set AppleScript's text item delimiters to {"<torrent:infoHash>", "</torrent:infoHash>"}
             set feedtorrentLink to text item 2 of currentEntry
             set tor_comment to "SDTV"
             set torQual to 0 as integer
@@ -560,59 +556,53 @@ script AppDelegate
         end repeat
         if bestfeeditem is not 0 then
             set the_order to {bestfeeditem, secondbest, thirdbest, fourthbest, fifthbest}
-            set AppleScript's text item delimiters to {"://torrentz2.eu/", ":"}
+            set AppleScript's text item delimiters to ": "
             repeat with tho from 1 to 5
                 set final_torrent to item tho of the_order
-                if final_torrent contains showname2
-                    set theHash to (text item 2 of final_torrent) & ".torrent"
-                    set tor_comment to "SDTV"
-                    set aud_comment to "Stereo"
-                    set source_comment to "TV-Rip"
-                    ###720p BLOCK###
-                    if final_torrent contains "720p" then set tor_comment to "720p" as text
-                    ###END 720p BLOCK###
-                    ignoring case, hyphens, punctuation and white space
-                        if final_torrent contains "DD5.1" then
-                            set aud_comment to "DD5.1"
-                        else if final_torrent contains "6ch" then
-                            set aud_comment to "DD5.1"
-                        end if
-                    end ignoring
-                    repeat with j2 from 1 to count of chanList
-                        if final_torrent contains item j2 of chanList then set aud_comment to item j2 of chanList as text
-                    end repeat
-                    ignoring case, hyphens, punctuation and white space
-                        if final_torrent contains "webdl" then
-                            set source_comment to "Web-DL"
-                        else if final_torrent contains "webrip" then
-                            set source_comment to "Web-DL"
-                        else if final_torrent contains "bdrip" then
-                            set source_comment to "Blu-Ray"
-                        else if final_torrent contains "bluray" then
-                            set source_comment to "Blu-Ray"
-                        end if
-                    end ignoring
-                    set title_appendage to showname2 & theEpcode & "." & tor_comment & "." & aud_comment & "." & source_comment
-                    set final_torrent2 to "http://itorrents.org/torrent/" & theHash
-                    set torrentRedirect to do shell script "curl -L \"" & final_torrent2 & "\"" as text
-                    if torrentRedirect does not contain "LimeTorrents.cc" then
-                        do shell script "curl " & final_torrent2 & " -o " & "\"" & torrentAddFolder & title_appendage & ".torrent\""
-                        ----STATBAR2----
-                        set statbar2 to current application's NSString's stringWithFormat_("%@%@%@%@%@%@%@", "Downloading ", showname, " ", theEpcode, " in ", tor_comment, " quality.")
-                        (statusLabel's setStringValue:statbar2)
-                        delay 0.01
-                        ----STATBAR2----
-                        do shell script aria & " --seed-time=0 --on-bt-download-complete=exit -d " & downloadingFolder & " " & torrentAddFolder & title_appendage & ".torrent > /dev/null 2>&1 &"
-                        exit repeat --make sure it also exits and moves on to the next episode number if it can't download anything from the_order
+                set theHash to (text item 1 of final_torrent) & ".torrent"
+                set tor_comment to "SDTV"
+                set aud_comment to "Stereo"
+                set source_comment to "TV-Rip"
+                ###720p BLOCK###
+                if final_torrent contains "720p" then set tor_comment to "720p" as text
+                ###END 720p BLOCK###
+                ignoring case, hyphens, punctuation and white space
+                    if final_torrent contains "DD5.1" then
+                        set aud_comment to "DD5.1"
+                    else if final_torrent contains "6ch" then
+                        set aud_comment to "DD5.1"
                     end if
-                end if
+                end ignoring
+                repeat with j2 from 1 to count of chanList
+                    if final_torrent contains item j2 of chanList then set aud_comment to item j2 of chanList as text
+                end repeat
+                ignoring case, hyphens, punctuation and white space
+                    if final_torrent contains "webdl" then
+                        set source_comment to "Web-DL"
+                    else if final_torrent contains "webrip" then
+                        set source_comment to "Web-DL"
+                    else if final_torrent contains "bdrip" then
+                        set source_comment to "Blu-Ray"
+                    else if final_torrent contains "bluray" then
+                        set source_comment to "Blu-Ray"
+                    end if
+                end ignoring
+                set title_appendage to showname2 & theEpcode & "." & tor_comment & "." & aud_comment & "." & source_comment
+                set final_torrent2 to "http://itorrents.org/torrent/" & theHash
+                set torrentRedirect to do shell script "curl -L " & final_torrent2 & " -o " & "\"" & torrentAddFolder & title_appendage & ".torrent\""
+                ----STATBAR2----
+                set statbar2 to current application's NSString's stringWithFormat_("%@%@%@%@%@%@%@", "Downloading ", showname, " ", theEpcode, " in ", tor_comment, " quality.")
+                (statusLabel's setStringValue:statbar2)
+                delay 0.01
+                ----STATBAR2----
+                do shell script aria & " --seed-time=0 --on-bt-download-complete=exit -d " & downloadingFolder & " " & torrentAddFolder & title_appendage & ".torrent > /dev/null 2>&1 &"
+                exit repeat --make sure it also exits and moves on to the next episode number if it can't download anything from the_order
             end repeat
 		end if
 		delay 0.01 -- more of these at END of NSTIMER sections, before it returns to main script?
 	end grabTorrent:
     ###########################################################################
     on resumeTorrent:sender  --this subroutine checks all the .torrent files in the torrent_add folder, and for each one, if it doesn't already have a corresponding video file in the downloadcomplete, processing, or downloading directories, it has aria start downloading that episode.  It also starts downloading any episode in the downloading directory that has not been modified in the past 10 minutes.
-        
         tell application "Finder"
             repeat with i from 1 to (count of (every item of torrent_add whose name contains ".torrent"))
                 set shouldDownload to false
@@ -648,13 +638,50 @@ script AppDelegate
                         end if
                     end repeat
                     repeat with z from 1 to countMatches3
+                        set ariaProcess to "none"
                         if name of item z of downloadingMatch contains matchQuality then
                             set inDownloading to true
                             set downloadingMatchName to (name of item z of downloadingMatch)
                             set ariaMatchCount to count (every item of downloadingFolder_folder whose name contains downloadingMatchName & ".aria2")
                             if ariaMatchCount is greater than 0 then
-                                set ariaMatchDate to creation date of (item 1 of downloadingFolder_folder whose name contains downloadingMatchName & ".aria2")
-                                if ariaMatchDate ² ((current date) - 10 * minutes) then
+                                set ariaProcess to do shell script "ps -e | grep aria"
+                                if ariaProcess contains matchEpisode then
+                                    if ariaProcess contains matchQuality then
+                                        if (creation date of (item 1 of downloadingFolder_folder whose name contains downloadingMatchName & ".aria2")) ² ((current date) - 10 * minutes) then
+                                            set AppleScript's text item delimiters to matchEpisode
+                                            set ariaProcess1 to text item 1 of ariaProcess
+                                            set AppleScript's text item delimiters to "??"
+                                            set killPID to text item 1 of ariaProcess1 as integer
+                                            do shell script "kill " & killPID
+                                            if killedAria contains downloadingMatchName then
+                                                if secondKill is false then
+                                                    set secondKill to true
+                                                    set shouldDownload to true
+                                                else
+                                                    if (modification date of (item z of downloadingMatch)) ² ((current date) - 10 * minutes) then
+                                                        move item z of downloadingMatch to errorQueue
+                                                        set z to (z - 1)
+                                                        if z = 0 then set z to 1 as integer
+                                                        set rmAria to (item 1 of downloadingFolder_folder whose name contains downloadingMatchName & ".aria2")
+                                                        set rmAria1 to rmAria as alias
+                                                        set rmAria2 to POSIX path of rmAria1 as text
+                                                        set rmTorrent to (item i of (every item of torrent_add whose name contains ".torrent"))
+                                                        set rmTorrent1 to rmTorrent as alias
+                                                        set rmTorrent2 to POSIX path of rmTorrent1 as text
+                                                        do shell script "rm " & quoted form of rmAria2 & " && rm " & quoted form of rmTorrent2
+                                                        set i to (i - 1)
+                                                        if i = 0 then set i to 1 as integer
+                                                    end if
+                                                end if
+                                            else
+                                                set killedAria to killedAria & ", " & downloadingMatchName
+                                                set shouldDownload to true
+                                            end if
+                                        end if
+                                    else
+                                        set shouldDownload to true
+                                    end if
+                                else
                                     set shouldDownload to true
                                 end if
                             end if
@@ -858,6 +885,8 @@ script AppDelegate
 							----The Newsroom
 						else if myshow3 contains "The.Newsroom.2012" then
 							set myshow to "The.Newsroom"
+                        else if myshow3 contains "Search.Party.2016" then
+                            set myshow to "Search.Party"
 						end if
 						----the 4 lines below change any dots in the filename to spaces
 						set text item delimiters of AppleScript to "."
@@ -1290,7 +1319,7 @@ script AppDelegate
 	on applicationShouldTerminate:sender
 		NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"theStuckProcess:" userInfo:(missing value) repeats:false
         try
-        do shell script "pkill aria2c"
+            do shell script "pkill aria2c"
         end try
 		return current application's NSTerminateNow
 	end applicationShouldTerminate:
