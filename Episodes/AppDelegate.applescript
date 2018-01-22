@@ -2,7 +2,7 @@
 --  AppDelegate.applescript
 --  Episodes
 --
---  Copyright © 2007-2017 Ryan Keefe.  Some rights reserved.
+--  Copyright © 2007-2018 Ryan Keefe.  Some rights reserved.
 
 ----REWRITE, WITH EACH INDEPENDENT PIECE BROKEN UP--EVERY ACTION, BIT OF LOGIC, ETC SHOULD BE ITS OWN SUBROUTINE--THEN STRING BACK TOGETHER.  PERFORMSELECTOR?
 
@@ -589,7 +589,7 @@ script AppDelegate
                 end ignoring
                 set title_appendage to showname2 & theEpcode & "." & tor_comment & "." & aud_comment & "." & source_comment
                 set final_torrent2 to "http://itorrents.org/torrent/" & theHash
-                set torrentRedirect to do shell script "curl -L " & final_torrent2 & " -o " & "\"" & torrentAddFolder & title_appendage & ".torrent\""
+                set torrentRedirect to do shell script "curl " & final_torrent2 & " -o " & "\"" & torrentAddFolder & title_appendage & ".torrent\""
                 ----STATBAR2----
                 set statbar2 to current application's NSString's stringWithFormat_("%@%@%@%@%@%@%@", "Downloading ", showname, " ", theEpcode, " in ", tor_comment, " quality.")
                 (statusLabel's setStringValue:statbar2)
@@ -1141,7 +1141,11 @@ script AppDelegate
 						delay 0.01
 					else if continue_adding is true then
 						if extension1 is ".mkv" then
-							tell current application to	do shell script theffmpeg & " -i " & processingFolder & "*.mkv -c:v copy -c:a copy " & processingFolder & fileNameNoExt & ".m4v && rm " & processingFolder & "*.mkv"
+                            try
+                                tell current application to	do shell script theffmpeg & " -i " & processingFolder & "*.mkv -c:v copy -c:a copy " & processingFolder & fileNameNoExt & ".m4v && rm " & processingFolder & "*.mkv"
+                            on error
+                                tell current application to	do shell script theffmpeg & " -i " & processingFolder & "*.mkv -y -c:v copy -c:a ac3 " & processingFolder & fileNameNoExt & ".m4v && rm " & processingFolder & "*.mkv"
+                            end try
 							set the_file to every item of processing whose name ends with ".mp4"
 							set the_file to every item of processing whose name ends with ".m4v"
 						end if --(extension1 is mkv)
