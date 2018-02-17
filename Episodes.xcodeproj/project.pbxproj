@@ -23,6 +23,7 @@
 		11DC8AFD1CE29EE200E1DEB6 /* Downloading in Resources */ = {isa = PBXBuildFile; fileRef = 11DC8AFB1CE29EE200E1DEB6 /* Downloading */; };
 		11DC8AFE1CE29EE200E1DEB6 /* DownloadingComplete in Resources */ = {isa = PBXBuildFile; fileRef = 11DC8AFC1CE29EE200E1DEB6 /* DownloadingComplete */; };
 		11E419C51E53060600FAF1DE /* ffmpeg in Resources */ = {isa = PBXBuildFile; fileRef = 11E419C41E53060600FAF1DE /* ffmpeg */; };
+		11E596FC2036E8500018D1C1 /* blacklist.txt in Resources */ = {isa = PBXBuildFile; fileRef = 11E596FB2036E8500018D1C1 /* blacklist.txt */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -45,6 +46,7 @@
 		11DC8AFC1CE29EE200E1DEB6 /* DownloadingComplete */ = {isa = PBXFileReference; lastKnownFileType = folder; path = DownloadingComplete; sourceTree = "<group>"; };
 		11DC8B011CE3144300E1DEB6 /* logo.rsrc */ = {isa = PBXFileReference; lastKnownFileType = archive.rsrc; path = logo.rsrc; sourceTree = "<group>"; };
 		11E419C41E53060600FAF1DE /* ffmpeg */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = ffmpeg; sourceTree = "<group>"; };
+		11E596FB2036E8500018D1C1 /* blacklist.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = blacklist.txt; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -108,6 +110,7 @@
 				11DC8AFB1CE29EE200E1DEB6 /* Downloading */,
 				11DC8AFC1CE29EE200E1DEB6 /* DownloadingComplete */,
 				113492C11CDADF940041DA61 /* show_list.txt */,
+				11E596FB2036E8500018D1C1 /* blacklist.txt */,
 				1142A7041CDC027700A29AF5 /* Processing */,
 				113492C21CDADF940041DA61 /* showart */,
 				112D47731CDC798700DE0F97 /* TorrentAdd */,
@@ -142,7 +145,7 @@
 		11C5E8F61CD084DC00450026 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0830;
+				LastUpgradeCheck = 0920;
 				ORGANIZATIONNAME = "Ryan Keefe";
 				TargetAttributes = {
 					11C5E8FD1CD084DC00450026 = {
@@ -185,6 +188,7 @@
 				11E419C51E53060600FAF1DE /* ffmpeg in Resources */,
 				11C5E90D1CD084DC00450026 /* MainMenu.xib in Resources */,
 				117BF2A31CDD749900BAA3D4 /* aria2c in Resources */,
+				11E596FC2036E8500018D1C1 /* blacklist.txt in Resources */,
 				118262D41D13E9E300E3628B /* Error in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -224,14 +228,20 @@
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
 				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
 				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
@@ -270,14 +280,20 @@
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
 				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
 				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
