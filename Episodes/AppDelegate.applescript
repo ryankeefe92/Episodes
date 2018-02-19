@@ -163,7 +163,7 @@ script AppDelegate
 	on applicationDidFinishLaunching:aNotification
 		---launch housekeeping is currently at bottom of applicationWillFinishLaunching.  Move here instead if necessary.
 		NSTimer's scheduledTimerWithTimeInterval:5 target:me selector:"download:" userInfo:(missing value) repeats:false
-		NSTimer's scheduledTimerWithTimeInterval:605 target:me selector:"download:" userInfo:(missing value) repeats:true --it's this long because of rate limit restrictions on torrentz2.eu
+		NSTimer's scheduledTimerWithTimeInterval:305 target:me selector:"download:" userInfo:(missing value) repeats:true
 		NSTimer's scheduledTimerWithTimeInterval:5 target:me selector:"process:" userInfo:(missing value) repeats:true
 		NSTimer's scheduledTimerWithTimeInterval:6 target:me selector:"moveHook:" userInfo:(missing value) repeats:true
         NSTimer's scheduledTimerWithTimeInterval:120 target:me selector:"theStuckProcess:" userInfo:(missing value) repeats:true
@@ -191,7 +191,7 @@ script AppDelegate
                     set todayDate2 to "20" & item 3 of dateTokes & theMonth & theDay as integer
                     set theShowEntry to showComboField's stringValue() as text
                     set text item delimiters of AppleScript to " "
-                    ----THE BELOW CODE IS VERY SIMILAR TO THE SECTION OF CODE IN THE "ENCODING" HANDLER THAT FETCHES THE TMDB ID FOR THE SHOW.  MAKE THAT CODE INTO ITS OWN SUBROUTINE, AND CALL WHERE ITS NEEDED ABOVE AND HERE---
+                    ----THE BELOW CODE IS VERY SIMILAR TO THE SECTION OF CODE IN THE "Processing" HANDLER THAT FETCHES THE TMDB ID FOR THE SHOW.  MAKE INTO SUBROUTINE, AND CALL WHERE NEEDED
                     set showEntry to text items of theShowEntry
                     set text item delimiters of AppleScript to "+"
                     set showEntry to "" & showEntry
@@ -205,7 +205,7 @@ script AppDelegate
                     set tvID to item 1 of apitokens
                     set myNewUrl to "api.themoviedb.org/3/tv/" & tvID & "?api_key=22c941722d77bc546e751ac90d4bebf6"
                     set API2 to do shell script "curl \"" & myNewUrl & "\""
-                    ------END AREA OF CODE THAT IS VERY SIMILAR TO CODE IN "ENCODING" HANDLER
+                    ------END AREA OF CODE THAT IS VERY SIMILAR TO CODE IN "Processing" HANDLER
                     set AppleScript's text item delimiters to "season_number\":"
                     set apitokens2 to text items of API2
                     set countAPI to count items of apitokens2
@@ -442,7 +442,6 @@ script AppDelegate
                     set vidQualFirst to -1 as integer --there is no original vidQual, since we are not replacing something in itunes, so we set it to -1, so anything found will be downloaded
                     set urlepcode to "S" & text 2 thru 3 of (currentdata as text) & "E" & text 4 thru 5 of (currentdata as text)
                     tell application "Finder" to set already_downloaded to (every item of torrent_add whose name contains showname2 & urlepcode)
-                    --display dialog "uno"
                     if count of already_downloaded is 0 then
                         set rss_items200 to do shell script "curl \"https://zooqle.com/search?q=%22" & urlshow & "%22+" & urlepcode & "+x264+category%3ATV&fmt=rss\"" as text
                         if (count of paragraphs of rss_items200) is greater than 18 then
@@ -491,7 +490,7 @@ script AppDelegate
                 end repeat
             end repeat
             ----STATBAR3----
-            set statbar3 to current application's NSString's stringWithFormat_("%@", "Idle") --shouldn't always be idle, leave "downloading" statuses up until the episode is added to itunes...then say adding...then idle.
+            set statbar3 to current application's NSString's stringWithFormat_("%@", "Idle") --shouldn't always be idle, leave "downloading" statuses up until the episode is added to itunes, then say adding, then idle.
             progressBar's incrementBy:incrementJump
             statusLabel's setStringValue:statbar3
             delay 0.01
@@ -519,8 +518,12 @@ script AppDelegate
             set feedtokens to text items of rss_items
             try
                 set oldBlackHash to read the open_target_file_2
-            on error
-                set oldBlackHash to "0000000000000000000000000000000000000000"
+                on error
+                try
+                    if oldBlackHash is {} then set oldBlackHash to "0000000000000000000000000000000000000000"
+                on error
+                    set oldBlackHash to "0000000000000000000000000000000000000000"
+                end try
             end try
             repeat with i from 2 to count of feedtokens
                 set currentEntry to item i of feedtokens
@@ -626,25 +629,27 @@ script AppDelegate
                         end if
                     end ignoring
                     set final_torrent2 to "http://itorrents.org/torrent/" & theHash
-                    set torrentRedirect to do shell script "curl " & final_torrent2 & " -o " & "\"" & torrentAddFolder & (showname2 & theEpcode & "." & tor_comment & "." & aud_comment & "." & source_comment) & ".torrent\""
-                    tell application "Finder" to set sizeCheck to size of (item 1 of torrent_add whose name contains (showname2 & theEpcode & "." & tor_comment & "." & aud_comment & "." & source_comment) & ".torrent")
+                    set torrentRedirect to do shell script "curl " & final_torrent2 & " -o " & "\"" & torrentAddFolder & (showname2 & theEpcode & "." & tor_comment & "." & aud_comment & "." & source_comment & "." & theHashNoExt) & ".torrent\""
+                    tell application "Finder" to set sizeCheck to size of (item 1 of torrent_add whose name contains (showname2 & theEpcode & "." & tor_comment & "." & aud_comment & "." & source_comment & "." & theHashNoExt) & ".torrent")
                     if sizeCheck is greater than 0 then
                         ----STATBAR2----
                         set statbar2 to current application's NSString's stringWithFormat_("%@%@%@%@%@%@%@", "Downloading ", showname, " ", theEpcode, " in ", tor_comment, " quality.")
                         (statusLabel's setStringValue:statbar2)
                         delay 0.01
                         ----STATBAR2----
-                        do shell script aria & " --seed-time=0 --on-bt-download-complete=exit -d " & downloadingFolder & " " & torrentAddFolder & (showname2 & theEpcode & "." & tor_comment & "." & aud_comment & "." & source_comment) & ".torrent > /dev/null 2>&1 &"
+                        do shell script aria & " --seed-time=0 --on-bt-download-complete=exit -d " & downloadingFolder & " " & torrentAddFolder & (showname2 & theEpcode & "." & tor_comment & "." & aud_comment & "." & source_comment & "." & theHashNoExt) & ".torrent > /dev/null 2>&1 &"
                     else
                         set blacklistedHash to true
                         tell application "Finder"
                             set the blackFile2 to the blackFile as text
                             set the open_master_file_2 to open for access file blackFile2 with write permission
                             set eof of the open_master_file_2 to 0
+                            --display dialog (theHashNoExt & return & oldBlackHash)
                             write theHashNoExt & return & oldBlackHash to open_master_file_2
+                            set oldBlackHash to (theHashNoExt & return & oldBlackHash)
                             close access the open_master_file_2
                         end tell
-                        set to_delete to name of (item 1 of torrent_add whose name contains (showname2 & theEpcode & "." & tor_comment & "." & aud_comment & "." & source_comment) & ".torrent")
+                        set to_delete to name of (item 1 of torrent_add whose name contains (showname2 & theEpcode & "." & tor_comment & "." & aud_comment & "." & source_comment & "." & theHashNoExt) & ".torrent")
                         do shell script "rm " & torrentAddFolder & quoted form of to_delete
                     end if
                     exit repeat --make sure it also exits and moves on to the next episode number if it can't download anything from the_order
@@ -654,7 +659,7 @@ script AppDelegate
     delay 0.01 -- more of these at END of NSTIMER sections, before it returns to main script?
 	end grabTorrent:
     ###########################################################################
-    on resumeTorrent:sender  --this subroutine checks all the .torrent files in the torrent_add folder, and for each one, if it doesn't already have a corresponding video file in the downloadcomplete, processing, or downloading directories, it has aria start downloading that episode.  It also starts downloading any episode in the downloading directory that has not been modified in the past 10 minutes.
+    on resumeTorrent:sender  --this subroutine checks all the .torrent files in the torrent_add folder, and for each one, if it doesn't already have a corresponding video file in the downloadcomplete, processing, or downloading directories, it has aria start downloading that episode.  It also starts re-downloading any episode in the downloading directory that has not been modified in the past 10 minutes.
         tell application "Finder"
             repeat with i from 1 to (count of (every item of torrent_add whose name contains ".torrent"))
                 set shouldDownload to false
@@ -752,7 +757,6 @@ script AppDelegate
                 end if
             end repeat
         end tell
-        ---ALSO: Have it delete any partially downloaded files from the downloading directory that do not have a corresponding .torrent.  IT BECOMES CLEAR WHICH PARTIALLY DOWNLOADED FILES HAVE A CORRESPONDING .TORRENT BECAUSE AFTER THE .TORRENT IS OPENED AGAIN AND THE VIDEO FILE CONTINUES DOWNLOADING, THE DATE CREATED/DATE MODIFIED VALUES OF THE .ARIA2 FILE IN THE DOWNLOADING DIRECTORY WILL BE THE PAST COUPLE OF MINUTES...if .aria2 file hasn't been updated in past 5-10 min, have it check the torrentadd folder for corresponding .torrent (same show name, episode id, video quality), and if none exists, delete it from the downloading directory.  Also run this at regular intervals, not just on launch.
     end resumeTorrent:
     ###########################################################################
     on moveHook:sender
@@ -865,7 +869,7 @@ script AppDelegate
 					try
 						set stream3 to text 3 of channels as integer
 					end try
-					------this part sees which audio stream has the greatest number of channels, and that is the audio stream that matters because if a file has stereo and 5.1 audio, the 5.1 audio is what will be extracted and used.  BUT, IF IT HAS STEREO AAC, SHOULDN'T IT ADD THAT TOO, SO IT DOESN'T NEED TO MAKE A STEREO MIXDOWN OF THE 5.1 IN ADDITION TO THE AC3 PASSTHRU?  OR DOES IT NEED TO BE MP3?
+					------this part sees which audio stream has the greatest number of channels, and that is the audio stream that matters because if a file has stereo and 5.1 audio, the 5.1 audio is what will be extracted and used.
 					if stream1 is greater than or equal to stream2 then
 						if stream1 is greater than or equal to stream3 then
 							set channels2 to stream1
@@ -1290,7 +1294,7 @@ script AppDelegate
             if count of stuckProcess is greater than 0
                 if modification date of item 1 of stuckProcess ² ((current date) - 12 * minutes) then  --if the file in the processing folder hasn't been modified in the last 12 minutes
                     if (count of stuckProcess) is 1 then
-                        move item 1 of stuckProcess to downloads ---moves the file that got stuck during processing back to the downloadingcomplete folder.  also, somehow mark file being moved?  either save it as a variable here, append something to the filename, or write to a text file?  This way, if it gets stuck in the processing folder a second time, it can be moved to the error folder instead of just moving back and forth between downloadedcomplete and processing folders.
+                        move item 1 of stuckProcess to downloads ---moves the file that got stuck during processing back to the downloadingcomplete folder.
                         if exists item 2 of processing then do shell script "rm " & processingFolder & "*.[^keep]*"
                     else if (count of stuckProcess) is 2 then
                         if modification date of item 2 of stuckProcess ² ((current date) - 12 * minutes) then
