@@ -644,7 +644,6 @@ script AppDelegate
                             set the blackFile2 to the blackFile as text
                             set the open_master_file_2 to open for access file blackFile2 with write permission
                             set eof of the open_master_file_2 to 0
-                            --display dialog (theHashNoExt & return & oldBlackHash)
                             write theHashNoExt & return & oldBlackHash to open_master_file_2
                             set oldBlackHash to (theHashNoExt & return & oldBlackHash)
                             close access the open_master_file_2
@@ -778,7 +777,7 @@ script AppDelegate
 	end moveHook:
     ###########################################################################
 	on process:sender
-		tell application "Finder"
+        tell application "Finder"
 			----From here to the next comment, the script checks downloadcomplete folder for video files, then deletes everything it doesn't need
 			repeat while (count of folders in downloads) is greater than 0
 				set downloads2_delete to name of (folder 1 of downloads)
@@ -854,7 +853,8 @@ script AppDelegate
 						set vid_comment to "4K"
 					end if
 					----The below checks to see how many audio channels are in the MKV file.  This is used to determine, in a case where the same episode already has been added to iTunes, if the incoming episode should replace it because it has more audio channels.
-					set channels2 to "2" as integer --just in case there's a problem retrieving the number of audio channels in the file, we assume it is stereo until the processes below tell us otherwise
+					set aud_comment to "Stereo" --this line and the line below are just in case there's a problem retrieving the number of audio channels in the file, we assume it is stereo until the processes below tell us otherwise
+                    set channels2 to "2" as integer
 					set channels to do shell script theMediaInfo & " \"--Inform=Audio;%Channels%\" " & processingFolder & "*.{mkv,mp4,m4v}"
 					set stream1 to 0 as integer
 					set stream2 to 0 as integer
@@ -884,7 +884,7 @@ script AppDelegate
 						end if
 					end if
 					set channels2List to {"Mono", "Stereo", "3ch", "4ch", "5ch", "DD5.1"}
-					repeat with i from 1 to count of channels2List
+                    repeat with i from 1 to count of channels2List
 						if channels2 is equal to i then
 							set aud_comment to item i of channels2List as text
 						end if
@@ -892,7 +892,7 @@ script AppDelegate
 					set sourceQual to "2" as integer ---if there is no indication of the source in the title, we assume that it is a TV rip.  TV rip = 2, BDrip = 3, WEB-DL = 1
 					set source_comment to "TV-Rip"
 					---for the below to work, when it renames the file in the folder, it can't clip off everything after the epcode!
-					ignoring case, hyphens, punctuation and white space
+                    ignoring case, hyphens, punctuation and white space
 						if text of capitalizedfinal contains "webdl" then
 							set sourceQual to "1" as integer
 							set source_comment to "Web-DL"
@@ -943,6 +943,8 @@ script AppDelegate
 							set myshow to "The.Newsroom"
                         else if myshow3 contains "Search.Party.2016" then
                             set myshow to "Search.Party"
+                            else if myshow3 contains "Search.Party.2016" then
+                            set myshow to "Search.Party"
 						end if
 						----the 4 lines below change any dots in the filename to spaces
 						set text item delimiters of AppleScript to "."
@@ -969,8 +971,6 @@ script AppDelegate
 							set text item delimiters of AppleScript to "\""
 							set tokens to text items of id0
 							set tvshowID to item 1 of tokens
-							
-                            
 							set mySeason to text 2 through 3 of epcodefinal as number
 							set mySeason2 to mySeason as text
 							set myEpisode to text 5 through 6 of epcodefinal as number
@@ -1197,19 +1197,48 @@ script AppDelegate
 						delay 0.01
 					else if continue_adding is true then
 						if extension1 is ".mkv" then
-                            try
-                                tell current application to	do shell script theffmpeg & " -i " & processingFolder & "*.mkv -c:v copy -c:a copy " & processingFolder & fileNameNoExt & ".m4v && rm " & processingFolder & "*.mkv"
-                            on error
-                                tell current application to	do shell script theffmpeg & " -i " & processingFolder & "*.mkv -y -c:v copy -c:a ac3 " & processingFolder & fileNameNoExt & ".m4v && rm " & processingFolder & "*.mkv"
-                            end try
+                            tell current application to set {langList, langChannels} to {do shell script theMediaInfo & " \"--Inform=General;%Audio_Language_List%\" " & processingFolder & "*.{mkv,mp4,m4v}", do shell script theMediaInfo & " \"--Inform=Audio;%Channels%\" " & processingFolder & "*.{mkv,mp4,m4v}"}
+                            set allEnglish to true
+                            set englishTrack to ""
+                            set AppleScript's text item delimiters to "/"
+                            set langTokens to text items of langList
+                            repeat with i from 1 to count of langTokens
+                                if item i of langTokens does not contain "English" then set allEnglish to false
+                            end repeat
+                            if allEnglish is true
+                                try
+                                    tell current application to	do shell script theffmpeg & " -i " & processingFolder & "*.mkv -c:v copy -c:a copy " & processingFolder & fileNameNoExt & ".m4v && rm " & processingFolder & "*.mkv"
+                                on error
+                                    try
+                                        tell current application to	do shell script theffmpeg & " -i " & processingFolder & "*.mkv -y -c:v copy -c:a ac3 " & processingFolder & fileNameNoExt & ".m4v && rm " & processingFolder & "*.mkv"
+                                        on error
+                                    ----blacklist the torrent hash, delete the file
+                                    end try
+                                end try
+                            else --if allEnglish is false
+                                repeat with i from 1 to count of langTokens
+                                    if item i of langTokens contains "English" then
+                                        if englishTrack is "" then
+                                            set englishTrack to i as integer
+                                            set langChannels0 to text i of langChannels
+                                        else
+                                            if text i of langChannels is greater than langChannels0 then
+                                                set langChannels0 to text i of langChannels
+                                                set englishTrack to i as integer
+                                            end if
+                                        end if
+                                    end if
+                                end repeat
+                                set englishTrackFinal to (englishTrack - 1)
+                                tell current application to do shell script theffmpeg & " -i " & processingFolder & "*.mkv -map 0:v:0 -map 0:a:" & englishTrackFinal & " -c copy " & processingFolder & fileNameNoExt & ".m4v && rm " & processingFolder & "*.mkv"
+                            end if
 							set the_file to every item of processing whose name ends with ".mp4"
 							set the_file to every item of processing whose name ends with ".m4v"
 						end if --(extension1 is mkv)
 					end if --(continue_adding is false/true)
 				end if --(not exists item 2 of processing)
 			end if ---(not exists item 2 of downloads)
-			
-            
+
             try
 				set totalprocessing to count files in processing
 				if totalprocessing is greater than 3 then
@@ -1290,17 +1319,25 @@ script AppDelegate
     ###########################################################################
     on theStuckProcess:sender --this subroutine moves/deletes any files that may have gotten stuck in the processing folder to prevent files from getting stuck in there if they fail to process
         tell application "Finder"
+            set secondChance to false
             set stuckProcess to (every item of processing whose name does not contain "dummyfile")
             if count of stuckProcess is greater than 0
                 if modification date of item 1 of stuckProcess ² ((current date) - 12 * minutes) then  --if the file in the processing folder hasn't been modified in the last 12 minutes
                     if (count of stuckProcess) is 1 then
+                        set secondChance to true
                         move item 1 of stuckProcess to downloads ---moves the file that got stuck during processing back to the downloadingcomplete folder.
                         if exists item 2 of processing then do shell script "rm " & processingFolder & "*.[^keep]*"
                     else if (count of stuckProcess) is 2 then
                         if modification date of item 2 of stuckProcess ² ((current date) - 12 * minutes) then
-                            if creation date of item 1 of stuckProcess is less than or equal to creation date of item 2 of stuckProcess then move (item 1 of stuckProcess) to downloads --item 1 is older than (or exactly the same age as) item 2
+                            if creation date of item 1 of stuckProcess is less than or equal to creation date of item 2 of stuckProcess
+                                move (item 1 of stuckProcess) to downloads --item 1 is older than (or exactly the same age as) item 2
+                                set secondChance to true
+                            end if
                             try
-                                if creation date of item 2 of stuckProcess is less than creation date of item 1 of stuckProcess then move (item 2 of stuckProcess) to downloads ---item 2 is older than item 1
+                                if creation date of item 2 of stuckProcess is less than creation date of item 1 of stuckProcess
+                                    move (item 2 of stuckProcess) to downloads ---item 2 is older than item 1
+                                    set secondChance to true
+                                end if
                             end try
                             if exists item 2 of processing then do shell script "rm " & processingFolder & "*.[^keep]*"
                         end if
