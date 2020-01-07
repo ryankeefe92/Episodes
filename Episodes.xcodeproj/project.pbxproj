@@ -7,13 +7,13 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		112D47751CDC798700DE0F97 /* TorrentAdd in Resources */ = {isa = PBXBuildFile; fileRef = 112D47731CDC798700DE0F97 /* TorrentAdd */; };
+		1126B25623C1C42400556700 /* transmission-remote in Resources */ = {isa = PBXBuildFile; fileRef = 1126B25423C1C42400556700 /* transmission-remote */; };
+		1126B25723C1C42400556700 /* transmission-daemon in Resources */ = {isa = PBXBuildFile; fileRef = 1126B25523C1C42400556700 /* transmission-daemon */; };
 		113492C41CDADF940041DA61 /* AtomicParsley64 in Resources */ = {isa = PBXBuildFile; fileRef = 113492BA1CDADF940041DA61 /* AtomicParsley64 */; };
 		113492C81CDADF940041DA61 /* mediainfo in Resources */ = {isa = PBXBuildFile; fileRef = 113492BE1CDADF940041DA61 /* mediainfo */; };
 		113492CB1CDADF940041DA61 /* show_list.txt in Resources */ = {isa = PBXBuildFile; fileRef = 113492C11CDADF940041DA61 /* show_list.txt */; };
 		113492CC1CDADF940041DA61 /* showart in Resources */ = {isa = PBXBuildFile; fileRef = 113492C21CDADF940041DA61 /* showart */; };
 		1142A7051CDC027700A29AF5 /* Processing in Resources */ = {isa = PBXBuildFile; fileRef = 1142A7041CDC027700A29AF5 /* Processing */; };
-		117BF2A31CDD749900BAA3D4 /* aria2c in Resources */ = {isa = PBXBuildFile; fileRef = 117BF2A21CDD749900BAA3D4 /* aria2c */; };
 		118262D41D13E9E300E3628B /* Error in Resources */ = {isa = PBXBuildFile; fileRef = 118262D31D13E9E300E3628B /* Error */; };
 		11C5E9021CD084DC00450026 /* AppleScriptObjC.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11C5E9011CD084DC00450026 /* AppleScriptObjC.framework */; };
 		11C5E9061CD084DC00450026 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 11C5E9051CD084DC00450026 /* main.m */; };
@@ -27,13 +27,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		112D47731CDC798700DE0F97 /* TorrentAdd */ = {isa = PBXFileReference; lastKnownFileType = folder; path = TorrentAdd; sourceTree = "<group>"; };
+		1126B25423C1C42400556700 /* transmission-remote */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = "transmission-remote"; sourceTree = "<group>"; };
+		1126B25523C1C42400556700 /* transmission-daemon */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = "transmission-daemon"; sourceTree = "<group>"; };
 		113492BA1CDADF940041DA61 /* AtomicParsley64 */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = AtomicParsley64; sourceTree = "<group>"; };
 		113492BE1CDADF940041DA61 /* mediainfo */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = mediainfo; sourceTree = "<group>"; };
 		113492C11CDADF940041DA61 /* show_list.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = show_list.txt; sourceTree = "<group>"; };
 		113492C21CDADF940041DA61 /* showart */ = {isa = PBXFileReference; lastKnownFileType = folder; path = showart; sourceTree = "<group>"; };
 		1142A7041CDC027700A29AF5 /* Processing */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Processing; sourceTree = "<group>"; };
-		117BF2A21CDD749900BAA3D4 /* aria2c */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = aria2c; sourceTree = "<group>"; };
 		118262D31D13E9E300E3628B /* Error */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Error; sourceTree = "<group>"; };
 		11C5E8FE1CD084DC00450026 /* Episodes.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Episodes.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		11C5E9011CD084DC00450026 /* AppleScriptObjC.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppleScriptObjC.framework; path = System/Library/Frameworks/AppleScriptObjC.framework; sourceTree = SDKROOT; };
@@ -101,7 +101,8 @@
 		11C5E9041CD084DC00450026 /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
-				117BF2A21CDD749900BAA3D4 /* aria2c */,
+				1126B25523C1C42400556700 /* transmission-daemon */,
+				1126B25423C1C42400556700 /* transmission-remote */,
 				113492BA1CDADF940041DA61 /* AtomicParsley64 */,
 				11E419C41E53060600FAF1DE /* ffmpeg */,
 				113492BE1CDADF940041DA61 /* mediainfo */,
@@ -113,7 +114,6 @@
 				11E596FB2036E8500018D1C1 /* blacklist.txt */,
 				1142A7041CDC027700A29AF5 /* Processing */,
 				113492C21CDADF940041DA61 /* showart */,
-				112D47731CDC798700DE0F97 /* TorrentAdd */,
 				11C5E9051CD084DC00450026 /* main.m */,
 			);
 			name = "Supporting Files";
@@ -145,17 +145,19 @@
 		11C5E8F61CD084DC00450026 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0920;
+				LastUpgradeCheck = 1000;
 				ORGANIZATIONNAME = "Ryan Keefe";
 				TargetAttributes = {
 					11C5E8FD1CD084DC00450026 = {
 						CreatedOnToolsVersion = 7.3;
+						DevelopmentTeam = 64349P3W6M;
+						ProvisioningStyle = Automatic;
 					};
 				};
 			};
 			buildConfigurationList = 11C5E8F91CD084DC00450026 /* Build configuration list for PBXProject "Episodes" */;
 			compatibilityVersion = "Xcode 3.2";
-			developmentRegion = English;
+			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
@@ -176,18 +178,18 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				112D47751CDC798700DE0F97 /* TorrentAdd in Resources */,
 				11C5E90A1CD084DC00450026 /* Assets.xcassets in Resources */,
 				1142A7051CDC027700A29AF5 /* Processing in Resources */,
 				113492CB1CDADF940041DA61 /* show_list.txt in Resources */,
 				113492CC1CDADF940041DA61 /* showart in Resources */,
+				1126B25623C1C42400556700 /* transmission-remote in Resources */,
 				11DC8AFE1CE29EE200E1DEB6 /* DownloadingComplete in Resources */,
 				113492C81CDADF940041DA61 /* mediainfo in Resources */,
 				11DC8AFD1CE29EE200E1DEB6 /* Downloading in Resources */,
+				1126B25723C1C42400556700 /* transmission-daemon in Resources */,
 				113492C41CDADF940041DA61 /* AtomicParsley64 in Resources */,
 				11E419C51E53060600FAF1DE /* ffmpeg in Resources */,
 				11C5E90D1CD084DC00450026 /* MainMenu.xib in Resources */,
-				117BF2A31CDD749900BAA3D4 /* aria2c in Resources */,
 				11E596FC2036E8500018D1C1 /* blacklist.txt in Resources */,
 				118262D41D13E9E300E3628B /* Error in Resources */,
 			);
@@ -232,12 +234,14 @@
 				CLANG_WARN_BOOL_CONVERSION = YES;
 				CLANG_WARN_COMMA = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
 				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
@@ -284,12 +288,14 @@
 				CLANG_WARN_BOOL_CONVERSION = YES;
 				CLANG_WARN_COMMA = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
 				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
@@ -320,11 +326,16 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = 64349P3W6M;
 				INFOPLIST_FILE = Episodes/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ryankeefe.Episodes;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 			};
 			name = Debug;
 		};
@@ -332,11 +343,16 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = 64349P3W6M;
 				INFOPLIST_FILE = Episodes/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ryankeefe.Episodes;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 			};
 			name = Release;
 		};

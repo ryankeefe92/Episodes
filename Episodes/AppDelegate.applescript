@@ -2,7 +2,7 @@
 --  AppDelegate.applescript
 --  Episodes
 --
---  Copyright � 2007-2018 Ryan Keefe.  Some rights reserved.
+--  Copyright � 2007-2020 Ryan Keefe.  Some rights reserved.
 
 ----REWRITE, WITH EACH INDEPENDENT PIECE BROKEN UP--EVERY ACTION, BIT OF LOGIC, ETC SHOULD BE ITS OWN SUBROUTINE--THEN STRING BACK TOGETHER.  PERFORMSELECTOR?
 
@@ -22,7 +22,8 @@ script AppDelegate
 	global listFile
     global blackFile
     global open_target_file_2
-	global aria
+	global transmission1
+    global transmission2
 	global atomicParsley
 	global theffmpeg
 	global theMediaInfo
@@ -34,14 +35,12 @@ script AppDelegate
 	global processing
 	global showArtFolder
 	global artfolder
-	global torrentAddFolder
-	global torrent_add
 	global errorQueue
 	global currentlyAiring
 	global myshow3
 	global epcodefinal
 	global vid_comment
-    global killedAria
+    global killedTransmission
     global secondKill
 	--property showTable : missing value
 	--property qualitySelect : missing value
@@ -57,9 +56,6 @@ script AppDelegate
 			set downloadingCompleteFolder0 to appLocation & "Contents:Resources:DownloadingComplete:" as alias
 			set downloadingCompleteFolder to POSIX path of downloadingCompleteFolder0 as text
 			set downloads to folder downloadingCompleteFolder0
-			set torrentAddFolder0 to appLocation & "Contents:Resources:TorrentAdd:" as alias
-			set torrentAddFolder to POSIX path of torrentAddFolder0 as text
-			set torrent_add to folder torrentAddFolder0
 			set showArtFolder0 to appLocation & "Contents:Resources:showart:" as alias
 			set showArtFolder to POSIX path of showArtFolder0 as text
 			set artfolder to folder showArtFolder0
@@ -71,12 +67,13 @@ script AppDelegate
 			set the listFile to (resourceFolder as string) & "show_list.txt" as string
             set the blackFile to (resourceFolder as string) & "blacklist.txt" as string
             set the open_target_file_2 to open for access file blackFile
-			set aria to POSIX path of resourceFolder & "aria2c" as text
+			set transmission1 to POSIX path of resourceFolder & "transmission-daemon" as text
+            set transmission2 to POSIX path of resourceFolder & "transmission-remote" as text
 			set atomicParsley to POSIX path of resourceFolder & "AtomicParsley64" as text
 			set theffmpeg to POSIX path of resourceFolder & "ffmpeg" as text
 			set theMediaInfo to POSIX path of resourceFolder & "mediainfo" as text
 			set the open_target_file to open for access file listFile
-            set killedAria to "0"
+            set killedTransmission to "0"
             set secondKill to false
 			try
 				set showlist to read the open_target_file
@@ -157,7 +154,7 @@ script AppDelegate
 		end tell
 		---end currently airing wikipedia block
         NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"theStuckProcess:" userInfo:(missing value) repeats:false
-        NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"resumeTorrent:" userInfo:(missing value) repeats:false
+        --NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"resumeTorrent:" userInfo:(missing value) repeats:false
 	end applicationWillFinishLaunching:
 	###########################################################################
 	on applicationDidFinishLaunching:aNotification
@@ -167,7 +164,7 @@ script AppDelegate
 		NSTimer's scheduledTimerWithTimeInterval:5 target:me selector:"process:" userInfo:(missing value) repeats:true
 		NSTimer's scheduledTimerWithTimeInterval:6 target:me selector:"moveHook:" userInfo:(missing value) repeats:true
         NSTimer's scheduledTimerWithTimeInterval:120 target:me selector:"theStuckProcess:" userInfo:(missing value) repeats:true
-        NSTimer's scheduledTimerWithTimeInterval:300 target:me selector:"resumeTorrent:" userInfo:(missing value) repeats:true
+        --NSTimer's scheduledTimerWithTimeInterval:300 target:me selector:"resumeTorrent:" userInfo:(missing value) repeats:true
 	end applicationDidFinishLaunching:
 	###########################################################################
     on populateEpcode:sender
@@ -396,7 +393,7 @@ script AppDelegate
                 set text item delimiters of AppleScript to "."
                 set showname2 to "" & showname2 & "."
                 ---check iTunes block begins here
-                tell application "iTunes"
+                tell application "TV"
                     if (count of (items of (every track of playlist "TV Shows" whose show contains showname))) is greater than 0 then
                         repeat with f from 1 to (count of (items of (every track of playlist "TV Shows" whose show contains showname)))
                             ----PROGBAR------
@@ -411,23 +408,12 @@ script AppDelegate
                                 if (comment of item f of (every track of playlist "TV Shows" whose show contains showname)) contains item i of {"Mono", "Stereo", "3ch", "4ch", "5ch", "DD5.1"} then set audQualFirst to i as integer
                             end repeat
                             if vidQualFirst is less than 1 then --###720p LINE###-- --this is where user can set it to a different "max quality" setting
-                                tell application "Finder" to set already_downloaded to (every item of torrent_add whose name contains showname2 & iTunesEpcode)
-                                if count of already_downloaded is 0 then
+                                tell application "Finder" to set already_downloading to (every item of downloadingFolder_folder whose name contains showname2 & iTunesEpcode)
+                                if count of already_downloading is 0 then
                                     set rss_items100 to do shell script "curl \"https://zooqle.com/search?q=%22" & urlshow & "%22+" & iTunesEpcode & "+x264+category%3ATV&fmt=rss\"" as text
                                     if (count of paragraphs of rss_items100) is greater than 18 then
                                         (NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"grabTorrent:" userInfo:{iTunesEpcode, rss_items100, vidQualFirst, showname, showname2} repeats:false)
                                         delay 0.01
-                                    end if
-                                else
-                                    tell application "Finder" to set sizeCheck to size of (item 1 of already_downloaded)
-                                    if sizeCheck is not greater than 0 then
-                                        set to_delete to name of (item 1 of already_downloaded)
-                                        do shell script "rm " & torrentAddFolder & quoted form of to_delete
-                                        set rss_items100 to do shell script "curl \"https://zooqle.com/search?q=%22" & urlshow & "%22+" & iTunesEpcode & "+x264+category%3ATV&fmt=rss\"" as text
-                                        if (count of paragraphs of rss_items100) is greater than 18 then
-                                            (NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"grabTorrent:" userInfo:{iTunesEpcode, rss_items100, vidQualFirst, showname, showname2} repeats:false)
-                                            delay 0.01
-                                        end if
                                     end if
                                 end if
                             end if
@@ -441,8 +427,8 @@ script AppDelegate
                 repeat
                     set vidQualFirst to -1 as integer --there is no original vidQual, since we are not replacing something in itunes, so we set it to -1, so anything found will be downloaded
                     set urlepcode to "S" & text 2 thru 3 of (currentdata as text) & "E" & text 4 thru 5 of (currentdata as text)
-                    tell application "Finder" to set already_downloaded to (every item of torrent_add whose name contains showname2 & urlepcode)
-                    if count of already_downloaded is 0 then
+                    tell application "Finder" to set already_downloading to (every item of downloadingFolder_folder whose name contains showname2 & urlepcode)
+                    if count of already_downloading is 0 then
                         set rss_items200 to do shell script "curl \"https://zooqle.com/search?q=%22" & urlshow & "%22+" & urlepcode & "+x264+category%3ATV&fmt=rss\"" as text
                         if (count of paragraphs of rss_items200) is greater than 18 then
                             (NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"grabTorrent:" userInfo:{urlepcode, rss_items200, vidQualFirst, showname, showname2} repeats:false)
@@ -460,17 +446,6 @@ script AppDelegate
                             end if
                             if advanceSeason is 2 then
                                 exit repeat
-                            end if
-                        end if
-                    else
-                        tell application "Finder" to set sizeCheck to size of (item 1 of already_downloaded)
-                        if sizeCheck is not greater than 0 then
-                            set to_delete to name of (item 1 of already_downloaded)
-                            do shell script "rm " & torrentAddFolder & quoted form of to_delete
-                            set rss_items200 to do shell script "curl \"https://zooqle.com/search?q=%22" & urlshow & "%22+" & urlepcode & "+x264+category%3ATV&fmt=rss\"" as text
-                            if (count of paragraphs of rss_items200) is greater than 18 then
-                                (NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"grabTorrent:" userInfo:{urlepcode, rss_items200, vidQualFirst, showname, showname2} repeats:false)
-                                delay 0.01
                             end if
                         end if
                     end if
@@ -599,8 +574,7 @@ script AppDelegate
                 set AppleScript's text item delimiters to ": "
                 repeat with tho from 1 to 5
                     set final_torrent to item tho of the_order
-                    set theHashNoExt to (text item 1 of final_torrent)
-                    set theHash to (text item 1 of final_torrent) & ".torrent"
+                    set theHash to (text item 1 of final_torrent)
                     set tor_comment to "SDTV"
                     set aud_comment to "Stereo"
                     set source_comment to "TV-Rip"
@@ -628,153 +602,92 @@ script AppDelegate
                             set source_comment to "Blu-Ray"
                         end if
                     end ignoring
-                    set final_torrent2 to "http://itorrents.org/torrent/" & theHash
-                    set torrentRedirect to do shell script "curl " & final_torrent2 & " -o " & "\"" & torrentAddFolder & (showname2 & theEpcode & "." & tor_comment & "." & aud_comment & "." & source_comment & "." & theHashNoExt) & ".torrent\""
-                    tell application "Finder" to set sizeCheck to size of (item 1 of torrent_add whose name contains (showname2 & theEpcode & "." & tor_comment & "." & aud_comment & "." & source_comment & "." & theHashNoExt) & ".torrent")
-                    if sizeCheck is greater than 0 then
+                    set final_torrent2 to "magnet:?xt=urn:btih:" & theHash
+                    #try -- comments with hashtags (this line, and the block a few lines down) WILL BE ADDED BACK once it is tested this way first, and once it can be established that try/on error will actually work with shell script and the dev/null
+                    do shell script transmission1 & " --download-dir \"" & downloadingCompleteFolder & "\" --incomplete-dir \"" & downloadingFolder & "\""
+                    delay 10
+                    do shell script transmission2 & " -a \"" & final_torrent2 & "\""
                         ----STATBAR2----
                         set statbar2 to current application's NSString's stringWithFormat_("%@%@%@%@%@%@%@", "Downloading ", showname, " ", theEpcode, " in ", tor_comment, " quality.")
                         (statusLabel's setStringValue:statbar2)
                         delay 0.01
                         ----STATBAR2----
-                        do shell script aria & " --seed-time=0 --on-bt-download-complete=exit -d " & downloadingFolder & " " & torrentAddFolder & (showname2 & theEpcode & "." & tor_comment & "." & aud_comment & "." & source_comment & "." & theHashNoExt) & ".torrent > /dev/null 2>&1 &"
-                    else
-                        set blacklistedHash to true
-                        tell application "Finder"
-                            set the blackFile2 to the blackFile as text
-                            set the open_master_file_2 to open for access file blackFile2 with write permission
-                            set eof of the open_master_file_2 to 0
-                            write theHashNoExt & return & oldBlackHash to open_master_file_2
-                            set oldBlackHash to (theHashNoExt & return & oldBlackHash)
-                            close access the open_master_file_2
-                        end tell
-                        set to_delete to name of (item 1 of torrent_add whose name contains (showname2 & theEpcode & "." & tor_comment & "." & aud_comment & "." & source_comment & "." & theHashNoExt) & ".torrent")
-                        do shell script "rm " & torrentAddFolder & quoted form of to_delete
-                    end if
+                    --else
+                    ###insert code here that checks the downloading folder after 90 seconds or so have passed to see if there is anything in there with theHash in its filename.  If there is not, or if the transmission cli throws an error (caused by the torrent not being good), then do the below
+                    #on error
+                    #set blacklistedHash to true
+                    #tell application "Finder"
+                    #set the blackFile2 to the blackFile as text
+                    #set the open_master_file_2 to open for access file blackFile2 with write permission
+                    #set eof of the open_master_file_2 to 0
+                    #write theHash & return & oldBlackHash to open_master_file_2
+                    #set oldBlackHash to (theHash & return & oldBlackHash)
+                    #close access the open_master_file_2
+                    #end tell
+                    #end try
                     exit repeat --make sure it also exits and moves on to the next episode number if it can't download anything from the_order
                 end repeat            
             end if
         end repeat
-    delay 0.01 -- more of these at END of NSTIMER sections, before it returns to main script?
+    delay 0.01
 	end grabTorrent:
     ###########################################################################
-    on resumeTorrent:sender  --this subroutine checks all the .torrent files in the torrent_add folder, and for each one, if it doesn't already have a corresponding video file in the downloadcomplete, processing, or downloading directories, it has aria start downloading that episode.  It also starts re-downloading any episode in the downloading directory that has not been modified in the past 10 minutes.
-        tell application "Finder"
-            repeat with i from 1 to (count of (every item of torrent_add whose name contains ".torrent"))
-                set shouldDownload to false
-                set inDownload to false
-                set inProcessing to false
-                set inDownloading to false
-                set theTorrentName to (name of item i of (every item of torrent_add whose name contains ".torrent"))
-                set AppleScript's text item delimiters to {".S0", ".S1", ".S2", ".S3", ".S4", ".S5", ".S6", ".S7", ".S8", ".S9"}
-                set matchShowName to (text item 1 of theTorrentName) as text
-                set AppleScript's text item delimiters to {matchShowName & ".", "."}
-                set matchSeason to text item 2 of theTorrentName
-                set matchEpisode to matchShowName & "." & matchSeason
-                set matchVidQuality to {"SDTV", "HDTV", "720p", "1080p", "4K"} -----HERE!!!
-                set matchQuality to ""
-                repeat with y from 1 to count of matchVidQuality
-                    if theTorrentName contains item y of matchVidQuality then set matchQuality to item y of matchVidQuality as text
-                end repeat
-                ignoring case, hyphens, punctuation and white space
-                    set downloadMatch to (every item of downloads whose name contains matchEpisode)
-                    set countMatches1 to count items of downloadMatch
-                    set processMatch to (every item of processing whose name contains matchEpisode)
-                    set countMatches2 to count items of processMatch
-                    set downloadingMatch to (every item of downloadingFolder_folder whose name contains matchEpisode)
-                    set countMatches3 to count items of downloadingMatch
-                    repeat with z from 1 to countMatches1
-                        if name of item z of downloadMatch contains matchQuality then
-                            set inDownload to true
-                        end if
-                    end repeat
-                    repeat with z from 1 to countMatches2
-                        if name of item z of processMatch contains matchQuality then
-                            set inProcessing to true
-                        end if
-                    end repeat
-                    repeat with z from 1 to countMatches3
-                        set ariaProcess to "none"
-                        if name of item z of downloadingMatch contains matchQuality then
-                            set inDownloading to true
-                            set downloadingMatchName to (name of item z of downloadingMatch)
-                            set ariaMatchCount to count (every item of downloadingFolder_folder whose name contains downloadingMatchName & ".aria2")
-                            if ariaMatchCount is greater than 0 then
-                                set ariaProcess to do shell script "ps -e | grep aria"
-                                if ariaProcess contains matchEpisode then
-                                    if ariaProcess contains matchQuality then
-                                        if (creation date of (item 1 of downloadingFolder_folder whose name contains downloadingMatchName & ".aria2")) � ((current date) - 10 * minutes) then
-                                            set AppleScript's text item delimiters to matchEpisode
-                                            set ariaProcess1 to text item 1 of ariaProcess
-                                            set AppleScript's text item delimiters to "??"
-                                            set killPID to text item 1 of ariaProcess1 as integer
-                                            do shell script "kill " & killPID
-                                            if killedAria contains downloadingMatchName then
-                                                if secondKill is false then
-                                                    set secondKill to true
-                                                    set shouldDownload to true
-                                                else
-                                                    if (modification date of (item z of downloadingMatch)) � ((current date) - 10 * minutes) then
-                                                        move item z of downloadingMatch to errorQueue
-                                                        set z to (z - 1)
-                                                        if z = 0 then set z to 1 as integer
-                                                        set rmAria to (item 1 of downloadingFolder_folder whose name contains downloadingMatchName & ".aria2")
-                                                        set rmAria1 to rmAria as alias
-                                                        set rmAria2 to POSIX path of rmAria1 as text
-                                                        set rmTorrent to (item i of (every item of torrent_add whose name contains ".torrent"))
-                                                        set rmTorrent1 to rmTorrent as alias
-                                                        set rmTorrent2 to POSIX path of rmTorrent1 as text
-                                                        do shell script "rm " & quoted form of rmAria2 & " && rm " & quoted form of rmTorrent2
-                                                        set i to (i - 1)
-                                                        if i = 0 then set i to 1 as integer
-                                                    end if
-                                                end if
-                                            else
-                                                set killedAria to killedAria & ", " & downloadingMatchName
-                                                set shouldDownload to true
-                                            end if
-                                        end if
-                                    else
-                                        set shouldDownload to true
-                                    end if
-                                else
-                                    set shouldDownload to true
-                                end if
-                            end if
-                        end if
-                    end repeat
-                end ignoring
-                if inDownload is false then
-                    if inProcessing is false then
-                        if inDownloading is false then
-                            set shouldDownload to true
-                        end if
-                    end if
-                end if
-                if shouldDownload is true then
-                    do shell script aria & " --seed-time=0 --on-bt-download-complete=exit -d " & downloadingFolder & " " & torrentAddFolder & theTorrentName & " > /dev/null 2>&1 &"
-                end if
-            end repeat
-        end tell
-    end resumeTorrent:
-    ###########################################################################
-    on moveHook:sender
-		tell application "Finder"  ---this block moves files that are done downloading with aria to the downloadcomplete folder
-			set all_aria_downloads to (every item of downloadingFolder_folder whose name does not contain ".aria2")
-			set aria_count to count all_aria_downloads
-			repeat with i from 1 to aria_count
-				set theAriaFile to item i of all_aria_downloads
-				set theAriaName to name of theAriaFile
-				if theAriaName does not contain "dummyfile" then
-					set notComplete to count (every item of downloadingFolder_folder whose name contains theAriaName & ".aria2")
-					if notComplete is less than 1 then
-						set ariaDate to creation date of theAriaFile
-						if ariaDate � ((current date) - 2 * minutes) then move theAriaFile to downloads
-					end if
-				end if
-			end repeat
-        end tell
-	end moveHook:
+   -- on resumeTorrent:sender  --this subroutine starts re-downloading any episode in the downloading directory that has not been modified in the past 10 minutes.
+     --   tell application "Finder"
+       --     ignoring case, hyphens, punctuation and white space
+                ----Here's the pseudocode for what this section of code needs to be now
+         --       repeat with z from 1 to (count of (every item of downloadingFolder_folder))
+           --         set shouldDownload to false
+             --       set downloadingMatchName to (name of item z of (every item of downloadingFolder_folder))
+               --     set downloadingHash to "0000000000000000000000000000000000000"
+                    ---UNCOMMENT THE BELOW!!! (And make it make sense, and delete the line above this one!)
+                    --set downloadingHash to hash code of downloadingMatchname
+                    ---from here on is actual code not pseudocode, but it's rough, double check it
+                    --set ariaMatchCount to count (every item of downloadingFolder_folder whose name contains downloadingMatchName & ".aria2")
+                    --if ariaMatchCount is greater than 0 then
+                      --  set ariaProcess to do shell script "ps -e | grep aria"
+                        --if ariaProcess contains downloadingHash then
+                          --  if (creation date of (item 1 of downloadingFolder_folder whose name contains downloadingMatchName & ".aria2")) � ((current date) - 10 * minutes) then
+                            --    set AppleScript's text item delimiters to downloadingHash
+                              --  set ariaProcess1 to text item 1 of ariaProcess
+                                --set AppleScript's text item delimiters to "??"
+                                --set killPID to text item 1 of ariaProcess1 as integer
+                                --do shell script "kill " & killPID
+                                
+                                --if killedTransmission contains downloadingMatchName then
+                                  --  if secondKill is false then
+                                    --    set secondKill to true
+                                      --  set shouldDownload to true
+                                   -- else
+                                     --   if (modification date of (item z of downloadingMatch)) � ((current date) - 10 * minutes) then
+                                       --     move item z of downloadingMatch to errorQueue
+                                            -----add code for adding this hash to the blacklist and trying another one for that same episode!
+                                         --   set z to (z - 1)
+                                           -- if z = 0 then set z to 1 as integer
+                                         --   set rmAria to (item 1 of downloadingFolder_folder whose name contains downloadingMatchName & ".aria2")
+                                           -- set rmAria1 to rmAria as alias
+                                         --   set rmAria2 to POSIX path of rmAria1 as text
+                                           -- do shell script "rm " & quoted form of rmAria2
+                                        --end if
+                             --       end if
+                            --    else
+                            --        set killedAria to killedAria & ", " & downloadingMatchName
+                           --         set shouldDownload to true
+                         --       end if
+                      --      end if
+                    --    else
+                   --         set shouldDownload to true
+                  --      end if
+                --    end if
+             --   end repeat
+         --   end ignoring
+      --      if shouldDownload is true then
+    --            set redownloadHash to "magnet:?xt=urn:btih:" & downloadingHash
+   --             do shell script aria & " --seed-time=0 --enable-dht=true --follow-torrent=mem --on-bt-download-complete=exit -d " & downloadingfolder & " " & quoted form of redownloadHash & " > /dev/null 2>&1 &"
+      --      end if
+     --   end tell
+   -- end resumeTorrent:
+
     ###########################################################################
 	on process:sender
         tell application "Finder"
@@ -965,154 +878,133 @@ script AppDelegate
 								tell application "Finder" to move the_file to errorQueue
 							end try
 							if exists item 2 of processing
-                            set text item delimiters of AppleScript to "<a id=\"tv_"
-							set tokens to text items of find_id
-							set id0 to item 2 of tokens
-							set text item delimiters of AppleScript to "\""
-							set tokens to text items of id0
-							set tvshowID to item 1 of tokens
-							set mySeason to text 2 through 3 of epcodefinal as number
-							set mySeason2 to mySeason as text
-							set myEpisode to text 5 through 6 of epcodefinal as number
-							set myEpisode2 to myEpisode as text
-							set mySeason2 to text 2 through 3 of epcodefinal
-							set myEpisode2 to text 5 through 6 of epcodefinal
-                            set firstmyurl to "api.themoviedb.org/3/tv/" & tvshowID & "?api_key=22c941722d77bc546e751ac90d4bebf6"
-                            try
-                                set firstin2 to do shell script "curl \"" & firstmyurl & "\""
-                            on error
-                                tell application "Finder" to move the_file to errorQueue
-                            end try
-                            if exists item 2 of processing
-                            set AppleScript's text item delimiters to "\",\"name\":\""
-                            set correctName0 to text item 2 of firstin2
-                            set AppleScript's text item delimiters to "\",\""
-                            set correctName1 to text item 1 of correctName0
-                            set text item delimiters of AppleScript to " "
-                            set correctName2 to text items of correctName1
-                            set text item delimiters of AppleScript to "+"
-                            set correctName2 to "" & correctName2
-                            set text item delimiters of AppleScript to "'"
-                            set correctName to text items of correctName2
-                            set text item delimiters of AppleScript to ""
-                            set correctName to "" & correctName
-							set myurl to "api.themoviedb.org/3/tv/" & tvshowID & "/season/" & mySeason2 & "/episode/" & myEpisode2 & "?api_key=22c941722d77bc546e751ac90d4bebf6"
-							----% xferd error (6) occurs on following line.
-							try
-								set in2 to do shell script "curl \"" & myurl & "\""
-							on error
-								tell application "Finder" to move the_file to errorQueue
-							end try
-                            if exists item 2 of processing
-							set showdescrip to "No description available."
-							set myname to "Season " & mySeason & ", Episode " & myEpisode
-							set AppleScript's text item delimiters to "\",\"overview\":\""
-							set tokens to text items of in2
-							set myname1 to item 1 of tokens
-							if myname1 does not contain "The resource you requested could not be found" then
-								set descrip1 to item 2 of tokens
-								set AppleScript's text item delimiters to "\""
-								set tokens to text items of myname1
-								set myname to last item of tokens as text ---episode name
-								set AppleScript's text item delimiters to "\",\"id"
-								set tokens to text items of descrip1
-								set descrip2 to item 1 of tokens ---description
-								set text item delimiters of AppleScript to {"'", "\"", "\\"}
-								set descrip2 to text items of descrip2
-								set text item delimiters of AppleScript to ""
-								set descrip2 to "" & descrip2
-								set text item delimiters of AppleScript to "<br>
-"
-								set descrip2 to text items of descrip2
-								set text item delimiters of AppleScript to "  "
-								set descrip2 to "" & descrip2
-								try
-									if descrip2 is not "" then set showdescrip to descrip2 as text
-								end try
-								set AppleScript's text item delimiters to "\"air_date\":\""
-								set tokens to text items of in2
-								set myair to item 2 of tokens
-								set AppleScript's text item delimiters to "\""
-								set tokens to text items of myair
-								set myair2 to item 1 of tokens as text ---airdate
-							end if
-							-----FETCH ARTWORK
-							tell application "Finder"
-								set oldArt to (every item of artfolder whose creation date � ((current date) - 4 * weeks))
-								repeat with oa from 1 to count of oldArt
-									set deleteArt to name of item oa of oldArt
-									if deleteArt does not contain "no_art" then
-										do shell script "rm " & showArtFolder & quoted form of deleteArt
-									end if
-								end repeat
-								set artfiles to (every item of artfolder whose name contains myshow2)
-								set artcount to count artfiles
-								try
-									set artname to name of item 1 of artfiles
-								end try
-							end tell
-							if artcount is greater than 0 then
-								set final_final_artwork to showArtFolder & artname as string
-							else
-								set arturl to "squaredtvart.tumblr.com/search/" & correctName2
-								try
-                                set find_artlink to do shell script "curl \"" & arturl & "\""
-								set AppleScript's text item delimiters to "<a href=\""
-								set arttokens to text items of find_artlink
-								set the_artlink00 to item 6 of arttokens
-								set AppleScript's text item delimiters to "img src=\""
-								set arttokens2 to text items of the_artlink00
-								set the_artlink0 to item 2 of arttokens2
-								set AppleScript's text item delimiters to "\""
-								set arttokens3 to text items of the_artlink0
-								set the_artlink0_0 to item 1 of arttokens3
-								set AppleScript's text item delimiters to "_"
-								set extensiontoke0 to text items of the_artlink0_0
-								set finalArtPiece to last item of extensiontoke0
-								set AppleScript's text item delimiters to "."
-								set arttokens4 to text items of finalArtPiece
-								set artquality to item 1 of arttokens4
-								set the_extension to item 2 of arttokens4
-								set AppleScript's text item delimiters to finalArtPiece
-								set preartQualityToke to text items of the_artlink0_0
-								set the_artlink to item 1 of preartQualityToke & "1280." & the_extension
-								set the_artlink2 to item 1 of preartQualityToke & "500." & the_extension
-								set the_artlink3 to item 1 of preartQualityToke & artquality & "." & the_extension
-                                end try
+                                set text item delimiters of AppleScript to "<a id=\"tv_"
+                                set tokens to text items of find_id
+                                set id0 to item 2 of tokens
+                                set text item delimiters of AppleScript to "\""
+                                set tokens to text items of id0
+                                set tvshowID to item 1 of tokens
+                                set mySeason to text 2 through 3 of epcodefinal as number
+                                set mySeason2 to mySeason as text
+                                set myEpisode to text 5 through 6 of epcodefinal as number
+                                set myEpisode2 to myEpisode as text
+                                set mySeason2 to text 2 through 3 of epcodefinal
+                                set myEpisode2 to text 5 through 6 of epcodefinal
+                                set firstmyurl to "api.themoviedb.org/3/tv/" & tvshowID & "?api_key=22c941722d77bc546e751ac90d4bebf6"
                                 try
-									try
-										do shell script "curl " & the_artlink & " -o " & "\"" & showArtFolder & myshow2 & "." & the_extension & "\""
-									on error
-										try
-											do shell script "curl " & the_artlink2 & " -o " & "\"" & showArtFolder & myshow2 & "." & the_extension & "\""
-										on error
-											try
-												do shell script "curl " & the_artlink3 & " -o " & "\"" & showArtFolder & myshow2 & "." & the_extension & "\""
-											end try
-										end try
-									end try
-									set final_final_artwork to showArtFolder & myshow2 & "." & the_extension as string
-								on error
-									set final_final_artwork to showArtFolder & "no_art.jpg" as string
-								end try
-							end if --(artcount is greater than 0)
+                                    set firstin2 to do shell script "curl \"" & firstmyurl & "\""
+                                    on error
+                                    tell application "Finder" to move the_file to errorQueue
+                                end try
+                                if exists item 2 of processing
+                                set AppleScript's text item delimiters to "\"original_name\":\""
+                                set correctName0 to text item 2 of firstin2
+                                set AppleScript's text item delimiters to "\",\""
+                                set correctName1 to text item 1 of correctName0
+                                set text item delimiters of AppleScript to " "
+                                set correctName2 to text items of correctName1
+                                set text item delimiters of AppleScript to "+"
+                                set correctName2 to "" & correctName2
+                                set myurl to "api.themoviedb.org/3/tv/" & tvshowID & "/season/" & mySeason2 & "/episode/" & myEpisode2 & "?api_key=22c941722d77bc546e751ac90d4bebf6"
+                                ----% xferd error (6) occurs on following line.
+                                try
+                                    set in2 to do shell script "curl \"" & myurl & "\""
+                                    on error
+                                    tell application "Finder" to move the_file to errorQueue
+                                end try
+                                if exists item 2 of processing
+                                    set showdescrip to "No description available."
+                                    set myname to "Season " & mySeason & ", Episode " & myEpisode
+                                    set AppleScript's text item delimiters to "\",\"overview\":\""
+                                    set tokens to text items of in2
+                                    set myname1 to item 1 of tokens
+                                    if myname1 does not contain "The resource you requested could not be found" then
+                                        set descrip1 to item 2 of tokens
+                                        set AppleScript's text item delimiters to "\""
+                                        set tokens to text items of myname1
+                                        set myname to last item of tokens as text ---episode name
+                                        set AppleScript's text item delimiters to "\",\"id"
+                                        set tokens to text items of descrip1
+                                        set descrip2 to item 1 of tokens ---description
+                                        set text item delimiters of AppleScript to {"'", "\"", "\\"}
+                                        set descrip2 to text items of descrip2
+                                        set text item delimiters of AppleScript to ""
+                                        set descrip2 to "" & descrip2
+                                        set text item delimiters of AppleScript to "<br>
+        "
+                                        set descrip2 to text items of descrip2
+                                        set text item delimiters of AppleScript to "  "
+                                        set descrip2 to "" & descrip2
+                                        try
+                                            if descrip2 is not "" then set showdescrip to descrip2 as text
+                                        end try
+                                        set AppleScript's text item delimiters to "\"air_date\":\""
+                                        set tokens to text items of in2
+                                        set myair to item 2 of tokens
+                                        set AppleScript's text item delimiters to "\""
+                                        set tokens to text items of myair
+                                        set myair2 to item 1 of tokens as text ---airdate
+                                    end if
+                                    -----FETCH ARTWORK
+                                    tell application "Finder"
+                                        set oldArt to (every item of artfolder whose creation date � ((current date) - 4 * weeks))
+                                        repeat with oa from 1 to count of oldArt
+                                            set deleteArt to name of item oa of oldArt
+                                            if deleteArt does not contain "no_art" then
+                                                do shell script "rm " & showArtFolder & quoted form of deleteArt
+                                            end if
+                                        end repeat
+                                        set artfiles to (every item of artfolder whose name contains myshow2)
+                                        set artcount to count artfiles
+                                        try
+                                            set artname to name of item 1 of artfiles
+                                        end try
+                                    end tell
+                                    if artcount is greater than 0 then
+                                        set final_final_artwork to showArtFolder & artname as string
+                                    else
+                                        set arturl to "https://squaredtvart.tumblr.com/search/" & correctName2
+                                        try
+                                            set find_artlink to do shell script "curl \"" & arturl & "\""
+                                            set AppleScript's text item delimiters to "_250.jpg"
+                                            set arttokens to text items of find_artlink
+                                            set the_artlink00 to item 1 of arttokens
+                                            set AppleScript's text item delimiters to "https://"
+                                            set arttokens2 to text items of the_artlink00
+                                            set the_artlink to "https://" & (last item of arttokens2) & "_1280.jpg"
+                                            set the_artlink2 to "https://" & (last item of arttokens2) & "_500.jpg"
+                                            
+                                        end try
+                                        try
+                                            try
+                                                do shell script "curl " & the_artlink & " -o " & "\"" & showArtFolder & myshow2 & ".jpg\""
+                                            on error
+                                                try
+                                                    do shell script "curl " & the_artlink2 & " -o " & "\"" & showArtFolder & myshow2 & ".jpg\""
+                                                end try
+                                            end try
+                                            set final_final_artwork to showArtFolder & myshow2 & ".jpg"
+                                        on error
+                                            set final_final_artwork to showArtFolder & "no_art.jpg" as string
+                                        end try
+                                    end if --(artcount is greater than 0)
+                                end if
                             end if
                         end if
-                        end if
-                        else
-							set myname to showname2
-							set final_final_artwork to showArtFolder & "no_art.jpg" as string
-						end if --(totaltokens2 is greater than 1)
-						set text item delimiters of AppleScript to {":", "'"}
-						set showname2 to text items of showname2 ---showname2 = name of the show
-						set myname to text items of myname ---myname = name of the episode
-						set text item delimiters of AppleScript to ""
-						set showname2 to "" & showname2
-						set myname to "" & myname
-						set EPids to "N/A"
-						set shouldcheckiTunes to false
-					end tell
-					tell application "iTunes"
+                    else
+                        set myname to showname2
+                        set final_final_artwork to showArtFolder & "no_art.jpg" as string
+                    end if --(totaltokens2 is greater than 1)
+                    set text item delimiters of AppleScript to {":", "'"}
+                    set showname2 to text items of showname2 ---showname2 = name of the show
+                    set myname to text items of myname ---myname = name of the episode
+                    set text item delimiters of AppleScript to ""
+                    set showname2 to "" & showname2
+                    set myname to "" & myname
+                    set EPids to "N/A"
+                    set shouldcheckiTunes to false
+                end tell
+					tell application "TV"
 						set existsShows to every track of playlist "TV Shows" whose name contains myname --episode title
 						set countfiles to count items of existsShows
 						set replaceShow to {}
@@ -1193,8 +1085,6 @@ script AppDelegate
 						do shell script "rm " & processingFolder & "*.[^keep]*"
                         NSTimer's scheduledTimerWithTimeInterval:0 |target|:me selector:"updateEpcode:" userInfo:{showname2, mySeason2, myEpisode2} repeats:false
                         delay 0.01
-						NSTimer's scheduledTimerWithTimeInterval:0 |target|:me selector:"trashTorrent:" userInfo:(missing value) repeats:false
-						delay 0.01
 					else if continue_adding is true then
 						if extension1 is ".mkv" then
                             tell current application to set {langList, langChannels} to {do shell script theMediaInfo & " \"--Inform=General;%Audio_Language_List%\" " & processingFolder & "*.{mkv,mp4,m4v}", do shell script theMediaInfo & " \"--Inform=Audio;%Channels%\" " & processingFolder & "*.{mkv,mp4,m4v}"}
@@ -1266,8 +1156,8 @@ script AppDelegate
 					else -----if the show does not use the standard SxxExx naming format
 						tell current application to do shell script atomicParsley & " " & processingFolder & origin & " --stik 'TV Show' --TVShowName '" & showname2 & "' --comment '" & final_comment & "' --artwork REMOVE_ALL --artwork " & final_final_artwork & "' --title '" & myname & "'"
 					end if
-					set metafiles2 to (every item of processing whose name contains "temp") as string
-					tell application "iTunes"
+					set metafiles2 to (every item of processing whose name contains "temp") as alias
+					tell application "TV"
 						if replaceShow is not {} then
 							set itunesShow to location of replaceShow
 							set i2 to POSIX path of itunesShow as text
@@ -1276,14 +1166,12 @@ script AppDelegate
 						end if
 						try
 							add metafiles2
-						on error number -43 --why does the below happen ONLY on error number 43??
-							do shell script "rm " & processingFolder & "*.[^keep]*"
+						on error
+                            tell application "Finder" to move the_file to errorQueue
 						end try
                         tell current application
                             do shell script "rm " & processingFolder & "*.[^keep]*"
                             NSTimer's scheduledTimerWithTimeInterval:0 |target|:me selector:"updateEpcode:" userInfo:{showname2, mySeason2, myEpisode2} repeats:false
-                            delay 0.01
-                            NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"trashTorrent:" userInfo:(missing value) repeats:false
                             delay 0.01
                         end tell
 						try
@@ -1298,18 +1186,10 @@ script AppDelegate
 								set bookmark of finalShow to (playbackpos - 5)
                             end if
 						end try
-						try
-							update item 3 of every source
-						end try
-						try
-							update item 4 of every source
-						end try
 					end tell
 					if (count of files in processing) is greater than 1 then
 						do shell script "rm " & quoted form of rm2
 						do shell script "rm " & processingFolder & "*-temp-*.*"
-						NSTimer's scheduledTimerWithTimeInterval:0 |target|:me selector:"trashTorrent:" userInfo:(missing value) repeats:false
-						delay 0.01
 					end if
 				end if --(goOn is true)
 			end try
@@ -1384,27 +1264,6 @@ script AppDelegate
             NSTimer's scheduledTimerWithTimeInterval:0 |target|:me selector:"writeList:" userInfo:(missing value) repeats:false
             delay 0.01
     end updateEpcode:
-	###########################################################################
-    on trashTorrent:sender
-        tell application "Finder"
-            set every_tor to every item of torrent_add whose name contains ".torrent"
-            set every_torCount to count every_tor
-            repeat with i from 1 to every_torCount
-                ignoring case, hyphens, punctuation, white space and diacriticals
-                    if name of item i of every_tor contains myshow3 then
-                        if name of item i of every_tor contains epcodefinal then
-                            if name of item i of every_tor contains vid_comment then
-                                set to_delete to name of item i of every_tor
-                                do shell script "rm " & torrentAddFolder & quoted form of to_delete
-                                set i to (i - 1)
-                                set every_torCount to (every_torCount - 1)
-                            end if
-                        end if
-                    end if
-                end ignoring
-            end repeat
-        end tell
-    end trashTorrent:
     ###########################################################################
 	on appQuit:sender
 		----housekeeping is currently in applicationShouldTerminate...move here instead (in addition?) if necessary
@@ -1416,7 +1275,7 @@ script AppDelegate
 	on applicationShouldTerminate:sender
 		NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"theStuckProcess:" userInfo:(missing value) repeats:false
         try
-            do shell script "pkill aria2c"
+            do shell script "pkill transmission-daemon"
         end try
 		return current application's NSTerminateNow
 	end applicationShouldTerminate:
