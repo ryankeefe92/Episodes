@@ -80,6 +80,10 @@ script AppDelegate
 				listOfShows's setStringValue:showlist
 			end try
 		end tell
+        try
+            do shell script "pkill transmission-daemon"
+        end try
+        do shell script transmission1 & " --download-dir \"" & downloadingCompleteFolder & "\" --incomplete-dir \"" & downloadingFolder & "\""
 		---Currently airing Wikipedia check
 		set find_id to do shell script "curl \"https://en.wikipedia.org/w/index.php?title=List_of_American_television_shows_currently_in_production&printable=yes\""
 		set AppleScript's text item delimiters to "<li><i><a href=\"/wiki/"
@@ -158,15 +162,34 @@ script AppDelegate
 	end applicationWillFinishLaunching:
 	###########################################################################
 	on applicationDidFinishLaunching:aNotification
-		---launch housekeeping is currently at bottom of applicationWillFinishLaunching.  Move here instead if necessary.
-		NSTimer's scheduledTimerWithTimeInterval:5 target:me selector:"download:" userInfo:(missing value) repeats:false
-		NSTimer's scheduledTimerWithTimeInterval:305 target:me selector:"download:" userInfo:(missing value) repeats:true
+		---launch housekeeping is currently at bottom of applicationWillFinishLaunching.  Move here instead if necessary
+        NSTimer's scheduledTimerWithTimeInterval:8 target:me selector:"startTorrents:" userInfo:(missing value) repeats:false
+        NSTimer's scheduledTimerWithTimeInterval:5 target:me selector:"download:" userInfo:(missing value) repeats:false
+		NSTimer's scheduledTimerWithTimeInterval:300 target:me selector:"download:" userInfo:(missing value) repeats:true
 		NSTimer's scheduledTimerWithTimeInterval:5 target:me selector:"process:" userInfo:(missing value) repeats:true
-		NSTimer's scheduledTimerWithTimeInterval:6 target:me selector:"moveHook:" userInfo:(missing value) repeats:true
         NSTimer's scheduledTimerWithTimeInterval:120 target:me selector:"theStuckProcess:" userInfo:(missing value) repeats:true
         --NSTimer's scheduledTimerWithTimeInterval:300 target:me selector:"resumeTorrent:" userInfo:(missing value) repeats:true
 	end applicationDidFinishLaunching:
 	###########################################################################
+    on startTorrents:sender
+        do shell script transmission2 & " --torrent all --start"
+        --the below block removes all completed torrents
+        set remove1 to do shell script transmission2 & " -l"
+        set AppleScript's text item delimiters to "
+        "
+        set torList to text items of remove1
+        repeat with listInt from 1 to ((count of torList))
+            if text item listInt of remove1 contains "100%" then
+                set remove2 to text item listInt of remove1
+                set AppleScript's text item delimiters to {"  100%", "*  100%"}
+                set remove3 to (text item 1 of remove2)
+                set AppleScript's text item delimiters to "
+                "
+                do shell script transmission2 & " -t " & remove3 & " -r"
+            end if
+        end repeat
+    end startTorrents
+    ###########################################################################
     on populateEpcode:sender
         if showComboField's stringValue as string is not equal to "" then
             set the_index to beginWith's indexOfSelectedItem()
@@ -368,6 +391,7 @@ script AppDelegate
     end writeList:
     ###########################################################################
     on download:sender --looks at list of shows in GUI as well as iTunes library to determine which TV episodes need to be fetched, then passes this information on to the grabTorrent: subroutine
+        
         set showlist to listOfShows's stringValue() as text
         if (count of (text items of showlist)) is greater than 0 then
             repeat with c from 1 to (count of (paragraphs of showlist))
@@ -392,7 +416,7 @@ script AppDelegate
                 set showname2 to text items of showname
                 set text item delimiters of AppleScript to "."
                 set showname2 to "" & showname2 & "."
-                ---check iTunes block begins here
+                ---check iTunes block begins here, double check that it works now that it's "TV"
                 tell application "TV"
                     if (count of (items of (every track of playlist "TV Shows" whose show contains showname))) is greater than 0 then
                         repeat with f from 1 to (count of (items of (every track of playlist "TV Shows" whose show contains showname)))
@@ -635,59 +659,17 @@ script AppDelegate
    -- on resumeTorrent:sender  --this subroutine starts re-downloading any episode in the downloading directory that has not been modified in the past 10 minutes.
      --   tell application "Finder"
        --     ignoring case, hyphens, punctuation and white space
-                ----Here's the pseudocode for what this section of code needs to be now
          --       repeat with z from 1 to (count of (every item of downloadingFolder_folder))
-           --         set shouldDownload to false
-             --       set downloadingMatchName to (name of item z of (every item of downloadingFolder_folder))
-               --     set downloadingHash to "0000000000000000000000000000000000000"
-                    ---UNCOMMENT THE BELOW!!! (And make it make sense, and delete the line above this one!)
-                    --set downloadingHash to hash code of downloadingMatchname
-                    ---from here on is actual code not pseudocode, but it's rough, double check it
-                    --set ariaMatchCount to count (every item of downloadingFolder_folder whose name contains downloadingMatchName & ".aria2")
-                    --if ariaMatchCount is greater than 0 then
-                      --  set ariaProcess to do shell script "ps -e | grep aria"
-                        --if ariaProcess contains downloadingHash then
-                          --  if (creation date of (item 1 of downloadingFolder_folder whose name contains downloadingMatchName & ".aria2")) ² ((current date) - 10 * minutes) then
-                            --    set AppleScript's text item delimiters to downloadingHash
-                              --  set ariaProcess1 to text item 1 of ariaProcess
-                                --set AppleScript's text item delimiters to "??"
-                                --set killPID to text item 1 of ariaProcess1 as integer
-                                --do shell script "kill " & killPID
-                                
-                                --if killedTransmission contains downloadingMatchName then
-                                  --  if secondKill is false then
-                                    --    set secondKill to true
-                                      --  set shouldDownload to true
-                                   -- else
-                                     --   if (modification date of (item z of downloadingMatch)) ² ((current date) - 10 * minutes) then
-                                       --     move item z of downloadingMatch to errorQueue
-                                            -----add code for adding this hash to the blacklist and trying another one for that same episode!
-                                         --   set z to (z - 1)
-                                           -- if z = 0 then set z to 1 as integer
-                                         --   set rmAria to (item 1 of downloadingFolder_folder whose name contains downloadingMatchName & ".aria2")
-                                           -- set rmAria1 to rmAria as alias
-                                         --   set rmAria2 to POSIX path of rmAria1 as text
-                                           -- do shell script "rm " & quoted form of rmAria2
-                                        --end if
-                             --       end if
-                            --    else
-                            --        set killedAria to killedAria & ", " & downloadingMatchName
-                           --         set shouldDownload to true
-                         --       end if
-                      --      end if
-                    --    else
-                   --         set shouldDownload to true
-                  --      end if
+                    --set ariaMatchCount to count (every item of downloadingFolder_folder whose name contains downloadingMatchName)
+                    --  if (creation date of (item 1 of downloadingFolder_folder whose name contains downloadingMatchName)) ² ((current date) - 10 * minutes) then
+                        -----add code for adding this hash to the blacklist and trying another one for that same episode!
+                            -- set redownloadHash to "magnet:?xt=urn:btih:" & downloadingHash
+                            --do shell script aria & " --seed-time=0 --enable-dht=true --follow-torrent=mem --on-bt-download-complete=exit -d " & downloadingfolder & " " & quoted form of redownloadHash & " > /dev/null 2>&1 &"
                 --    end if
-             --   end repeat
+            --   end repeat
          --   end ignoring
-      --      if shouldDownload is true then
-    --            set redownloadHash to "magnet:?xt=urn:btih:" & downloadingHash
-   --             do shell script aria & " --seed-time=0 --enable-dht=true --follow-torrent=mem --on-bt-download-complete=exit -d " & downloadingfolder & " " & quoted form of redownloadHash & " > /dev/null 2>&1 &"
-      --      end if
      --   end tell
    -- end resumeTorrent:
-
     ###########################################################################
 	on process:sender
         tell application "Finder"
@@ -1197,7 +1179,7 @@ script AppDelegate
 		end tell
 	end process:
     ###########################################################################
-    on theStuckProcess:sender --this subroutine moves/deletes any files that may have gotten stuck in the processing folder to prevent files from getting stuck in there if they fail to process
+    on theStuckProcess:sender --this subroutine moves/deletes any files that may have gotten stuck in the processing folder if they fail to process
         tell application "Finder"
             set secondChance to false
             set stuckProcess to (every item of processing whose name does not contain "dummyfile")
@@ -1266,14 +1248,30 @@ script AppDelegate
     end updateEpcode:
     ###########################################################################
 	on appQuit:sender
-		----housekeeping is currently in applicationShouldTerminate...move here instead (in addition?) if necessary
-		NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"writeList:" userInfo:"writeList" repeats:false
-		delay 0.01
 		tell current application to quit
 	end appQuit:
 	###########################################################################
 	on applicationShouldTerminate:sender
-		NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"theStuckProcess:" userInfo:(missing value) repeats:false
+		NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"writeList:" userInfo:"writeList" repeats:false
+        delay 0.01
+        NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"theStuckProcess:" userInfo:(missing value) repeats:false
+        delay 0.01
+        --the below block removes all completed torrents
+        set remove1 to do shell script transmission2 & " -l"
+        set AppleScript's text item delimiters to "
+        "
+        set torList to text items of remove1
+        repeat with listInt from 1 to ((count of torList))
+            if text item listInt of remove1 contains "100%" then
+                set remove2 to text item listInt of remove1
+                set AppleScript's text item delimiters to {"  100%", "*  100%"}
+                set remove3 to (text item 1 of remove2)
+                set AppleScript's text item delimiters to "
+                "
+                do shell script transmission2 & " -t " & remove3 & " -r"
+            end if
+        end repeat
+        do shell script transmission2 & " --torrent all --stop"
         try
             do shell script "pkill transmission-daemon"
         end try
