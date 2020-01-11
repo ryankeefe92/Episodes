@@ -83,7 +83,7 @@ script AppDelegate
         try
             do shell script "pkill transmission-daemon"
         end try
-        do shell script transmission1 & " --download-dir \"" & downloadingCompleteFolder & "\" --incomplete-dir \"" & downloadingFolder & "\""
+        do shell script transmission1 & " --download-dir \"" & downloadingCompleteFolder & "\" --incomplete-dir \"" & downloadingFolder & "\" > /dev/null 2>&1"
 		---Currently airing Wikipedia check
 		set find_id to do shell script "curl \"https://en.wikipedia.org/w/index.php?title=List_of_American_television_shows_currently_in_production&printable=yes\""
 		set AppleScript's text item delimiters to "<li><i><a href=\"/wiki/"
@@ -164,6 +164,7 @@ script AppDelegate
 	on applicationDidFinishLaunching:aNotification
 		---launch housekeeping is currently at bottom of applicationWillFinishLaunching.  Move here instead if necessary
         NSTimer's scheduledTimerWithTimeInterval:8 target:me selector:"startTorrents:" userInfo:(missing value) repeats:false
+        NSTimer's scheduledTimerWithTimeInterval:600 target:me selector:"startTorrents:" userInfo:(missing value) repeats:true
         NSTimer's scheduledTimerWithTimeInterval:5 target:me selector:"download:" userInfo:(missing value) repeats:false
 		NSTimer's scheduledTimerWithTimeInterval:300 target:me selector:"download:" userInfo:(missing value) repeats:true
 		NSTimer's scheduledTimerWithTimeInterval:5 target:me selector:"process:" userInfo:(missing value) repeats:true
@@ -172,7 +173,7 @@ script AppDelegate
 	end applicationDidFinishLaunching:
 	###########################################################################
     on startTorrents:sender
-        do shell script transmission2 & " --torrent all --start"
+        do shell script transmission2 & " --torrent all --start > /dev/null 2>&1"
         --the below block removes all completed torrents
         set remove1 to do shell script transmission2 & " -l"
         set AppleScript's text item delimiters to "
@@ -185,7 +186,7 @@ script AppDelegate
                 set remove3 to (text item 1 of remove2)
                 set AppleScript's text item delimiters to "
                 "
-                do shell script transmission2 & " -t " & remove3 & " -r"
+                do shell script transmission2 & " -t " & remove3 & " -r > /dev/null 2>&1"
             end if
         end repeat
     end startTorrents
@@ -628,9 +629,7 @@ script AppDelegate
                     end ignoring
                     set final_torrent2 to "magnet:?xt=urn:btih:" & theHash
                     #try -- comments with hashtags (this line, and the block a few lines down) WILL BE ADDED BACK once it is tested this way first, and once it can be established that try/on error will actually work with shell script and the dev/null
-                    do shell script transmission1 & " --download-dir \"" & downloadingCompleteFolder & "\" --incomplete-dir \"" & downloadingFolder & "\""
-                    delay 10
-                    do shell script transmission2 & " -a \"" & final_torrent2 & "\""
+                    do shell script transmission2 & " -a \"" & final_torrent2 & "\" > /dev/null 2>&1"
                         ----STATBAR2----
                         set statbar2 to current application's NSString's stringWithFormat_("%@%@%@%@%@%@%@", "Downloading ", showname, " ", theEpcode, " in ", tor_comment, " quality.")
                         (statusLabel's setStringValue:statbar2)
@@ -933,7 +932,7 @@ script AppDelegate
                                         repeat with oa from 1 to count of oldArt
                                             set deleteArt to name of item oa of oldArt
                                             if deleteArt does not contain "no_art" then
-                                                do shell script "rm " & showArtFolder & quoted form of deleteArt
+                                                do shell script "rm " & showArtFolder & quoted form of deleteArt & " > /dev/null 2>&1"
                                             end if
                                         end repeat
                                         set artfiles to (every item of artfolder whose name contains myshow2)
@@ -1152,7 +1151,7 @@ script AppDelegate
                             tell application "Finder" to move the_file to errorQueue
 						end try
                         tell current application
-                            do shell script "rm " & processingFolder & "*.[^keep]*"
+                            do shell script "rm " & processingFolder & "*.[^keep]* > /dev/null 2>&1"
                             NSTimer's scheduledTimerWithTimeInterval:0 |target|:me selector:"updateEpcode:" userInfo:{showname2, mySeason2, myEpisode2} repeats:false
                             delay 0.01
                         end tell
@@ -1170,8 +1169,8 @@ script AppDelegate
 						end try
 					end tell
 					if (count of files in processing) is greater than 1 then
-						do shell script "rm " & quoted form of rm2
-						do shell script "rm " & processingFolder & "*-temp-*.*"
+						do shell script "rm " & quoted form of rm2 & " > /dev/null 2>&1"
+						do shell script "rm " & processingFolder & "*-temp-*.* > /dev/null 2>&1"
 					end if
 				end if --(goOn is true)
 			end try
@@ -1188,7 +1187,7 @@ script AppDelegate
                     if (count of stuckProcess) is 1 then
                         set secondChance to true
                         move item 1 of stuckProcess to downloads ---moves the file that got stuck during processing back to the downloadingcomplete folder.
-                        if exists item 2 of processing then do shell script "rm " & processingFolder & "*.[^keep]*"
+                        if exists item 2 of processing then do shell script "rm " & processingFolder & "*.[^keep]* > /dev/null 2>&1"
                     else if (count of stuckProcess) is 2 then
                         if modification date of item 2 of stuckProcess ² ((current date) - 12 * minutes) then
                             if creation date of item 1 of stuckProcess is less than or equal to creation date of item 2 of stuckProcess
@@ -1201,7 +1200,7 @@ script AppDelegate
                                     set secondChance to true
                                 end if
                             end try
-                            if exists item 2 of processing then do shell script "rm " & processingFolder & "*.[^keep]*"
+                            if exists item 2 of processing then do shell script "rm " & processingFolder & "*.[^keep]* > /dev/null 2>&1"
                         end if
                     end if
                 end if
@@ -1248,12 +1247,12 @@ script AppDelegate
     end updateEpcode:
     ###########################################################################
 	on appQuit:sender
+        NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"writeList:" userInfo:"writeList" repeats:false
+        delay 0.01
 		tell current application to quit
 	end appQuit:
 	###########################################################################
 	on applicationShouldTerminate:sender
-		NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"writeList:" userInfo:"writeList" repeats:false
-        delay 0.01
         NSTimer's scheduledTimerWithTimeInterval:0 target:me selector:"theStuckProcess:" userInfo:(missing value) repeats:false
         delay 0.01
         --the below block removes all completed torrents
