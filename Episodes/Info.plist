@@ -37,7 +37,7 @@
 	<key>DTSDKBuild</key>
 	<string>16C58</string>
 	<key>DTSDKName</key>
-	<string>macosx10.12</string>
+	<string>macosx15</string>
 	<key>DTXcode</key>
 	<string>0821</string>
 	<key>DTXcodeBuild</key>
@@ -45,13 +45,13 @@
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.entertainment</string>
 	<key>LSMinimumSystemVersion</key>
-	<string>10.12</string>
-	<key>NSHumanReadableCopyright</key>
-	<string>Copyright © 2007-2020 Ryan Keefe.  Some rights reserved.</string>
-	<key>NSMainNibFile</key>
-	<string>MainMenu</string>
+	<string>15</string>
 	<key>NSAppleEventsUsageDescription</key>
 	<string>This script needs to control other applications to run.</string>
+	<key>NSHumanReadableCopyright</key>
+	<string>Copyright © 2007-2025 Ryan Keefe.  Some rights reserved.</string>
+	<key>NSMainNibFile</key>
+	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 </dict>

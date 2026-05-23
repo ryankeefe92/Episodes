@@ -2,7 +2,7 @@
 --  AppDelegate.applescript
 --  Episodes
 --
---  Copyright © 2007-2020 Ryan Keefe.  Some rights reserved.
+--  Copyright © 2007-2025 Ryan Keefe.  Some rights reserved.
 
 ----REWRITE, WITH EACH INDEPENDENT PIECE BROKEN UP--EVERY ACTION, BIT OF LOGIC, ETC SHOULD BE ITS OWN SUBROUTINE--THEN STRING BACK TOGETHER.  PERFORMSELECTOR?
 
@@ -176,17 +176,12 @@ script AppDelegate
         do shell script transmission2 & " --torrent all --start > /dev/null 2>&1"
         --the below block removes all completed torrents
         set remove1 to do shell script transmission2 & " -l"
-        set AppleScript's text item delimiters to "
-        "
-        set torList to text items of remove1
-        repeat with listInt from 1 to ((count of torList))
-            if text item listInt of remove1 contains "100%" then
-                set remove2 to text item listInt of remove1
+        repeat with listInt from 1 to (count of (paragraphs of remove1))
+            if paragraph listInt of remove1 contains "100%" then
+                set remove2 to paragraph listInt of remove1
                 set AppleScript's text item delimiters to {"  100%", "*  100%"}
-                set remove3 to (text item 1 of remove2)
-                set AppleScript's text item delimiters to "
-                "
-                do shell script transmission2 & " -t " & remove3 & " -r > /dev/null 2>&1"
+                set remove3 to (text item 1 of remove2) as integer
+                do shell script transmission2 & " -t " & remove3 & " -r"
             end if
         end repeat
     end startTorrents
@@ -218,7 +213,7 @@ script AppDelegate
                     set showEntry to "" & showEntry
                     set theTVURL to "https://www.themoviedb.org/search?query=" & showEntry
                     set find_id to do shell script "curl \"" & theTVURL & "\""
-                    set text item delimiters of AppleScript to "<a id=\"tv_"
+                    set text item delimiters of AppleScript to "class=\"result\" href=\"/tv/"
                     set apitokens to text items of find_id
                     set apiid to item 2 of apitokens
                     set text item delimiters of AppleScript to "\""
@@ -505,9 +500,10 @@ script AppDelegate
         set vidQualFirst to item 3 of sender's userInfo as integer
         set showname to item 4 of sender's userInfo as text
         set showname2 to item 5 of sender's userInfo as text
-        set blacklistedHash to true
-        repeat while blacklistedHash is true
-            set blacklistedHash to false
+        --set blacklistedHash to true
+        --repeat while blacklistedHash is true
+            --set blacklistedHash to false
+            set mostSeeders to 0 as integer
             set bestquality to 0 as integer
             set bestfeeditem to 0 as integer
             set secondbest to 0 as integer
@@ -516,31 +512,43 @@ script AppDelegate
             set fifthbest to 0 as integer
             set AppleScript's text item delimiters to "<item>"
             set feedtokens to text items of rss_items
-            try
-                set oldBlackHash to read the open_target_file_2
-                on error
-                try
-                    if oldBlackHash is {} then set oldBlackHash to "0000000000000000000000000000000000000000"
-                on error
-                    set oldBlackHash to "0000000000000000000000000000000000000000"
-                end try
-            end try
+            --try
+                --set oldBlackHash to read the open_target_file_2
+                --on error
+                --try
+                    --if oldBlackHash is {} then set oldBlackHash to "0000000000000000000000000000000000000000"
+                --on error
+                    --set oldBlackHash to "0000000000000000000000000000000000000000"
+                --end try
+            --end try
             repeat with i from 2 to count of feedtokens
                 set currentEntry to item i of feedtokens
                 set AppleScript's text item delimiters to {"<title>", "</title>"}
                 set feedtorrentTitle to text item 2 of currentEntry
                 set AppleScript's text item delimiters to {"<torrent:infoHash>", "</torrent:infoHash>"}
                 set feedtorrentLink to text item 2 of currentEntry
-                if oldBlackHash does not contain feedtorrentLink then
+                set AppleScript's text item delimiters to {"<torrent:seeds>", "</torrent:seeds>"}
+                set seedCount to text item 2 of currentEntry
+                --if oldBlackHash does not contain feedtorrentLink then
                     set tor_comment to "SDTV"
                     set torQual to 0 as integer
                     if feedtorrentTitle contains theEpcode
-                        ###720p BLOCK###
                         if feedtorrentTitle contains "720p" then
                             set tor_comment to "720p"
                             set torQual to 1
                         end if
-                        ###END 720p BLOCK###
+                        if feedtorrentTitle contains "1080p" then
+                            set tor_comment to "1080p"
+                            set torQual to 2
+                        end if
+                        if feedtorrentTitle contains "4K" then
+                            set tor_comment to "4K"
+                            set torQual to 3
+                        end if
+                        if feedtorrentTitle contains "2160p" then
+                            set tor_comment to "4K"
+                            set torQual to 3
+                        end if
                         set torAudQual to 2 as integer
                         ---the below (from here to end repeat) sets the torAudQual, but nothing checks the torAudQual later!  Implement something (a few lines down, when it is checking the torQual) to also check the torAudQual
                         ignoring case, hyphens, punctuation and white space
@@ -559,46 +567,41 @@ script AppDelegate
                                 set torAudQual to j as integer
                             end if
                         end repeat
-                        set torSourceQual to 2 as integer
-                        set sourcList to {"WEB-DL", "TV-Rip", "Blu-Ray"}
-                        ignoring case, hyphens, punctuation and white space
-                            if feedtorrentTitle contains "Web-Rip" then
-                                set torSourceQual to 1 as integer
-                            end if
-                            repeat with j from 1 to count of sourcList
-                                if feedtorrentTitle contains item j of sourcList then
-                                    set torSourceQual to j as integer
-                                end if
-                            end repeat
-                        end ignoring
-                        ----make it so if a torrent is nuked and propered, the proper replaces the nuke
-                        if torQual is greater than vidQualFirst then
-                            ----also add in audio and source quality checkers here...torAudQual and torSourceQual are set just a few lines above and should be checked here!!
-                            if torQual is greater than or equal to bestquality then
-                                set bestquality to torQual as integer
-                                try
-                                    set fifthbest to fourthbest
-                                end try
-                                try
-                                    set fourthbest to thirdbest
-                                end try
-                                try
-                                    set thirdbest to secondbest
-                                end try
-                                try
-                                    set secondbest to bestfeeditem
-                                end try
+                        if seedCount is greater than or equal to mostSeeders then
+                            if torQual is greater than vidQualFirst then
+                                ----also add in audio quality checker here...torAudQual is set just a few lines above and should be checked here!!
+                                set mostSeeders to seedCount as integer
                                 set bestfeeditem to feedtorrentLink & ": " & feedtorrentTitle
                             end if
                         end if
-                    end if
+                        ----make it so if a torrent is nuked and propered, the proper replaces the nuke
+                        --if torQual is greater than vidQualFirst then
+                            --if torQual is greater than or equal to bestquality then
+                                --set bestquality to torQual as integer
+                                --try
+                                    --set fifthbest to fourthbest
+                                --end try
+                                --try
+                                    --set fourthbest to thirdbest
+                                --end try
+                                --try
+                                    --set thirdbest to secondbest
+                                --end try
+                                --try
+                                    --set secondbest to bestfeeditem
+                                --end try
+                                --set bestfeeditem to feedtorrentLink & ": " & feedtorrentTitle
+                            --end if
+                        --end if
+                    --end if
                 end if
             end repeat
             if bestfeeditem is not 0 then
-                set the_order to {bestfeeditem, secondbest, thirdbest, fourthbest, fifthbest}
+                --set the_order to {bestfeeditem, secondbest, thirdbest, fourthbest, fifthbest}
                 set AppleScript's text item delimiters to ": "
-                repeat with tho from 1 to 5
-                    set final_torrent to item tho of the_order
+                --repeat with tho from 1 to 5
+                    --set final_torrent to item tho of the_order
+                    set final_torrent to bestfeeditem
                     set theHash to (text item 1 of final_torrent)
                     set tor_comment to "SDTV"
                     set aud_comment to "Stereo"
@@ -648,10 +651,10 @@ script AppDelegate
                     #close access the open_master_file_2
                     #end tell
                     #end try
-                    exit repeat --make sure it also exits and moves on to the next episode number if it can't download anything from the_order
-                end repeat            
+                    --exit repeat --make sure it also exits and moves on to the next episode number if it can't download anything from the_order
+                --end repeat
             end if
-        end repeat
+        --end repeat
     delay 0.01
 	end grabTorrent:
     ###########################################################################
@@ -859,7 +862,7 @@ script AppDelegate
 								tell application "Finder" to move the_file to errorQueue
 							end try
 							if exists item 2 of processing
-                                set text item delimiters of AppleScript to "<a id=\"tv_"
+                                set text item delimiters of AppleScript to "class=\"result\" href=\"/tv/"
                                 set tokens to text items of find_id
                                 set id0 to item 2 of tokens
                                 set text item delimiters of AppleScript to "\""
@@ -1257,16 +1260,11 @@ script AppDelegate
         delay 0.01
         --the below block removes all completed torrents
         set remove1 to do shell script transmission2 & " -l"
-        set AppleScript's text item delimiters to "
-        "
-        set torList to text items of remove1
-        repeat with listInt from 1 to ((count of torList))
-            if text item listInt of remove1 contains "100%" then
-                set remove2 to text item listInt of remove1
+        repeat with listInt from 1 to (count of (paragraphs of remove1))
+            if paragraph listInt of remove1 contains "100%" then
+                set remove2 to paragraph listInt of remove1
                 set AppleScript's text item delimiters to {"  100%", "*  100%"}
-                set remove3 to (text item 1 of remove2)
-                set AppleScript's text item delimiters to "
-                "
+                set remove3 to (text item 1 of remove2) as integer
                 do shell script transmission2 & " -t " & remove3 & " -r"
             end if
         end repeat
